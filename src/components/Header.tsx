@@ -5,6 +5,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { NotificationCenter } from "./NotificationCenter";
+import { UserSearch } from "@/components/search/UserSearch";
 
 export const Header = () => {
   const { user, profile, signOut } = useAuth();
@@ -29,9 +30,7 @@ export const Header = () => {
       </div>
 
       <div className="flex items-center gap-4">
-        <button className="w-10 h-10 rounded-xl bg-secondary hover:bg-secondary/80 flex items-center justify-center transition-colors hover-lift">
-          <Search className="w-5 h-5" />
-        </button>
+        <UserSearch />
         
         {user && <NotificationCenter />}
         

@@ -13,6 +13,11 @@ import { Progress } from "@/components/ui/progress";
 import { UserBettingHistory } from "@/components/profile/UserBettingHistory";
 import { AvatarUpload } from "@/components/profile/AvatarUpload";
 import { UserTeamsSection } from "@/components/profile/UserTeamsSection";
+import { TeamActivityFeed } from "@/components/profile/TeamActivityFeed";
+import { ProfileViewsCard } from "@/components/profile/ProfileViewsCard";
+import { RecentVisitors } from "@/components/profile/RecentVisitors";
+import { ProfileShareButton } from "@/components/profile/ProfileShareButton";
+import { PendingInvitesBanner } from "@/components/profile/PendingInvitesBanner";
 
 import { Pencil, MapPin, Linkedin, Github, Globe, Mail, Trophy, Target, TrendingUp, Award, Eye, Users } from "lucide-react";
 import { toast } from "sonner";
@@ -20,6 +25,7 @@ import { EmptyState } from "@/components/EmptyState";
 import { StatsCard } from "@/components/profile/StatsCard";
 import { useTeamMemberships } from "@/hooks/useTeamMemberships";
 import { useProfileViews } from "@/hooks/useProfileViews";
+import { useOAuthCallback } from "@/hooks/useOAuthCallback";
 
 export default function MyProfile() {
   const { user, profile } = useAuth();
@@ -28,6 +34,9 @@ export default function MyProfile() {
   const [fullProfile, setFullProfile] = useState<any>(null);
   const { memberships: teamMemberships, loading: teamsLoading } = useTeamMemberships(user?.id);
   const { viewCount } = useProfileViews(user?.id);
+  
+  // Handle OAuth callbacks
+  useOAuthCallback();
 
   useEffect(() => {
     if (!user) {
@@ -108,6 +117,9 @@ export default function MyProfile() {
 
   return (
     <div className="container max-w-7xl mx-auto p-4 md:p-6 space-y-6">
+      {/* Pending Invites Banner */}
+      <PendingInvitesBanner userId={user.id} />
+      
       {/* Hero Header Card */}
       <Card className="relative overflow-hidden">
         <div className="absolute inset-0 bg-gradient-to-br from-primary/10 via-background to-background" />
@@ -122,10 +134,13 @@ export default function MyProfile() {
                 size="xl"
                 onUploadComplete={(url) => setFullProfile({ ...fullProfile, avatar_url: url })}
               />
-              <Button onClick={() => navigate("/profile/edit")} size="sm" className="w-full lg:w-auto">
-                <Pencil className="h-4 w-4 mr-2" />
-                Edit Profile
-              </Button>
+              <div className="flex gap-2 w-full lg:w-auto">
+                <Button onClick={() => navigate("/profile/edit")} size="sm" className="flex-1 lg:flex-initial">
+                  <Pencil className="h-4 w-4 mr-2" />
+                  Edit Profile
+                </Button>
+                <ProfileShareButton username={fullProfile.username} userId={user.id} />
+              </div>
             </div>
             
             {/* Profile Info */}
@@ -256,186 +271,203 @@ export default function MyProfile() {
         />
       </div>
 
-      {/* Tabs Section */}
-      <Tabs defaultValue="overview" className="space-y-6">
-        <TabsList className="grid w-full grid-cols-2 lg:grid-cols-5 h-auto p-1">
-          <TabsTrigger value="overview" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
-            Overview
-          </TabsTrigger>
-          <TabsTrigger value="teams" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
-            Teams
-          </TabsTrigger>
-          <TabsTrigger value="experience" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
-            Experience
-          </TabsTrigger>
-          <TabsTrigger value="history" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
-            Betting History
-          </TabsTrigger>
-          <TabsTrigger value="activity" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
-            Team Activity
-          </TabsTrigger>
-        </TabsList>
+      {/* Tabs Section with Sidebar */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div className="lg:col-span-2">
+          <Tabs defaultValue="overview" className="space-y-6">
+            <TabsList className="grid w-full grid-cols-2 lg:grid-cols-5 h-auto p-1">
+              <TabsTrigger value="overview" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
+                Overview
+              </TabsTrigger>
+              <TabsTrigger value="teams" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
+                Teams
+              </TabsTrigger>
+              <TabsTrigger value="experience" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
+                Experience
+              </TabsTrigger>
+              <TabsTrigger value="history" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
+                Betting History
+              </TabsTrigger>
+              <TabsTrigger value="activity" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
+                Team Activity
+              </TabsTrigger>
+            </TabsList>
 
-        <TabsContent value="overview" className="space-y-6">
-          {fullProfile.bio ? (
-            <Card className="p-6 hover:shadow-lg transition-shadow">
-              <h2 className="text-2xl font-bold mb-4 flex items-center gap-2">
-                <div className="h-1 w-8 bg-primary rounded" />
-                About
-              </h2>
-              <p className="text-muted-foreground leading-relaxed whitespace-pre-wrap">{fullProfile.bio}</p>
-            </Card>
-          ) : (
-            <EmptyState
-              icon={Pencil}
-              title="No bio yet"
-              description="Add a bio to tell others about yourself"
-              action={{
-                label: "Edit Profile",
-                onClick: () => navigate("/profile/edit")
-              }}
-            />
-          )}
+            
 
-          {fullProfile.skills && fullProfile.skills.length > 0 && (
-            <Card className="p-6 hover:shadow-lg transition-shadow">
-              <h2 className="text-2xl font-bold mb-4 flex items-center gap-2">
-                <div className="h-1 w-8 bg-primary rounded" />
-                Skills
-              </h2>
-              <div className="flex flex-wrap gap-2">
-                {fullProfile.skills.map((skill: any, index: number) => (
-                  <Badge key={index} variant="secondary" className="px-3 py-1 text-sm">
-                    {skill.name}
-                  </Badge>
-                ))}
-              </div>
-            </Card>
-          )}
+            <TabsContent value="overview" className="space-y-6">
+              {fullProfile.bio ? (
+                <Card className="p-6 hover:shadow-lg transition-shadow">
+                  <h2 className="text-2xl font-bold mb-4 flex items-center gap-2">
+                    <div className="h-1 w-8 bg-primary rounded" />
+                    About
+                  </h2>
+                  <p className="text-muted-foreground leading-relaxed whitespace-pre-wrap">{fullProfile.bio}</p>
+                </Card>
+              ) : (
+                <EmptyState
+                  icon={Pencil}
+                  title="No bio yet"
+                  description="Add a bio to tell others about yourself"
+                  action={{
+                    label: "Edit Profile",
+                    onClick: () => navigate("/profile/edit")
+                  }}
+                />
+              )}
 
-          {fullProfile.projects && fullProfile.projects.length > 0 ? (
-            <Card className="p-6 hover:shadow-lg transition-shadow">
-              <h2 className="text-2xl font-bold mb-4 flex items-center gap-2">
-                <div className="h-1 w-8 bg-primary rounded" />
-                Projects
-              </h2>
-              <div className="space-y-6">
-                {fullProfile.projects.map((project: any, index: number) => (
-                  <div key={index} className="group p-4 border-l-4 border-primary/50 hover:border-primary bg-muted/30 hover:bg-muted/50 rounded-r-lg transition-all">
-                    <h3 className="font-bold text-lg group-hover:text-primary transition-colors">{project.title}</h3>
-                    <p className="text-sm text-muted-foreground mt-2">{project.description}</p>
-                    {project.url && (
-                      <a 
-                        href={project.url} 
-                        target="_blank" 
-                        rel="noopener noreferrer"
-                        className="inline-flex items-center gap-2 text-sm text-primary hover:underline mt-2 font-medium"
-                      >
-                        View Project →
-                      </a>
-                    )}
+              {fullProfile.skills && fullProfile.skills.length > 0 && (
+                <Card className="p-6 hover:shadow-lg transition-shadow">
+                  <h2 className="text-2xl font-bold mb-4 flex items-center gap-2">
+                    <div className="h-1 w-8 bg-primary rounded" />
+                    Skills
+                  </h2>
+                  <div className="flex flex-wrap gap-2">
+                    {fullProfile.skills.map((skill: any, index: number) => (
+                      <Badge key={index} variant="secondary" className="px-3 py-1 text-sm">
+                        {skill.name}
+                      </Badge>
+                    ))}
                   </div>
-                ))}
-              </div>
-            </Card>
-          ) : null}
-        </TabsContent>
+                </Card>
+              )}
 
-        <TabsContent value="teams" className="space-y-6">
-          <Card className="p-6">
-            <h2 className="text-2xl font-bold mb-6 flex items-center gap-2">
-              <div className="h-1 w-8 bg-primary rounded" />
-              My Teams
-            </h2>
-            <UserTeamsSection memberships={teamMemberships} isOwnProfile={true} />
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="experience" className="space-y-6">
-          {fullProfile.experience && fullProfile.experience.length > 0 ? (
-            <Card className="p-6 hover:shadow-lg transition-shadow">
-              <h2 className="text-2xl font-bold mb-6 flex items-center gap-2">
-                <div className="h-1 w-8 bg-primary rounded" />
-                Work Experience
-              </h2>
-              <div className="space-y-6">
-                {fullProfile.experience.map((exp: any, index: number) => (
-                  <div key={index} className="group p-4 border-l-4 border-primary/50 hover:border-primary bg-muted/30 hover:bg-muted/50 rounded-r-lg transition-all">
-                    <h3 className="font-bold text-lg group-hover:text-primary transition-colors">{exp.title}</h3>
-                    <p className="text-sm font-medium text-muted-foreground mt-1">{exp.company}</p>
-                    <p className="text-xs text-muted-foreground mt-1">
-                      {exp.startDate} - {exp.endDate || "Present"}
-                    </p>
-                    {exp.description && (
-                      <p className="text-sm mt-3 leading-relaxed">{exp.description}</p>
-                    )}
+              {fullProfile.projects && fullProfile.projects.length > 0 ? (
+                <Card className="p-6 hover:shadow-lg transition-shadow">
+                  <h2 className="text-2xl font-bold mb-4 flex items-center gap-2">
+                    <div className="h-1 w-8 bg-primary rounded" />
+                    Projects
+                  </h2>
+                  <div className="space-y-6">
+                    {fullProfile.projects.map((project: any, index: number) => (
+                      <div key={index} className="group p-4 border-l-4 border-primary/50 hover:border-primary bg-muted/30 hover:bg-muted/50 rounded-r-lg transition-all">
+                        <h3 className="font-bold text-lg group-hover:text-primary transition-colors">{project.title}</h3>
+                        <p className="text-sm text-muted-foreground mt-2">{project.description}</p>
+                        {project.url && (
+                          <a 
+                            href={project.url} 
+                            target="_blank" 
+                            rel="noopener noreferrer"
+                            className="inline-flex items-center gap-2 text-sm text-primary hover:underline mt-2 font-medium"
+                          >
+                            View Project →
+                          </a>
+                        )}
+                      </div>
+                    ))}
                   </div>
-                ))}
-              </div>
-            </Card>
-          ) : (
-            <EmptyState
-              icon={Award}
-              title="No work experience yet"
-              description="Add your work experience to showcase your professional background"
-              action={{
-                label: "Edit Profile",
-                onClick: () => navigate("/profile/edit")
-              }}
-            />
-          )}
+                </Card>
+              ) : null}
+            </TabsContent>
 
-          {fullProfile.education && fullProfile.education.length > 0 && (
-            <Card className="p-6 hover:shadow-lg transition-shadow">
-              <h2 className="text-2xl font-bold mb-6 flex items-center gap-2">
-                <div className="h-1 w-8 bg-primary rounded" />
-                Education
-              </h2>
-              <div className="space-y-4">
-                {fullProfile.education.map((edu: any, index: number) => (
-                  <div key={index} className="group p-4 border-l-4 border-primary/50 hover:border-primary bg-muted/30 hover:bg-muted/50 rounded-r-lg transition-all">
-                    <h3 className="font-bold text-lg group-hover:text-primary transition-colors">{edu.degree}</h3>
-                    <p className="text-sm font-medium text-muted-foreground mt-1">{edu.institution}</p>
-                    <p className="text-xs text-muted-foreground mt-1">{edu.year}</p>
+            <TabsContent value="teams" className="space-y-6">
+              <Card className="p-6">
+                <h2 className="text-2xl font-bold mb-6 flex items-center gap-2">
+                  <div className="h-1 w-8 bg-primary rounded" />
+                  My Teams
+                </h2>
+                <UserTeamsSection memberships={teamMemberships} isOwnProfile={true} />
+              </Card>
+            </TabsContent>
+
+            <TabsContent value="experience" className="space-y-6">
+              {fullProfile.experience && fullProfile.experience.length > 0 ? (
+                <Card className="p-6 hover:shadow-lg transition-shadow">
+                  <h2 className="text-2xl font-bold mb-6 flex items-center gap-2">
+                    <div className="h-1 w-8 bg-primary rounded" />
+                    Work Experience
+                  </h2>
+                  <div className="space-y-6">
+                    {fullProfile.experience.map((exp: any, index: number) => (
+                      <div key={index} className="group p-4 border-l-4 border-primary/50 hover:border-primary bg-muted/30 hover:bg-muted/50 rounded-r-lg transition-all">
+                        <h3 className="font-bold text-lg group-hover:text-primary transition-colors">{exp.title}</h3>
+                        <p className="text-sm font-medium text-muted-foreground mt-1">{exp.company}</p>
+                        <p className="text-xs text-muted-foreground mt-1">
+                          {exp.startDate} - {exp.endDate || "Present"}
+                        </p>
+                        {exp.description && (
+                          <p className="text-sm mt-3 leading-relaxed">{exp.description}</p>
+                        )}
+                      </div>
+                    ))}
                   </div>
-                ))}
-              </div>
-            </Card>
-          )}
+                </Card>
+              ) : (
+                <EmptyState
+                  icon={Award}
+                  title="No work experience yet"
+                  description="Add your work experience to showcase your professional background"
+                  action={{
+                    label: "Edit Profile",
+                    onClick: () => navigate("/profile/edit")
+                  }}
+                />
+              )}
 
-          {fullProfile.certifications && fullProfile.certifications.length > 0 && (
-            <Card className="p-6 hover:shadow-lg transition-shadow">
-              <h2 className="text-2xl font-bold mb-6 flex items-center gap-2">
-                <div className="h-1 w-8 bg-primary rounded" />
-                Certifications
-              </h2>
-              <div className="space-y-4">
-                {fullProfile.certifications.map((cert: any, index: number) => (
-                  <div key={index} className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-2 p-4 bg-muted/30 rounded-lg hover:bg-muted/50 transition-colors">
-                    <div>
-                      <h3 className="font-bold">{cert.name}</h3>
-                      <p className="text-sm text-muted-foreground">{cert.issuer}</p>
-                    </div>
-                    <span className="text-sm text-muted-foreground font-medium">{cert.date}</span>
+              {fullProfile.education && fullProfile.education.length > 0 && (
+                <Card className="p-6 hover:shadow-lg transition-shadow">
+                  <h2 className="text-2xl font-bold mb-6 flex items-center gap-2">
+                    <div className="h-1 w-8 bg-primary rounded" />
+                    Education
+                  </h2>
+                  <div className="space-y-4">
+                    {fullProfile.education.map((edu: any, index: number) => (
+                      <div key={index} className="group p-4 border-l-4 border-primary/50 hover:border-primary bg-muted/30 hover:bg-muted/50 rounded-r-lg transition-all">
+                        <h3 className="font-bold text-lg group-hover:text-primary transition-colors">{edu.degree}</h3>
+                        <p className="text-sm font-medium text-muted-foreground mt-1">{edu.institution}</p>
+                        <p className="text-xs text-muted-foreground mt-1">{edu.year}</p>
+                      </div>
+                    ))}
                   </div>
-                ))}
-              </div>
-            </Card>
-          )}
-        </TabsContent>
+                </Card>
+              )}
 
-        <TabsContent value="history">
-          <UserBettingHistory userId={user.id} />
-        </TabsContent>
+              {fullProfile.certifications && fullProfile.certifications.length > 0 && (
+                <Card className="p-6 hover:shadow-lg transition-shadow">
+                  <h2 className="text-2xl font-bold mb-6 flex items-center gap-2">
+                    <div className="h-1 w-8 bg-primary rounded" />
+                    Certifications
+                  </h2>
+                  <div className="space-y-4">
+                    {fullProfile.certifications.map((cert: any, index: number) => (
+                      <div key={index} className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-2 p-4 bg-muted/30 rounded-lg hover:bg-muted/50 transition-colors">
+                        <div>
+                          <h3 className="font-bold">{cert.name}</h3>
+                          <p className="text-sm text-muted-foreground">{cert.issuer}</p>
+                        </div>
+                        <span className="text-sm text-muted-foreground font-medium">{cert.date}</span>
+                      </div>
+                    ))}
+                  </div>
+                </Card>
+              )}
+            </TabsContent>
 
-        <TabsContent value="activity">
-          <EmptyState
-            icon={TrendingUp}
-            title="Team activity coming soon"
-            description="Track your team's performance and activity feed here"
-          />
-        </TabsContent>
-      </Tabs>
+            <TabsContent value="history">
+              <UserBettingHistory userId={user.id} />
+            </TabsContent>
+
+            <TabsContent value="activity" className="space-y-6">
+              {teamMemberships.map((membership) => (
+                <TeamActivityFeed key={membership.id} teamId={membership.teams.id} />
+              ))}
+              {teamMemberships.length === 0 && (
+                <EmptyState
+                  icon={Users}
+                  title="No Team Activity"
+                  description="Join a team to see team activity here"
+                />
+              )}
+            </TabsContent>
+          </Tabs>
+        </div>
+
+        {/* Sidebar */}
+        <div className="space-y-6">
+          <ProfileViewsCard userId={user.id} />
+          <RecentVisitors userId={user.id} />
+        </div>
+      </div>
     </div>
   );
 }
