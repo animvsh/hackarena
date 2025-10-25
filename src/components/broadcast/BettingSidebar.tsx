@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Card } from '@/components/ui/card';
@@ -7,7 +8,6 @@ import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { TrendingUp, Clock, Trophy, DollarSign, ArrowUpRight, ArrowDownRight } from 'lucide-react';
 import { BettingModal } from '@/components/BettingModal';
-import { TeamDetailModal } from '@/components/TeamDetailModal';
 import { useMarketOdds } from '@/hooks/useMarketOdds';
 
 interface Market {
@@ -24,12 +24,12 @@ interface BettingSidebarProps {
 }
 
 export function BettingSidebar({ onMarketClick }: BettingSidebarProps) {
+  const navigate = useNavigate();
   const [hotMarkets, setHotMarkets] = useState<Market[]>([]);
   const [tickerItems, setTickerItems] = useState<any[]>([]);
   const [selectedMarket, setSelectedMarket] = useState<Market | null>(null);
   const [selectedTeam, setSelectedTeam] = useState<any>(null);
   const [bettingModalOpen, setBettingModalOpen] = useState(false);
-  const [teamModalOpen, setTeamModalOpen] = useState(false);
   const [quickBetAmount, setQuickBetAmount] = useState(50);
   const { odds } = useMarketOdds(hotMarkets[0]?.id);
 
@@ -89,18 +89,9 @@ export function BettingSidebar({ onMarketClick }: BettingSidebarProps) {
   };
 
   const handleViewTeam = (teamData: any) => {
-    setSelectedTeam({
-      id: teamData.team_id,
-      name: teamData.team_name,
-      logo_url: teamData.logo_url,
-      tagline: null,
-      category: [],
-      tech_stack: [],
-      github_repo: null,
-      current_progress: 0,
-      momentum_score: 0
-    });
-    setTeamModalOpen(true);
+    if (teamData.team_id) {
+      navigate(`/teams/${teamData.team_id}`);
+    }
   };
 
   return (
@@ -278,15 +269,6 @@ export function BettingSidebar({ onMarketClick }: BettingSidebarProps) {
           onBetPlaced={() => {
             setBettingModalOpen(false);
           }}
-        />
-      )}
-
-      {/* Team Detail Modal */}
-      {selectedTeam && (
-        <TeamDetailModal
-          open={teamModalOpen}
-          onOpenChange={setTeamModalOpen}
-          team={selectedTeam}
         />
       )}
     </>

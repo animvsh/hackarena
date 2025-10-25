@@ -17,6 +17,8 @@ import Sponsors from "./pages/Sponsors";
 import WalletPage from "./pages/WalletPage";
 import BroadcastStream from "./pages/BroadcastStream";
 import NotFound from "./pages/NotFound";
+import TeamProfile from "./pages/TeamProfile";
+import UserProfile from "./pages/UserProfile";
 
 const queryClient = new QueryClient();
 
@@ -33,7 +35,10 @@ const App = () => (
             <Route path="/onboarding" element={<ProtectedRoute><Onboarding /></ProtectedRoute>} />
             <Route path="/markets" element={<Markets />} />
             <Route path="/teams" element={<Teams />} />
+            <Route path="/teams/:teamId" element={<ProtectedRoute><TeamProfile /></ProtectedRoute>} />
             <Route path="/teams/:teamId/settings" element={<ProtectedRoute><TeamSettings /></ProtectedRoute>} />
+            <Route path="/users/:userId" element={<ProtectedRoute><UserProfile /></ProtectedRoute>} />
+            <Route path="/profile" element={<ProtectedRoute><UserProfile /></ProtectedRoute>} />
             <Route path="/leaderboard" element={<Leaderboard />} />
             <Route path="/radio" element={<RadioPage />} />
             <Route path="/sponsors" element={<Sponsors />} />
