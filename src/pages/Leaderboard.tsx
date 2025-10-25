@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { Sidebar } from "@/components/Sidebar";
 import { Header } from "@/components/Header";
 import { supabase } from "@/integrations/supabase/client";
@@ -28,6 +29,7 @@ interface UserRanking {
 }
 
 const Leaderboard = () => {
+  const navigate = useNavigate();
   const [teamsByProgress, setTeamsByProgress] = useState<TeamRanking[]>([]);
   const [teamsByMomentum, setTeamsByMomentum] = useState<TeamRanking[]>([]);
   const [topPredictors, setTopPredictors] = useState<UserRanking[]>([]);
@@ -136,11 +138,12 @@ const Leaderboard = () => {
                 {teamsByProgress.map((team, index) => (
                   <div
                     key={team.id}
-                    className={`flex items-center gap-4 p-4 rounded-lg transition-colors ${
+                    className={`flex items-center gap-4 p-4 rounded-lg transition-colors cursor-pointer hover:bg-muted ${
                       index < 3
                         ? 'bg-gradient-to-r from-yellow-500/10 to-transparent'
                         : 'bg-background'
                     }`}
+                    onClick={() => navigate(`/teams/${team.id}`)}
                   >
                     <div className="text-2xl font-bold w-12 text-center">
                       {getMedalIcon(index + 1)}
@@ -179,11 +182,12 @@ const Leaderboard = () => {
                 {teamsByMomentum.map((team, index) => (
                   <div
                     key={team.id}
-                    className={`flex items-center gap-4 p-4 rounded-lg transition-colors ${
+                    className={`flex items-center gap-4 p-4 rounded-lg transition-colors cursor-pointer hover:bg-muted ${
                       index < 3
                         ? 'bg-gradient-to-r from-red-500/10 to-transparent'
                         : 'bg-background'
                     }`}
+                    onClick={() => navigate(`/teams/${team.id}`)}
                   >
                     <div className="text-2xl font-bold w-12 text-center">
                       {getMedalIcon(index + 1)}
@@ -222,11 +226,12 @@ const Leaderboard = () => {
                 {topPredictors.map((user, index) => (
                   <div
                     key={user.id}
-                    className={`flex items-center gap-4 p-4 rounded-lg transition-colors ${
+                    className={`flex items-center gap-4 p-4 rounded-lg transition-colors cursor-pointer hover:bg-muted ${
                       index < 3
                         ? 'bg-gradient-to-r from-purple-500/10 to-transparent'
                         : 'bg-background'
                     }`}
+                    onClick={() => navigate(`/users/${user.id}`)}
                   >
                     <div className="text-2xl font-bold w-12 text-center">
                       {index === 0 ? (
