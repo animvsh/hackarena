@@ -19,9 +19,12 @@ import {
   Key, 
   Clock,
   CheckCircle2,
-  XCircle 
+  XCircle,
+  Mail
 } from 'lucide-react';
 import { Loader2 } from 'lucide-react';
+import { InviteMemberButton } from '@/components/teams/InviteMemberButton';
+import { TeamInviteCard } from '@/components/teams/TeamInviteCard';
 
 interface TeamMember {
   id: string;
@@ -47,6 +50,20 @@ interface JoinRequest {
   };
 }
 
+interface TeamInvite {
+  id: string;
+  invite_email: string;
+  status: string;
+  message: string | null;
+  created_at: string;
+  expires_at: string;
+  invited_user_id: string | null;
+  users?: {
+    username: string;
+    avatar_url: string | null;
+  };
+}
+
 export default function TeamSettings() {
   const { teamId } = useParams();
   const navigate = useNavigate();
@@ -56,6 +73,7 @@ export default function TeamSettings() {
   const [team, setTeam] = useState<any>(null);
   const [members, setMembers] = useState<TeamMember[]>([]);
   const [joinRequests, setJoinRequests] = useState<JoinRequest[]>([]);
+  const [teamInvites, setTeamInvites] = useState<TeamInvite[]>([]);
   const [inviteCode, setInviteCode] = useState('');
   const [copied, setCopied] = useState(false);
   const [canManage, setCanManage] = useState(false);
@@ -131,8 +149,27 @@ export default function TeamSettings() {
 
     await fetchMembers();
     await fetchJoinRequests();
+    await fetchTeamInvites();
     
     setLoading(false);
+  };
+
+  const fetchTeamInvites = async () => {
+    const { data } = await supabase
+      .from('team_invites')
+      .select(`
+        *,
+        users:invited_user_id (
+          username,
+          avatar_url
+        )
+      `)
+      .eq('team_id', teamId)
+      .order('created_at', { ascending: false });
+
+    if (data) {
+      setTeamInvites(data as any);
+    }
   };
 
   const fetchMembers = async () => {
@@ -255,9 +292,12 @@ export default function TeamSettings() {
         <Header />
 
         <div className="mb-8">
-          <div className="flex items-center gap-2 mb-2">
-            <Settings className="w-8 h-8 text-primary" />
-            <h1 className="text-3xl font-bold">{team?.name} Settings</h1>
+          <div className="flex items-center justify-between mb-2">
+            <div className="flex items-center gap-2">
+              <Settings className="w-8 h-8 text-primary" />
+              <h1 className="text-3xl font-bold">{team?.name} Settings</h1>
+            </div>
+            <InviteMemberButton teamId={teamId!} teamName={team?.name || 'Team'} />
           </div>
           <p className="text-muted-foreground">
             Manage your team members and settings
@@ -276,6 +316,15 @@ export default function TeamSettings() {
               {joinRequests.length > 0 && (
                 <Badge variant="destructive" className="ml-1">
                   {joinRequests.length}
+                </Badge>
+              )}
+            </TabsTrigger>
+            <TabsTrigger value="invitations" className="flex items-center gap-2">
+              <Mail className="h-4 w-4" />
+              Invitations
+              {teamInvites.filter(i => i.status === 'pending').length > 0 && (
+                <Badge variant="secondary" className="ml-1">
+                  {teamInvites.filter(i => i.status === 'pending').length}
                 </Badge>
               )}
             </TabsTrigger>
@@ -389,6 +438,20 @@ export default function TeamSettings() {
                     ))}
                   </div>
                 )}
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="invitations">
+            <Card>
+              <CardHeader>
+                <CardTitle>Team Invitations</CardTitle>
+                <CardDescription>
+                  View and manage invitations you've sent to join your team
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <TeamInviteCard invites={teamInvites} onRefresh={fetchTeamInvites} />
               </CardContent>
             </Card>
           </TabsContent>

@@ -12,6 +12,7 @@ import { Users, Trophy, Briefcase, Award, Coins } from 'lucide-react';
 import { TeamSetup } from '@/components/onboarding/TeamSetup';
 import { InviteCodeDisplay } from '@/components/onboarding/InviteCodeDisplay';
 import { ProfileImport } from '@/components/onboarding/ProfileImport';
+import { ProfileForm } from '@/components/onboarding/ProfileForm';
 
 const roleOptions = [
   { value: 'spectator', label: 'Spectator', icon: Users, description: 'Watch and predict outcomes' },
@@ -218,38 +219,13 @@ export default function Onboarding() {
   if (step === 3) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background p-4">
-        <Card className="w-full max-w-2xl">
-          <CardHeader>
-            <CardTitle>Complete Your Profile</CardTitle>
-            <CardDescription>Tell us a bit about yourself (optional)</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-6">
-            <div className="space-y-2">
-              <Label htmlFor="username">Display Name</Label>
-              <Input
-                id="username"
-                placeholder={profile?.username || 'Your username'}
-                value={profileData.username}
-                onChange={(e) => setProfileData({ ...profileData, username: e.target.value })}
-              />
-            </div>
-            {role === 'hacker' && (
-              <div className="space-y-2">
-                <Label htmlFor="github">GitHub Username</Label>
-                <Input
-                  id="github"
-                  placeholder="octocat"
-                  value={profileData.githubUsername}
-                  onChange={(e) => setProfileData({ ...profileData, githubUsername: e.target.value })}
-                />
-              </div>
-            )}
-            <div className="flex gap-4">
-              <Button variant="outline" onClick={() => setStep(2)}>Back</Button>
-              <Button onClick={handleProfileSubmit} className="flex-1">Continue</Button>
-            </div>
-          </CardContent>
-        </Card>
+        <div className="w-full max-w-2xl">
+          <ProfileForm
+            initialData={profileData}
+            onSubmit={handleProfileSubmit}
+            onBack={() => setStep(2.5)}
+          />
+        </div>
       </div>
     );
   }
