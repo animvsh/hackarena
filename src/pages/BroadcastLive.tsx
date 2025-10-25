@@ -1,5 +1,9 @@
-import { TVStudioBroadcast } from '@/components/broadcast/TVStudioBroadcast';
+import { BroadcastVideoPlayer } from '@/components/broadcast/BroadcastVideoPlayer';
 
 export default function BroadcastLive() {
-  return <TVStudioBroadcast />;
+  return (
+    <div className="min-h-screen bg-background p-8 flex items-center justify-center">
+      <BroadcastVideoPlayer />
+    </div>
+  );
 }

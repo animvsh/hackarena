@@ -16,21 +16,15 @@ export function TickerTape({ items = [] }: TickerTapeProps) {
   ];
 
   return (
-    <div className="absolute bottom-0 left-0 right-0 h-16 bg-card/90 border-t border-primary/20 overflow-hidden">
+    <div className="absolute bottom-0 left-0 right-0 h-6 bg-card/90 border-t border-primary/20 overflow-hidden">
       <div className="flex items-center h-full">
-        {/* Static LIVE indicator */}
-        <div className="flex items-center gap-2 px-6 bg-destructive/20 h-full border-r border-primary/20">
-          <div className="w-2 h-2 bg-destructive rounded-full animate-pulse" />
-          <span className="text-xs font-bold text-foreground uppercase tracking-widest">LIVE</span>
-        </div>
-
         {/* Scrolling ticker content */}
         <div className="flex-1 overflow-hidden relative">
-          <div className="animate-scroll flex gap-12">
+          <div className="animate-scroll flex gap-8">
             {[...displayItems, ...displayItems, ...displayItems].map((item, index) => (
-              <div key={`${item.id}-${index}`} className="flex items-center gap-3 whitespace-nowrap">
-                <span className={`font-bold ${item.priority === 'breaking' ? 'text-destructive' : 'text-primary'}`}>●</span>
-                <span className="text-sm font-medium text-foreground uppercase tracking-wide">
+              <div key={`${item.id}-${index}`} className="flex items-center gap-2 whitespace-nowrap">
+                <span className={`text-xs ${item.priority === 'breaking' ? 'text-destructive' : 'text-primary'}`}>●</span>
+                <span className="text-xs font-medium text-foreground">
                   {item.text}
                 </span>
               </div>
