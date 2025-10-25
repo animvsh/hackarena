@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import anchorLeftImg from '@/assets/news-anchor-left.png';
 import anchorRightImg from '@/assets/news-anchor-right.png';
+import { MouthAnimation } from './MouthAnimation';
 
 interface BroadcastCharacterProps {
   narrative: string;
@@ -18,6 +19,8 @@ export function BroadcastCharacter({ narrative, isLive, isSpeaking = false, acti
   const [leftBlinking, setLeftBlinking] = useState(false);
   const [rightBlinking, setRightBlinking] = useState(false);
   const [mouthOpen, setMouthOpen] = useState(false);
+  const [headTilt, setHeadTilt] = useState(0);
+  const [shoulderMove, setShoulderMove] = useState(0);
 
   // Typing effect with mouth animation
   useEffect(() => {
@@ -72,6 +75,16 @@ export function BroadcastCharacter({ narrative, isLive, isSpeaking = false, acti
     };
   }, []);
 
+  // Subtle head movements and gestures
+  useEffect(() => {
+    const movementInterval = setInterval(() => {
+      setHeadTilt(Math.random() * 4 - 2);
+      setShoulderMove(Math.random() * 2 - 1);
+    }, 4000);
+
+    return () => clearInterval(movementInterval);
+  }, []);
+
   useEffect(() => {
     if (isSpeaking) {
       setCharacterState('speaking');
@@ -91,37 +104,39 @@ export function BroadcastCharacter({ narrative, isLive, isSpeaking = false, acti
     }
   };
 
+  const anchorName = activeAnchor === 'left' ? 'Sarah Chen' : 'Marcus Reid';
+  const anchorTitle = activeAnchor === 'left' ? 'Lead Analyst' : 'Senior Reporter';
+
   return (
     <div className="absolute inset-0 z-10">
-      {/* News Anchors Container - Realistic photo anchors */}
+      {/* News Anchors Container */}
       <div className="absolute bottom-[15%] left-1/2 transform -translate-x-1/2 flex items-end gap-8 lg:gap-16">
-        {/* Left Anchor - Female in Purple Blazer */}
+        {/* Left Anchor */}
         <div 
-          className={`relative w-48 h-72 lg:w-64 lg:h-96 transition-all duration-300 ${
-            activeAnchor === 'left' && characterState === 'speaking' 
-              ? 'scale-105 z-20' 
-              : activeAnchor === 'right' && characterState === 'speaking'
-              ? 'opacity-60 scale-95'
-              : ''
+          className={`relative w-48 h-72 lg:w-64 lg:h-96 transition-all duration-500 ${
+            activeAnchor === 'left' 
+              ? 'scale-105 z-20 brightness-110' 
+              : 'scale-95 opacity-60 brightness-75'
           }`}
           style={{
             animation: activeAnchor === 'left' && characterState === 'speaking' 
               ? 'breathing 3s ease-in-out infinite' 
-              : 'none'
+              : 'none',
+            transform: `rotate(${headTilt}deg) translateY(${shoulderMove}px)`,
+            filter: activeAnchor === 'left' 
+              ? 'drop-shadow(0 0 20px rgba(59, 130, 246, 0.5))' 
+              : 'drop-shadow(0 10px 30px rgba(0,0,0,0.3))'
           }}
         >
           <img 
             src={anchorLeftImg} 
             alt="News Anchor"
             className="w-full h-full object-cover object-top rounded-t-lg shadow-2xl"
-            style={{
-              filter: 'drop-shadow(0 10px 30px rgba(0,0,0,0.3))',
-            }}
           />
           
-          {/* Mouth animation overlay */}
-          {activeAnchor === 'left' && mouthOpen && characterState === 'speaking' && (
-            <div className="absolute bottom-[28%] left-1/2 transform -translate-x-1/2 w-3 h-2 bg-black/40 rounded-full transition-all duration-75" />
+          {/* Better mouth animation */}
+          {activeAnchor === 'left' && characterState === 'speaking' && (
+            <MouthAnimation isOpen={mouthOpen} position="left" />
           )}
           
           {/* Eye blinking */}
@@ -130,41 +145,36 @@ export function BroadcastCharacter({ narrative, isLive, isSpeaking = false, acti
                  style={{ backgroundColor: 'rgba(237, 216, 206, 0.95)' }} />
           )}
           
-          {/* Studio lighting effect on anchor */}
+          {/* Studio lighting */}
           <div className="absolute inset-0 bg-gradient-to-t from-transparent via-transparent to-white/5 pointer-events-none" />
-          
-          {isLive && activeAnchor === 'left' && characterState === 'speaking' && (
-            <div className="absolute top-3 right-3 w-3 h-3 bg-destructive rounded-full animate-pulse ring-2 ring-white shadow-lg" />
-          )}
         </div>
 
-        {/* Right Anchor - Male in Navy Suit */}
+        {/* Right Anchor */}
         <div 
-          className={`relative w-48 h-72 lg:w-64 lg:h-96 transition-all duration-300 ${
-            activeAnchor === 'right' && characterState === 'speaking' 
-              ? 'scale-105 z-20' 
-              : activeAnchor === 'left' && characterState === 'speaking'
-              ? 'opacity-60 scale-95'
-              : ''
+          className={`relative w-48 h-72 lg:w-64 lg:h-96 transition-all duration-500 ${
+            activeAnchor === 'right' 
+              ? 'scale-105 z-20 brightness-110' 
+              : 'scale-95 opacity-60 brightness-75'
           }`}
           style={{
             animation: activeAnchor === 'right' && characterState === 'speaking' 
               ? 'breathing 3s ease-in-out infinite 0.5s' 
-              : 'none'
+              : 'none',
+            transform: `rotate(${-headTilt}deg) translateY(${shoulderMove}px)`,
+            filter: activeAnchor === 'right' 
+              ? 'drop-shadow(0 0 20px rgba(59, 130, 246, 0.5))' 
+              : 'drop-shadow(0 10px 30px rgba(0,0,0,0.3))'
           }}
         >
           <img 
             src={anchorRightImg} 
             alt="News Anchor"
             className="w-full h-full object-cover object-top rounded-t-lg shadow-2xl"
-            style={{
-              filter: 'drop-shadow(0 10px 30px rgba(0,0,0,0.3))',
-            }}
           />
           
-          {/* Mouth animation overlay */}
-          {activeAnchor === 'right' && mouthOpen && characterState === 'speaking' && (
-            <div className="absolute bottom-[28%] left-1/2 transform -translate-x-1/2 w-3 h-2 bg-black/40 rounded-full transition-all duration-75" />
+          {/* Better mouth animation */}
+          {activeAnchor === 'right' && characterState === 'speaking' && (
+            <MouthAnimation isOpen={mouthOpen} position="right" />
           )}
           
           {/* Eye blinking */}
@@ -173,44 +183,41 @@ export function BroadcastCharacter({ narrative, isLive, isSpeaking = false, acti
                  style={{ backgroundColor: 'rgba(237, 216, 206, 0.95)' }} />
           )}
           
-          {/* Studio lighting effect on anchor */}
+          {/* Studio lighting */}
           <div className="absolute inset-0 bg-gradient-to-t from-transparent via-transparent to-white/5 pointer-events-none" />
-          
-          {isLive && activeAnchor === 'right' && characterState === 'speaking' && (
-            <div className="absolute top-3 left-3 w-3 h-3 bg-destructive rounded-full animate-pulse ring-2 ring-white shadow-lg" />
-          )}
         </div>
       </div>
 
-      {/* Professional Speech Bubble - positioned above anchors */}
-      {narrative && (
-        <div className={`absolute bottom-[52%] transform -translate-y-0 max-w-2xl w-[90%] z-25 transition-all duration-500 ${
-          activeAnchor === 'left' 
-            ? 'left-[30%] -translate-x-1/2' 
-            : 'left-[70%] -translate-x-1/2'
-        }`}>
-          <div className="relative bg-white/95 backdrop-blur-sm border border-gray-200 rounded-lg px-6 py-4 shadow-2xl animate-in fade-in slide-in-from-top-4 duration-300">
-            {/* Bubble tail pointing down to active anchor */}
-            <div className={`absolute -bottom-3 transform w-6 h-6 bg-white/95 border-b border-r border-gray-200 rotate-45 transition-all duration-300 ${
-              activeAnchor === 'left' ? 'left-[20%]' : 'right-[20%]'
-            }`} />
+      {/* Professional Speech Bubble */}
+      {displayedText && (
+        <div className="absolute bottom-2 left-1/2 transform -translate-x-1/2 max-w-4xl w-full px-4 z-25">
+          <div className="bg-gradient-to-r from-card/98 to-card/95 backdrop-blur-md border-2 border-primary/40 rounded-xl shadow-2xl overflow-hidden">
+            <div className="h-1 bg-gradient-to-r from-primary via-primary/60 to-transparent" />
             
-            {/* Content */}
-            <div className="relative min-h-[2rem]">
-              <p className="text-sm lg:text-base font-medium text-gray-900 leading-relaxed text-left">
+            <div className="p-4">
+              <div className="flex items-center justify-between mb-2 pb-2 border-b border-primary/20">
+                <div className="flex items-center gap-2">
+                  <div className="w-2 h-2 bg-primary rounded-full animate-pulse" />
+                  <span className="text-xs font-black text-primary uppercase tracking-wider">
+                    {anchorName}
+                  </span>
+                  <span className="text-xs text-muted-foreground">•</span>
+                  <span className="text-xs text-muted-foreground uppercase tracking-wide">
+                    {anchorTitle}
+                  </span>
+                </div>
+                <div className="text-xs text-muted-foreground font-bold">
+                  HACKCAST LIVE
+                </div>
+              </div>
+              
+              <p className="text-base text-foreground leading-relaxed font-medium">
                 {displayedText}
-                {isTyping && <span className="inline-block w-0.5 h-4 bg-[#2563eb] ml-1 animate-pulse" />}
+                {isTyping && (
+                  <span className="inline-block w-1.5 h-5 ml-1 bg-primary animate-pulse" />
+                )}
               </p>
             </div>
-            
-            {/* Speaking indicator */}
-            {characterState === 'speaking' && (
-              <div className="absolute -top-1 -right-1 flex gap-1">
-                <div className="w-2 h-2 bg-[#2563eb] rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
-                <div className="w-2 h-2 bg-[#2563eb] rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
-                <div className="w-2 h-2 bg-[#2563eb] rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
-              </div>
-            )}
           </div>
         </div>
       )}

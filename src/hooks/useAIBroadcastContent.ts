@@ -123,8 +123,8 @@ export function useAIBroadcastContent() {
     // Generate initial content immediately
     generateFakeContent();
 
-    // Then generate every 12 seconds
-    const interval = setInterval(generateFakeContent, 12000);
+    // Then generate every 7 seconds for faster updates
+    const interval = setInterval(generateFakeContent, 7000);
 
     return () => {
       supabase.removeChannel(channel);
