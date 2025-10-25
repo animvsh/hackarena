@@ -39,7 +39,7 @@ export function useSegmentManager() {
     setSegmentContent(content);
     setCurrentCommentaryIndex(0);
     setProgressPercent(0);
-  }, [currentScene, generateSegment]);
+  }, [currentScene]); // Remove generateSegment from dependencies
 
   // Segment flow state machine
   useEffect(() => {
