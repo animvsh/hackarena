@@ -1,1 +1,13 @@
 project_id = "jqdfjcpgevgajdljckur"
+
+[functions.analyze-team-profile]
+verify_jwt = false
+
+[functions.create-team]
+verify_jwt = true
+
+[functions.join-team]
+verify_jwt = true
+
+[functions.manage-join-request]
+verify_jwt = true

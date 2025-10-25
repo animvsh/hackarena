@@ -10,6 +10,7 @@ import Auth from "./pages/Auth";
 import Onboarding from "./pages/Onboarding";
 import Markets from "./pages/Markets";
 import Teams from "./pages/Teams";
+import TeamSettings from "./pages/TeamSettings";
 import Leaderboard from "./pages/Leaderboard";
 import RadioPage from "./pages/RadioPage";
 import Sponsors from "./pages/Sponsors";
@@ -31,6 +32,7 @@ const App = () => (
             <Route path="/onboarding" element={<ProtectedRoute><Onboarding /></ProtectedRoute>} />
             <Route path="/markets" element={<Markets />} />
             <Route path="/teams" element={<Teams />} />
+            <Route path="/teams/:teamId/settings" element={<ProtectedRoute><TeamSettings /></ProtectedRoute>} />
             <Route path="/leaderboard" element={<Leaderboard />} />
             <Route path="/radio" element={<RadioPage />} />
             <Route path="/sponsors" element={<Sponsors />} />
