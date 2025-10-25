@@ -10,9 +10,12 @@ import { Progress } from "@/components/ui/progress";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Card } from "@/components/ui/card";
 import { supabase } from "@/integrations/supabase/client";
-import { GitCommit, Image, Trophy, Twitter, Clock, Users } from "lucide-react";
+import { useOddsHistory } from "@/hooks/useOddsHistory";
+import { GitCommit, Image, Trophy, Twitter, Clock, Users, BarChart3, TrendingUp, TrendingDown } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 
 interface Team {
   id: string;
@@ -54,12 +57,27 @@ interface TeamDetailModalProps {
 export const TeamDetailModal = ({ open, onOpenChange, team }: TeamDetailModalProps) => {
   const [progressUpdates, setProgressUpdates] = useState<ProgressUpdate[]>([]);
   const [teamMembers, setTeamMembers] = useState<TeamMember[]>([]);
+  const [marketId, setMarketId] = useState<string | undefined>();
+  const { history: oddsHistory, loading: historyLoading } = useOddsHistory(team?.id, marketId);
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     if (team && open) {
       fetchProgressUpdates();
       fetchTeamMembers();
+      
+      // Fetch market association
+      const fetchMarket = async () => {
+        const { data } = await supabase
+          .from('market_odds')
+          .select('market_id')
+          .eq('team_id', team.id)
+          .limit(1)
+          .single();
+        
+        if (data) setMarketId(data.market_id);
+      };
+      fetchMarket();
     }
   }, [team, open]);
 
@@ -152,8 +170,12 @@ export const TeamDetailModal = ({ open, onOpenChange, team }: TeamDetailModalPro
         </DialogHeader>
 
         <Tabs defaultValue="overview" className="mt-4">
-          <TabsList className="grid w-full grid-cols-2">
+          <TabsList className="grid w-full grid-cols-3">
             <TabsTrigger value="overview">Overview</TabsTrigger>
+            <TabsTrigger value="performance">
+              <BarChart3 className="h-4 w-4 mr-2" />
+              Performance
+            </TabsTrigger>
             <TabsTrigger value="members">
               <Users className="h-4 w-4 mr-2" />
               Members ({teamMembers.length})
@@ -249,6 +271,105 @@ export const TeamDetailModal = ({ open, onOpenChange, team }: TeamDetailModalPro
                     ))}
                   </div>
                 )}
+              </div>
+            </ScrollArea>
+          </TabsContent>
+
+          <TabsContent value="performance">
+            <ScrollArea className="max-h-[60vh] pr-4">
+              <div className="space-y-6">
+                {/* Historical Odds Chart */}
+                <Card className="p-6">
+                  <h3 className="font-semibold mb-4 flex items-center gap-2">
+                    <BarChart3 className="w-5 h-5 text-primary" />
+                    24-Hour Odds Performance
+                  </h3>
+                  {historyLoading ? (
+                    <div className="h-[300px] flex items-center justify-center">
+                      <p className="text-sm text-muted-foreground">Loading chart...</p>
+                    </div>
+                  ) : (
+                    <ResponsiveContainer width="100%" height={300}>
+                      <LineChart data={oddsHistory.map(point => ({
+                        time: new Date(point.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+                        odds: point.odds
+                      }))}>
+                        <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+                        <XAxis 
+                          dataKey="time" 
+                          stroke="hsl(var(--muted-foreground))"
+                          style={{ fontSize: '12px' }}
+                        />
+                        <YAxis 
+                          domain={[0, 100]}
+                          stroke="hsl(var(--muted-foreground))"
+                          label={{ value: 'Odds %', angle: -90, position: 'insideLeft', style: { fontSize: '12px' } }}
+                        />
+                        <Tooltip 
+                          contentStyle={{ 
+                            backgroundColor: 'hsl(var(--card))', 
+                            border: '1px solid hsl(var(--border))',
+                            borderRadius: '0.5rem'
+                          }}
+                        />
+                        <Line 
+                          type="monotone" 
+                          dataKey="odds" 
+                          stroke="hsl(var(--primary))" 
+                          strokeWidth={3}
+                          dot={{ fill: 'hsl(var(--primary))', r: 4 }}
+                        />
+                      </LineChart>
+                    </ResponsiveContainer>
+                  )}
+                </Card>
+
+                {/* Betting Stats */}
+                <div className="grid grid-cols-2 gap-4">
+                  <Card className="p-4">
+                    <p className="text-sm text-muted-foreground mb-1">24h Change</p>
+                    <div className="flex items-center gap-2">
+                      {oddsHistory.length > 1 && (
+                        oddsHistory[oddsHistory.length - 1].odds > oddsHistory[0].odds ? (
+                          <>
+                            <TrendingUp className="w-5 h-5 text-success" />
+                            <span className="text-2xl font-bold text-success">
+                              +{(oddsHistory[oddsHistory.length - 1].odds - oddsHistory[0].odds).toFixed(1)}%
+                            </span>
+                          </>
+                        ) : (
+                          <>
+                            <TrendingDown className="w-5 h-5 text-destructive" />
+                            <span className="text-2xl font-bold text-destructive">
+                              {(oddsHistory[oddsHistory.length - 1].odds - oddsHistory[0].odds).toFixed(1)}%
+                            </span>
+                          </>
+                        )
+                      )}
+                    </div>
+                  </Card>
+
+                  <Card className="p-4">
+                    <p className="text-sm text-muted-foreground mb-1">Total Volume</p>
+                    <p className="text-2xl font-bold">
+                      {oddsHistory.length > 0 ? oddsHistory[oddsHistory.length - 1].volume : 0} HC
+                    </p>
+                  </Card>
+
+                  <Card className="p-4">
+                    <p className="text-sm text-muted-foreground mb-1">Peak Odds</p>
+                    <p className="text-2xl font-bold text-primary">
+                      {Math.max(...oddsHistory.map(h => h.odds), 0).toFixed(1)}%
+                    </p>
+                  </Card>
+
+                  <Card className="p-4">
+                    <p className="text-sm text-muted-foreground mb-1">Lowest Odds</p>
+                    <p className="text-2xl font-bold text-muted-foreground">
+                      {Math.min(...oddsHistory.map(h => h.odds), 100).toFixed(1)}%
+                    </p>
+                  </Card>
+                </div>
               </div>
             </ScrollArea>
           </TabsContent>

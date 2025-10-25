@@ -10,6 +10,7 @@ import { LiveCommentaryTicker } from "@/components/LiveCommentaryTicker";
 import { BroadcastVideoPlayer } from "@/components/broadcast/BroadcastVideoPlayer";
 import { Users, TrendingUp, Zap, Trophy, Radio, BarChart3 } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { Skeleton } from "@/components/ui/skeleton";
 
@@ -112,13 +113,22 @@ const Index = () => {
 
         {/* Live Broadcast - Hero Section */}
         <div className="mb-8">
-          <div className="mb-4">
-            <h2 className="text-3xl font-bold mb-2 bg-gradient-to-r from-neon-yellow via-neon-blue to-neon-purple bg-clip-text text-transparent">
-              Live Broadcast
-            </h2>
-            <p className="text-muted-foreground text-sm">
-              Real-time AI commentary from the hackathon floor
-            </p>
+          <div className="mb-4 flex items-center justify-between">
+            <div>
+              <h2 className="text-3xl font-bold mb-2 bg-gradient-to-r from-neon-yellow via-neon-blue to-neon-purple bg-clip-text text-transparent">
+                Live Broadcast
+              </h2>
+              <p className="text-muted-foreground text-sm">
+                Real-time AI commentary from the hackathon floor
+              </p>
+            </div>
+            <Button 
+              variant="outline" 
+              onClick={() => window.location.href = '/broadcast'}
+              className="gap-2"
+            >
+              Full Screen View
+            </Button>
           </div>
           <BroadcastVideoPlayer />
         </div>

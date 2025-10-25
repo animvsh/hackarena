@@ -15,6 +15,7 @@ import Leaderboard from "./pages/Leaderboard";
 import RadioPage from "./pages/RadioPage";
 import Sponsors from "./pages/Sponsors";
 import WalletPage from "./pages/WalletPage";
+import BroadcastStream from "./pages/BroadcastStream";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -37,6 +38,7 @@ const App = () => (
             <Route path="/radio" element={<RadioPage />} />
             <Route path="/sponsors" element={<Sponsors />} />
             <Route path="/wallet" element={<ProtectedRoute><WalletPage /></ProtectedRoute>} />
+            <Route path="/broadcast" element={<BroadcastStream />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>

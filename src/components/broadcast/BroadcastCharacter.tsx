@@ -62,14 +62,15 @@ export function BroadcastCharacter({ narrative, isLive, isSpeaking = false }: Br
   };
 
   return (
-    <div className="flex items-end gap-3 animate-in slide-in-from-bottom-2 duration-500">
-      {/* Broadcast Host Image */}
+    <div className="absolute bottom-8 left-8 flex items-end gap-3 animate-in slide-in-from-bottom-2 duration-500 z-10">
+      {/* Broadcast Host Image - positioned behind desk */}
       <div className="relative flex-shrink-0">
-        <div className="w-24 h-24 rounded-full overflow-hidden ring-4 ring-primary/40 shadow-xl">
+        <div className="w-32 h-32 rounded-full overflow-hidden ring-4 ring-primary/40 shadow-2xl">
           <img 
             src={broadcastHost} 
             alt="Broadcast Host" 
-            className="w-full h-full object-cover"
+            className="w-full h-full object-cover object-top"
+            style={{ objectPosition: '50% 20%' }}
           />
         </div>
         
@@ -80,14 +81,16 @@ export function BroadcastCharacter({ narrative, isLive, isSpeaking = false }: Br
         
         {/* Live indicator */}
         {isLive && (
-          <div className="absolute -top-1 -right-1 w-4 h-4 bg-destructive rounded-full animate-pulse ring-2 ring-background" />
+          <div className="absolute -top-1 -right-1 w-5 h-5 bg-destructive rounded-full animate-pulse ring-2 ring-background flex items-center justify-center">
+            <div className="w-2 h-2 bg-white rounded-full" />
+          </div>
         )}
       </div>
 
       {/* Speech Bubble */}
-      <div className="relative bg-card/95 backdrop-blur-sm border-2 border-primary/40 rounded-2xl px-4 py-3 max-w-md shadow-2xl">
+      <div className="relative bg-card/95 backdrop-blur-sm border-2 border-primary/40 rounded-2xl px-5 py-4 max-w-lg shadow-2xl">
         {/* Bubble tail pointing to host */}
-        <div className="absolute -left-2 bottom-6 w-4 h-4 bg-card border-l-2 border-b-2 border-primary/40 transform rotate-45" />
+        <div className="absolute -left-2 bottom-8 w-4 h-4 bg-card border-l-2 border-b-2 border-primary/40 transform rotate-45" />
         
         {/* Content */}
         <div className="relative">
