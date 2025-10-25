@@ -12,7 +12,7 @@ export type Database = {
   __InternalSupabase: {
     PostgrestVersion: "13.0.5"
   }
-  public: {
+  graphql_public: {
     Tables: {
       [_ in never]: never
     }
@@ -20,7 +20,534 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      graphql: {
+        Args: {
+          extensions?: Json
+          operationName?: string
+          query?: string
+          variables?: Json
+        }
+        Returns: Json
+      }
+    }
+    Enums: {
       [_ in never]: never
+    }
+    CompositeTypes: {
+      [_ in never]: never
+    }
+  }
+  public: {
+    Tables: {
+      api_usage: {
+        Row: {
+          call_count: number | null
+          created_at: string | null
+          endpoint: string | null
+          id: string
+          last_called: string | null
+          sponsor_id: string | null
+          team_id: string | null
+        }
+        Insert: {
+          call_count?: number | null
+          created_at?: string | null
+          endpoint?: string | null
+          id?: string
+          last_called?: string | null
+          sponsor_id?: string | null
+          team_id?: string | null
+        }
+        Update: {
+          call_count?: number | null
+          created_at?: string | null
+          endpoint?: string | null
+          id?: string
+          last_called?: string | null
+          sponsor_id?: string | null
+          team_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "api_usage_sponsor_id_fkey"
+            columns: ["sponsor_id"]
+            isOneToOne: false
+            referencedRelation: "sponsors"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "api_usage_team_id_fkey"
+            columns: ["team_id"]
+            isOneToOne: false
+            referencedRelation: "teams"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      commentary_feed: {
+        Row: {
+          audio_url: string | null
+          created_at: string | null
+          event_type: string | null
+          id: string
+          related_market_id: string | null
+          related_team_id: string | null
+          text: string
+          voice_persona: string | null
+        }
+        Insert: {
+          audio_url?: string | null
+          created_at?: string | null
+          event_type?: string | null
+          id?: string
+          related_market_id?: string | null
+          related_team_id?: string | null
+          text: string
+          voice_persona?: string | null
+        }
+        Update: {
+          audio_url?: string | null
+          created_at?: string | null
+          event_type?: string | null
+          id?: string
+          related_market_id?: string | null
+          related_team_id?: string | null
+          text?: string
+          voice_persona?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "commentary_feed_related_market_id_fkey"
+            columns: ["related_market_id"]
+            isOneToOne: false
+            referencedRelation: "prediction_markets"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "commentary_feed_related_team_id_fkey"
+            columns: ["related_team_id"]
+            isOneToOne: false
+            referencedRelation: "teams"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      market_odds: {
+        Row: {
+          current_odds: number
+          id: string
+          last_updated: string | null
+          market_id: string | null
+          team_id: string | null
+          volume: number | null
+        }
+        Insert: {
+          current_odds?: number
+          id?: string
+          last_updated?: string | null
+          market_id?: string | null
+          team_id?: string | null
+          volume?: number | null
+        }
+        Update: {
+          current_odds?: number
+          id?: string
+          last_updated?: string | null
+          market_id?: string | null
+          team_id?: string | null
+          volume?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "market_odds_market_id_fkey"
+            columns: ["market_id"]
+            isOneToOne: false
+            referencedRelation: "prediction_markets"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "market_odds_team_id_fkey"
+            columns: ["team_id"]
+            isOneToOne: false
+            referencedRelation: "teams"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      prediction_markets: {
+        Row: {
+          category: string
+          created_at: string | null
+          end_time: string | null
+          id: string
+          prize_amount: number
+          sponsor_id: string | null
+          start_time: string | null
+          status: string | null
+          total_pool: number | null
+          winner_team_id: string | null
+        }
+        Insert: {
+          category: string
+          created_at?: string | null
+          end_time?: string | null
+          id?: string
+          prize_amount: number
+          sponsor_id?: string | null
+          start_time?: string | null
+          status?: string | null
+          total_pool?: number | null
+          winner_team_id?: string | null
+        }
+        Update: {
+          category?: string
+          created_at?: string | null
+          end_time?: string | null
+          id?: string
+          prize_amount?: number
+          sponsor_id?: string | null
+          start_time?: string | null
+          status?: string | null
+          total_pool?: number | null
+          winner_team_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "prediction_markets_sponsor_id_fkey"
+            columns: ["sponsor_id"]
+            isOneToOne: false
+            referencedRelation: "sponsors"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "prediction_markets_winner_team_id_fkey"
+            columns: ["winner_team_id"]
+            isOneToOne: false
+            referencedRelation: "teams"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      predictions: {
+        Row: {
+          amount: number
+          created_at: string | null
+          id: string
+          market_id: string | null
+          odds_at_bet: number
+          payout: number | null
+          status: string | null
+          team_id: string | null
+          user_id: string | null
+        }
+        Insert: {
+          amount: number
+          created_at?: string | null
+          id?: string
+          market_id?: string | null
+          odds_at_bet: number
+          payout?: number | null
+          status?: string | null
+          team_id?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          amount?: number
+          created_at?: string | null
+          id?: string
+          market_id?: string | null
+          odds_at_bet?: number
+          payout?: number | null
+          status?: string | null
+          team_id?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "predictions_market_id_fkey"
+            columns: ["market_id"]
+            isOneToOne: false
+            referencedRelation: "prediction_markets"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "predictions_team_id_fkey"
+            columns: ["team_id"]
+            isOneToOne: false
+            referencedRelation: "teams"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "predictions_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      progress_updates: {
+        Row: {
+          content: string | null
+          created_at: string | null
+          id: string
+          impact_score: number | null
+          metadata: Json | null
+          team_id: string | null
+          title: string | null
+          type: string
+        }
+        Insert: {
+          content?: string | null
+          created_at?: string | null
+          id?: string
+          impact_score?: number | null
+          metadata?: Json | null
+          team_id?: string | null
+          title?: string | null
+          type: string
+        }
+        Update: {
+          content?: string | null
+          created_at?: string | null
+          id?: string
+          impact_score?: number | null
+          metadata?: Json | null
+          team_id?: string | null
+          title?: string | null
+          type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "progress_updates_team_id_fkey"
+            columns: ["team_id"]
+            isOneToOne: false
+            referencedRelation: "teams"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      projects: {
+        Row: {
+          created_at: string | null
+          demo_url: string | null
+          description: string | null
+          id: string
+          screenshot_urls: string[] | null
+          team_id: string | null
+          title: string
+          updated_at: string | null
+          video_url: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          demo_url?: string | null
+          description?: string | null
+          id?: string
+          screenshot_urls?: string[] | null
+          team_id?: string | null
+          title: string
+          updated_at?: string | null
+          video_url?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          demo_url?: string | null
+          description?: string | null
+          id?: string
+          screenshot_urls?: string[] | null
+          team_id?: string | null
+          title?: string
+          updated_at?: string | null
+          video_url?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "projects_team_id_fkey"
+            columns: ["team_id"]
+            isOneToOne: false
+            referencedRelation: "teams"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      sponsors: {
+        Row: {
+          api_documentation: string | null
+          created_at: string | null
+          description: string | null
+          id: string
+          logo_url: string | null
+          name: string
+          prize_pool: number | null
+          website: string | null
+        }
+        Insert: {
+          api_documentation?: string | null
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          logo_url?: string | null
+          name: string
+          prize_pool?: number | null
+          website?: string | null
+        }
+        Update: {
+          api_documentation?: string | null
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          logo_url?: string | null
+          name?: string
+          prize_pool?: number | null
+          website?: string | null
+        }
+        Relationships: []
+      }
+      team_members: {
+        Row: {
+          created_at: string | null
+          github_username: string | null
+          id: string
+          name: string
+          role: string | null
+          team_id: string | null
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          github_username?: string | null
+          id?: string
+          name: string
+          role?: string | null
+          team_id?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          github_username?: string | null
+          id?: string
+          name?: string
+          role?: string | null
+          team_id?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "team_members_team_id_fkey"
+            columns: ["team_id"]
+            isOneToOne: false
+            referencedRelation: "teams"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "team_members_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      teams: {
+        Row: {
+          category: string[] | null
+          created_at: string | null
+          current_progress: number | null
+          devpost_url: string | null
+          github_repo: string | null
+          id: string
+          logo_url: string | null
+          momentum_score: number | null
+          name: string
+          status: string | null
+          tagline: string | null
+          team_size: number | null
+          tech_stack: string[] | null
+          updated_at: string | null
+        }
+        Insert: {
+          category?: string[] | null
+          created_at?: string | null
+          current_progress?: number | null
+          devpost_url?: string | null
+          github_repo?: string | null
+          id?: string
+          logo_url?: string | null
+          momentum_score?: number | null
+          name: string
+          status?: string | null
+          tagline?: string | null
+          team_size?: number | null
+          tech_stack?: string[] | null
+          updated_at?: string | null
+        }
+        Update: {
+          category?: string[] | null
+          created_at?: string | null
+          current_progress?: number | null
+          devpost_url?: string | null
+          github_repo?: string | null
+          id?: string
+          logo_url?: string | null
+          momentum_score?: number | null
+          name?: string
+          status?: string | null
+          tagline?: string | null
+          team_size?: number | null
+          tech_stack?: string[] | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      users: {
+        Row: {
+          avatar_url: string | null
+          correct_predictions: number | null
+          created_at: string | null
+          email: string | null
+          id: string
+          total_predictions: number | null
+          updated_at: string | null
+          username: string
+          wallet_balance: number | null
+          xp: number | null
+        }
+        Insert: {
+          avatar_url?: string | null
+          correct_predictions?: number | null
+          created_at?: string | null
+          email?: string | null
+          id?: string
+          total_predictions?: number | null
+          updated_at?: string | null
+          username: string
+          wallet_balance?: number | null
+          xp?: number | null
+        }
+        Update: {
+          avatar_url?: string | null
+          correct_predictions?: number | null
+          created_at?: string | null
+          email?: string | null
+          id?: string
+          total_predictions?: number | null
+          updated_at?: string | null
+          username?: string
+          wallet_balance?: number | null
+          xp?: number | null
+        }
+        Relationships: []
+      }
+    }
+    Views: {
+      [_ in never]: never
+    }
+    Functions: {
+      update_market_odds: {
+        Args: { p_bet_amount: number; p_market_id: string; p_team_id: string }
+        Returns: undefined
+      }
     }
     Enums: {
       [_ in never]: never
@@ -149,6 +676,9 @@ export type CompositeTypes<
     : never
 
 export const Constants = {
+  graphql_public: {
+    Enums: {},
+  },
   public: {
     Enums: {},
   },

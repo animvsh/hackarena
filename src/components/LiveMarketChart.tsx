@@ -7,6 +7,7 @@ export const LiveMarketChart = () => {
   const [teams, setTeams] = useState<any[]>([]);
   const [oddsHistory, setOddsHistory] = useState<any[]>([]);
   const [selectedTrack, setSelectedTrack] = useState<string>("all");
+  const [stats, setStats] = useState({ totalVolume: 0, activeMarkets: 0, predictions: 0 });
 
   useEffect(() => {
     fetchMarketData();
@@ -40,15 +41,37 @@ export const LiveMarketChart = () => {
 
     if (teamsData) {
       setTeams(teamsData);
-      
+
       // Transform data for chart
       const chartData = teamsData.map(team => ({
         name: team.name,
         odds: team.market_odds?.[0]?.current_odds * 100 || 0,
       }));
-      
+
       setOddsHistory(chartData);
     }
+
+    // Fetch stats
+    const { data: oddsData } = await supabase
+      .from('market_odds')
+      .select('volume');
+
+    const totalVolume = oddsData?.reduce((sum, item) => sum + (item.volume || 0), 0) || 0;
+
+    const { count: activeMarkets } = await supabase
+      .from('prediction_markets')
+      .select('*', { count: 'exact', head: true })
+      .eq('status', 'open');
+
+    const { count: predictions } = await supabase
+      .from('predictions')
+      .select('*', { count: 'exact', head: true });
+
+    setStats({
+      totalVolume,
+      activeMarkets: activeMarkets || 0,
+      predictions: predictions || 0,
+    });
   };
 
   return (
@@ -102,15 +125,15 @@ export const LiveMarketChart = () => {
       <div className="mt-4 grid grid-cols-3 gap-4">
         <div className="text-center">
           <p className="text-xs text-muted-foreground">Total Volume</p>
-          <p className="text-lg font-bold">124.5K HC</p>
+          <p className="text-lg font-bold">{stats.totalVolume.toLocaleString()} HC</p>
         </div>
         <div className="text-center">
           <p className="text-xs text-muted-foreground">Active Markets</p>
-          <p className="text-lg font-bold">8</p>
+          <p className="text-lg font-bold">{stats.activeMarkets}</p>
         </div>
         <div className="text-center">
           <p className="text-xs text-muted-foreground">Predictions</p>
-          <p className="text-lg font-bold">1,247</p>
+          <p className="text-lg font-bold">{stats.predictions.toLocaleString()}</p>
         </div>
       </div>
     </div>
