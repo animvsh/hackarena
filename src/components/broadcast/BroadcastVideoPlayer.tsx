@@ -19,8 +19,8 @@ export function BroadcastVideoPlayer() {
   }, [commentary?.id, commentary?.text, speak]);
 
   return (
-    <div className="w-full max-w-[450px] mx-auto">
-      <div className="relative aspect-video bg-card border-2 border-border rounded-lg overflow-hidden shadow-xl">
+    <div className="w-full">
+      <div className="relative aspect-video bg-gradient-to-br from-card to-secondary/50 border border-border rounded-lg overflow-hidden shadow-lg">
         {/* Compact Header */}
         <BroadcastHeader currentScene={currentScene} isLive={isLive} />
 
