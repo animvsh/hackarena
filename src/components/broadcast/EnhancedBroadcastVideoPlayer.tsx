@@ -131,16 +131,6 @@ export function EnhancedBroadcastVideoPlayer() {
     }
   };
 
-  // Show splash screen
-  if (broadcastState === 'splash') {
-    return <BroadcastSplashScreen onComplete={goLive} />;
-  }
-
-  // Show commercial break
-  if (broadcastState === 'commercial') {
-    return <CommercialBreak duration={30} onComplete={endCommercialBreak} />;
-  }
-
   const handleFullscreen = () => {
     const elem = document.querySelector('.video-player-container');
     if (elem) {
@@ -173,7 +163,7 @@ export function EnhancedBroadcastVideoPlayer() {
     togglePlayPause();
   };
 
-  // Keyboard shortcuts
+  // Keyboard shortcuts - MUST be before early returns
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.code === 'Space') {
@@ -186,7 +176,17 @@ export function EnhancedBroadcastVideoPlayer() {
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [isLive, broadcastState]);
+  }, [broadcastState]);
+
+  // Show splash screen - early returns AFTER all hooks
+  if (broadcastState === 'splash') {
+    return <BroadcastSplashScreen onComplete={goLive} />;
+  }
+
+  // Show commercial break
+  if (broadcastState === 'commercial') {
+    return <CommercialBreak duration={30} onComplete={endCommercialBreak} />;
+  }
 
   return (
     <div className="w-full">
