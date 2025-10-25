@@ -1,368 +1,315 @@
 import { useEffect, useState } from "react";
 import { Sidebar } from "@/components/Sidebar";
 import { Header } from "@/components/Header";
-import { supabase } from "@/integrations/supabase/client";
-import { Card } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Trophy, TrendingUp, Code, Users, BarChart3 } from "lucide-react";
-import { Skeleton } from "@/components/ui/skeleton";
+import { Button } from "@/components/ui/button";
+import { Trophy, DollarSign, Calendar, MapPin, Users, Target, ExternalLink } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 
 interface Sponsor {
   id: string;
   name: string;
-  logo_url: string | null;
-  website: string | null;
-  description: string | null;
-  prize_pool: number;
+  logo_url: string;
+  website: string;
+  description: string;
+  hackathons: Hackathon[];
 }
 
-interface APIUsageData {
-  team_id: string;
-  endpoint: string;
-  call_count: number;
-  teams: {
-    name: string;
-    logo_url: string;
-  };
-}
-
-interface MarketData {
-  category: string;
-  prize_amount: number;
-  total_pool: number;
-  status: string;
+interface Hackathon {
+  id: string;
+  name: string;
+  description: string;
+  location: string;
+  startDate: string;
+  endDate: string;
+  status: 'upcoming' | 'live' | 'finished';
+  totalPrizePool: number;
+  teamCount: number;
+  categories: string[];
 }
 
 const Sponsors = () => {
   const [sponsors, setSponsors] = useState<Sponsor[]>([]);
-  const [selectedSponsor, setSelectedSponsor] = useState<Sponsor | null>(null);
-  const [apiUsage, setApiUsage] = useState<APIUsageData[]>([]);
-  const [markets, setMarkets] = useState<MarketData[]>([]);
   const [loading, setLoading] = useState(true);
+  const navigate = useNavigate();
 
   useEffect(() => {
-    fetchSponsors();
+    generateSponsorData();
   }, []);
 
-  useEffect(() => {
-    if (selectedSponsor) {
-      fetchSponsorAnalytics(selectedSponsor.id);
-    }
-  }, [selectedSponsor]);
-
-  const fetchSponsors = async () => {
-    setLoading(true);
-    const { data, error } = await supabase
-      .from('sponsors')
-      .select('*')
-      .order('prize_pool', { ascending: false });
-
-    if (data && !error) {
-      setSponsors(data);
-      if (data.length > 0) {
-        setSelectedSponsor(data[0]);
+  const generateSponsorData = () => {
+    const sponsorsData: Sponsor[] = [
+      {
+        id: "techcrunch",
+        name: "TechCrunch",
+        logo_url: "https://upload.wikimedia.org/wikipedia/commons/thumb/b/b9/TechCrunch_logo.svg/200px-TechCrunch_logo.svg.png",
+        website: "https://techcrunch.com",
+        description: "Leading technology media property, dedicated to obsessively profiling startups, reviewing new Internet products, and breaking tech news.",
+        hackathons: [
+          {
+            id: "techcrunch-disrupt-2024",
+            name: "TechCrunch Disrupt 2024",
+            description: "The world's premier startup competition",
+            location: "San Francisco, CA",
+            startDate: "2024-11-15T09:00:00Z",
+            endDate: "2024-11-17T18:00:00Z",
+            status: "upcoming",
+            totalPrizePool: 50000,
+            teamCount: 120,
+            categories: ["Best Overall", "AI/ML Innovation", "FinTech Solutions", "Social Impact"]
+          }
+        ]
+      },
+      {
+        id: "mit",
+        name: "MIT",
+        logo_url: "https://upload.wikimedia.org/wikipedia/en/thumb/4/44/MIT_Seal.svg/200px-MIT_Seal.svg.png",
+        website: "https://mit.edu",
+        description: "Massachusetts Institute of Technology - a world-renowned private research university.",
+        hackathons: [
+          {
+            id: "hackmit-2024",
+            name: "HackMIT 2024",
+            description: "MIT's premier hackathon",
+            location: "Cambridge, MA",
+            startDate: "2024-12-01T10:00:00Z",
+            endDate: "2024-12-03T16:00:00Z",
+            status: "upcoming",
+            totalPrizePool: 30000,
+            teamCount: 80,
+            categories: ["Best Overall", "Social Impact", "Mobile App", "Healthcare Tech"]
+          }
+        ]
+      },
+      {
+        id: "penn",
+        name: "University of Pennsylvania",
+        logo_url: "https://upload.wikimedia.org/wikipedia/en/thumb/9/9a/University_of_Pennsylvania_logo.svg/200px-University_of_Pennsylvania_logo.svg.png",
+        website: "https://upenn.edu",
+        description: "A private Ivy League research university in Philadelphia.",
+        hackathons: [
+          {
+            id: "pennapps-2024",
+            name: "PennApps 2024",
+            description: "University of Pennsylvania's hackathon",
+            location: "Philadelphia, PA",
+            startDate: "2024-11-22T09:00:00Z",
+            endDate: "2024-11-24T17:00:00Z",
+            status: "upcoming",
+            totalPrizePool: 25000,
+            teamCount: 100,
+            categories: ["Best Overall", "Healthcare Tech", "Blockchain", "Education"]
+          }
+        ]
+      },
+      {
+        id: "microsoft",
+        name: "Microsoft",
+        logo_url: "https://upload.wikimedia.org/wikipedia/commons/thumb/4/44/Microsoft_logo.svg/200px-Microsoft_logo.svg.png",
+        website: "https://microsoft.com",
+        description: "Multinational technology corporation that develops, manufactures, licenses, supports and sells computer software, consumer electronics and personal computers.",
+        hackathons: [
+          {
+            id: "microsoft-build-2024",
+            name: "Microsoft Build Hackathon 2024",
+            description: "Build the future with Microsoft technologies",
+            location: "Seattle, WA",
+            startDate: "2024-12-10T08:00:00Z",
+            endDate: "2024-12-12T20:00:00Z",
+            status: "upcoming",
+            totalPrizePool: 40000,
+            teamCount: 150,
+            categories: ["Azure Innovation", "AI/ML Solutions", "Developer Tools", "Cloud Native"]
+          }
+        ]
+      },
+      {
+        id: "google",
+        name: "Google",
+        logo_url: "https://upload.wikimedia.org/wikipedia/commons/thumb/2/2f/Google_2015_logo.svg/200px-Google_2015_logo.svg.png",
+        website: "https://google.com",
+        description: "Multinational technology company specializing in Internet-related services and products.",
+        hackathons: [
+          {
+            id: "google-io-hackathon-2024",
+            name: "Google I/O Hackathon 2024",
+            description: "Innovate with Google technologies",
+            location: "Mountain View, CA",
+            startDate: "2024-11-30T09:00:00Z",
+            endDate: "2024-12-02T18:00:00Z",
+            status: "upcoming",
+            totalPrizePool: 35000,
+            teamCount: 90,
+            categories: ["Android Development", "Web Technologies", "Machine Learning", "Cloud Computing"]
+          }
+        ]
       }
-    }
+    ];
+
+    setSponsors(sponsorsData);
     setLoading(false);
   };
 
-  const fetchSponsorAnalytics = async (sponsorId: string) => {
-    // Fetch API usage
-    const { data: usage } = await supabase
-      .from('api_usage')
-      .select(`
-        team_id,
-        endpoint,
-        call_count,
-        teams (
-          name,
-          logo_url
-        )
-      `)
-      .eq('sponsor_id', sponsorId);
-
-    if (usage) {
-      setApiUsage(usage as any);
-    }
-
-    // Fetch prediction markets
-    const { data: marketData } = await supabase
-      .from('prediction_markets')
-      .select('category, prize_amount, total_pool, status')
-      .eq('sponsor_id', sponsorId);
-
-    if (marketData) {
-      setMarkets(marketData);
+  const getStatusBadge = (status: string) => {
+    switch (status) {
+      case 'upcoming':
+        return <Badge className="bg-blue-100 text-blue-800">Upcoming</Badge>;
+      case 'live':
+        return <Badge className="bg-green-100 text-green-800">Live</Badge>;
+      case 'finished':
+        return <Badge className="bg-gray-100 text-gray-800">Finished</Badge>;
+      default:
+        return <Badge className="bg-gray-100 text-gray-800">Unknown</Badge>;
     }
   };
 
-  const getTotalAPICalls = () => {
-    return apiUsage.reduce((sum, usage) => sum + usage.call_count, 0);
-  };
-
-  const getActiveTeams = () => {
-    return new Set(apiUsage.map(u => u.team_id)).size;
-  };
-
-  const getTotalBetsPlaced = () => {
-    return markets.reduce((sum, m) => sum + m.total_pool, 0);
+  const goToHackathon = (hackathonId: string) => {
+    navigate(`/hackathons?hackathon=${hackathonId}`);
   };
 
   if (loading) {
     return (
-      <div className="flex min-h-screen bg-background">
+      <div className="flex h-screen bg-gray-50">
         <Sidebar />
-        <main className="flex-1 p-8">
+        <div className="flex-1 flex flex-col">
           <Header />
-          <Skeleton className="h-96 w-full" />
-        </main>
+          <div className="flex-1 p-6">
+            <div className="animate-pulse">
+              <div className="h-8 bg-gray-200 rounded w-1/4 mb-6"></div>
+              <div className="grid gap-6">
+                {[1, 2, 3].map((i) => (
+                  <div key={i} className="h-32 bg-gray-200 rounded"></div>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="flex min-h-screen bg-background">
+    <div className="flex h-screen bg-gray-50">
       <Sidebar />
-
-      <main className="flex-1 p-8">
+      <div className="flex-1 flex flex-col">
         <Header />
-
-        {/* Page Header */}
-        <div className="mb-8">
-          <div className="flex items-center gap-2 mb-2">
-            <Trophy className="w-8 h-8 text-primary" />
-            <h1 className="text-3xl font-bold">Sponsor Dashboard</h1>
+        <div className="flex-1 p-6">
+          <div className="mb-8">
+            <h1 className="text-3xl font-bold mb-2">Sponsors</h1>
+            <p className="text-gray-600">Discover hackathons by sponsor and place your bets</p>
           </div>
-          <p className="text-muted-foreground">
-            Track API usage, engagement metrics, and market performance
-          </p>
-        </div>
 
-        {/* Sponsor Selector */}
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4 mb-8">
-          {sponsors.map((sponsor) => (
-            <Card
-              key={sponsor.id}
-              className={`p-4 cursor-pointer transition-all hover:border-primary/50 ${
-                selectedSponsor?.id === sponsor.id
-                  ? 'border-primary bg-primary/5'
-                  : ''
-              }`}
-              onClick={() => setSelectedSponsor(sponsor)}
-            >
-              <div className="flex flex-col items-center text-center gap-2">
-                {sponsor.logo_url && (
-                  <img
-                    src={sponsor.logo_url}
-                    alt={sponsor.name}
-                    className="w-12 h-12 object-contain rounded"
-                  />
-                )}
-                <div>
-                  <p className="font-semibold text-sm">{sponsor.name}</p>
-                  <p className="text-xs text-muted-foreground">
-                    ${sponsor.prize_pool.toLocaleString()}
-                  </p>
-                </div>
-              </div>
-            </Card>
-          ))}
-        </div>
-
-        {/* Analytics Content */}
-        {selectedSponsor && (
-          <div className="space-y-6">
-            {/* Header Info */}
-            <Card className="p-6">
-              <div className="flex items-start gap-4">
-                {selectedSponsor.logo_url && (
-                  <img
-                    src={selectedSponsor.logo_url}
-                    alt={selectedSponsor.name}
-                    className="w-20 h-20 object-contain rounded-lg"
-                  />
-                )}
-                <div className="flex-1">
-                  <h2 className="text-2xl font-bold mb-2">{selectedSponsor.name}</h2>
-                  {selectedSponsor.description && (
-                    <p className="text-muted-foreground mb-2">
-                      {selectedSponsor.description}
-                    </p>
-                  )}
-                  {selectedSponsor.website && (
-                    <a
-                      href={selectedSponsor.website}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-sm text-primary hover:underline"
-                    >
-                      {selectedSponsor.website}
-                    </a>
-                  )}
-                </div>
-                <Badge variant="outline" className="text-lg px-4 py-2">
-                  ${selectedSponsor.prize_pool.toLocaleString()}
-                </Badge>
-              </div>
-            </Card>
-
-            {/* Key Metrics */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-              <Card className="p-6">
-                <div className="flex items-center gap-3">
-                  <div className="p-3 bg-blue-500/10 rounded-lg">
-                    <Code className="w-6 h-6 text-blue-500" />
-                  </div>
-                  <div>
-                    <p className="text-sm text-muted-foreground">Total API Calls</p>
-                    <p className="text-2xl font-bold">{getTotalAPICalls().toLocaleString()}</p>
-                  </div>
-                </div>
-              </Card>
-
-              <Card className="p-6">
-                <div className="flex items-center gap-3">
-                  <div className="p-3 bg-green-500/10 rounded-lg">
-                    <Users className="w-6 h-6 text-green-500" />
-                  </div>
-                  <div>
-                    <p className="text-sm text-muted-foreground">Active Teams</p>
-                    <p className="text-2xl font-bold">{getActiveTeams()}</p>
-                  </div>
-                </div>
-              </Card>
-
-              <Card className="p-6">
-                <div className="flex items-center gap-3">
-                  <div className="p-3 bg-yellow-500/10 rounded-lg">
-                    <BarChart3 className="w-6 h-6 text-yellow-500" />
-                  </div>
-                  <div>
-                    <p className="text-sm text-muted-foreground">Prediction Markets</p>
-                    <p className="text-2xl font-bold">{markets.length}</p>
-                  </div>
-                </div>
-              </Card>
-
-              <Card className="p-6">
-                <div className="flex items-center gap-3">
-                  <div className="p-3 bg-purple-500/10 rounded-lg">
-                    <TrendingUp className="w-6 h-6 text-purple-500" />
-                  </div>
-                  <div>
-                    <p className="text-sm text-muted-foreground">Total Bets Placed</p>
-                    <p className="text-2xl font-bold">{getTotalBetsPlaced()} HC</p>
-                  </div>
-                </div>
-              </Card>
-            </div>
-
-            {/* Detailed Analytics */}
-            <Tabs defaultValue="api-usage" className="w-full">
-              <TabsList>
-                <TabsTrigger value="api-usage">API Usage</TabsTrigger>
-                <TabsTrigger value="markets">Markets</TabsTrigger>
-                <TabsTrigger value="engagement">Engagement</TabsTrigger>
-              </TabsList>
-
-              <TabsContent value="api-usage" className="space-y-4">
-                <Card className="p-6">
-                  <h3 className="text-lg font-semibold mb-4">API Usage by Team</h3>
-                  {apiUsage.length === 0 ? (
-                    <p className="text-center text-muted-foreground py-8">
-                      No API usage recorded yet
-                    </p>
-                  ) : (
-                    <div className="space-y-3">
-                      {apiUsage.map((usage, index) => (
-                        <div
-                          key={index}
-                          className="flex items-center justify-between p-4 bg-background rounded-lg"
-                        >
-                          <div className="flex items-center gap-3">
-                            <img
-                              src={usage.teams.logo_url}
-                              alt={usage.teams.name}
-                              className="w-10 h-10 rounded"
-                            />
-                            <div>
-                              <p className="font-semibold">{usage.teams.name}</p>
-                              <p className="text-sm text-muted-foreground">{usage.endpoint}</p>
-                            </div>
-                          </div>
-                          <Badge variant="secondary">
-                            {usage.call_count.toLocaleString()} calls
-                          </Badge>
+          <div className="grid gap-6">
+            {sponsors.map((sponsor) => (
+              <Card key={sponsor.id} className="hover:shadow-lg transition-shadow">
+                <CardHeader>
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center space-x-4">
+                      <img 
+                        src={sponsor.logo_url} 
+                        alt={sponsor.name}
+                        className="h-12 w-12 object-contain"
+                      />
+                      <div>
+                        <CardTitle className="text-xl">{sponsor.name}</CardTitle>
+                        <p className="text-gray-600 text-sm">{sponsor.description}</p>
+                        <div className="flex items-center mt-2">
+                          <ExternalLink className="h-4 w-4 text-gray-400 mr-1" />
+                          <a 
+                            href={sponsor.website} 
+                            target="_blank" 
+                            rel="noopener noreferrer"
+                            className="text-blue-600 hover:text-blue-800 text-sm"
+                          >
+                            {sponsor.website}
+                          </a>
                         </div>
-                      ))}
+                      </div>
                     </div>
-                  )}
-                </Card>
-              </TabsContent>
-
-              <TabsContent value="markets" className="space-y-4">
-                <Card className="p-6">
-                  <h3 className="text-lg font-semibold mb-4">Prediction Markets</h3>
-                  {markets.length === 0 ? (
-                    <p className="text-center text-muted-foreground py-8">
-                      No markets created yet
-                    </p>
-                  ) : (
-                    <div className="space-y-3">
-                      {markets.map((market, index) => (
-                        <div
-                          key={index}
-                          className="flex items-center justify-between p-4 bg-background rounded-lg"
-                        >
+                    <div className="text-right">
+                      <div className="text-sm text-gray-600">
+                        {sponsor.hackathons.length} Hackathon{sponsor.hackathons.length !== 1 ? 's' : ''}
+                      </div>
+                    </div>
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-4">
+                    {sponsor.hackathons.map((hackathon) => (
+                      <div key={hackathon.id} className="border rounded-lg p-4 bg-gray-50">
+                        <div className="flex items-center justify-between mb-3">
                           <div>
-                            <p className="font-semibold">{market.category}</p>
-                            <p className="text-sm text-muted-foreground">
-                              Prize: ${market.prize_amount.toLocaleString()}
-                            </p>
+                            <h3 className="font-semibold text-lg">{hackathon.name}</h3>
+                            <p className="text-gray-600 text-sm">{hackathon.description}</p>
                           </div>
                           <div className="text-right">
-                            <Badge
-                              variant={market.status === 'open' ? 'default' : 'secondary'}
-                            >
-                              {market.status}
-                            </Badge>
-                            <p className="text-sm text-muted-foreground mt-1">
-                              {market.total_pool} HC wagered
-                            </p>
+                            {getStatusBadge(hackathon.status)}
                           </div>
                         </div>
-                      ))}
-                    </div>
-                  )}
-                </Card>
-              </TabsContent>
 
-              <TabsContent value="engagement" className="space-y-4">
-                <Card className="p-6">
-                  <h3 className="text-lg font-semibold mb-4">Engagement Overview</h3>
-                  <div className="grid grid-cols-2 gap-6">
-                    <div className="p-4 bg-background rounded-lg">
-                      <p className="text-sm text-muted-foreground mb-2">Avg API Calls/Team</p>
-                      <p className="text-3xl font-bold">
-                        {getActiveTeams() > 0
-                          ? Math.round(getTotalAPICalls() / getActiveTeams())
-                          : 0}
-                      </p>
-                    </div>
-                    <div className="p-4 bg-background rounded-lg">
-                      <p className="text-sm text-muted-foreground mb-2">Market Participation</p>
-                      <p className="text-3xl font-bold">
-                        {markets.filter(m => m.total_pool > 0).length}/{markets.length}
-                      </p>
-                    </div>
+                        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
+                          <div className="flex items-center">
+                            <DollarSign className="h-4 w-4 text-green-600 mr-2" />
+                            <div>
+                              <div className="text-sm font-semibold">${hackathon.totalPrizePool.toLocaleString()}</div>
+                              <div className="text-xs text-gray-600">Prize Pool</div>
+                            </div>
+                          </div>
+                          <div className="flex items-center">
+                            <Users className="h-4 w-4 text-blue-600 mr-2" />
+                            <div>
+                              <div className="text-sm font-semibold">{hackathon.teamCount}</div>
+                              <div className="text-xs text-gray-600">Teams</div>
+                            </div>
+                          </div>
+                          <div className="flex items-center">
+                            <MapPin className="h-4 w-4 text-purple-600 mr-2" />
+                            <div>
+                              <div className="text-sm font-semibold">{hackathon.location}</div>
+                              <div className="text-xs text-gray-600">Location</div>
+                            </div>
+                          </div>
+                          <div className="flex items-center">
+                            <Calendar className="h-4 w-4 text-orange-600 mr-2" />
+                            <div>
+                              <div className="text-sm font-semibold">
+                                {new Date(hackathon.startDate).toLocaleDateString()}
+                              </div>
+                              <div className="text-xs text-gray-600">Start Date</div>
+                            </div>
+                          </div>
+                        </div>
+
+                        <div className="mb-4">
+                          <div className="text-sm font-medium mb-2">Prize Categories:</div>
+                          <div className="flex flex-wrap gap-2">
+                            {hackathon.categories.map((category) => (
+                              <Badge key={category} variant="outline" className="text-xs">
+                                {category}
+                              </Badge>
+                            ))}
+                          </div>
+                        </div>
+
+                        <div className="flex justify-end">
+                          <Button 
+                            onClick={() => goToHackathon(hackathon.id)}
+                            className="bg-blue-600 hover:bg-blue-700"
+                          >
+                            <Target className="h-4 w-4 mr-2" />
+                            Go to Hackathon
+                          </Button>
+                        </div>
+                      </div>
+                    ))}
                   </div>
-                </Card>
-              </TabsContent>
-            </Tabs>
+                </CardContent>
+              </Card>
+            ))}
           </div>
-        )}
-      </main>
+        </div>
+      </div>
     </div>
   );
 };

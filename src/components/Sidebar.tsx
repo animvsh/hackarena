@@ -1,4 +1,4 @@
-import { Tv, TrendingUp, Users, BarChart3, Radio, Trophy, Wallet, Settings, LogOut } from "lucide-react";
+import { Tv, TrendingUp, Users, BarChart3, Radio, Trophy, Wallet, Settings, LogOut, Target } from "lucide-react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
@@ -11,6 +11,7 @@ const navItems = [
   { icon: BarChart3, label: "Leaderboard", route: "/leaderboard" },
   { icon: Radio, label: "Commentary", route: "/radio" },
   { icon: Trophy, label: "Sponsors", route: "/sponsors" },
+  { icon: Target, label: "Hackathons", route: "/hackathons" },
   { icon: Wallet, label: "My Wallet", route: "/wallet" },
 ];
 

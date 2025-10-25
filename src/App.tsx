@@ -14,6 +14,8 @@ import Leaderboard from "./pages/Leaderboard";
 import RadioPage from "./pages/RadioPage";
 import Sponsors from "./pages/Sponsors";
 import WalletPage from "./pages/WalletPage";
+import Hackathons from "./pages/Hackathons";
+import DatabasePopulator from "./pages/DatabasePopulator";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -28,12 +30,14 @@ const App = () => (
           <Routes>
             <Route path="/" element={<Index />} />
             <Route path="/auth" element={<Auth />} />
-            <Route path="/onboarding" element={<ProtectedRoute><Onboarding /></ProtectedRoute>} />
+            <Route path="/onboarding" element={<Onboarding />} />
             <Route path="/markets" element={<Markets />} />
             <Route path="/teams" element={<Teams />} />
             <Route path="/leaderboard" element={<Leaderboard />} />
             <Route path="/radio" element={<RadioPage />} />
             <Route path="/sponsors" element={<Sponsors />} />
+            <Route path="/hackathons" element={<Hackathons />} />
+            <Route path="/populate" element={<DatabasePopulator />} />
             <Route path="/wallet" element={<ProtectedRoute><WalletPage /></ProtectedRoute>} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
