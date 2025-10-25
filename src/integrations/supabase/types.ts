@@ -107,6 +107,44 @@ export type Database = {
           },
         ]
       }
+      integration_metrics: {
+        Row: {
+          created_at: string | null
+          id: string
+          integration_id: string
+          metric_metadata: Json | null
+          metric_name: string
+          metric_value: number | null
+          recorded_at: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          integration_id: string
+          metric_metadata?: Json | null
+          metric_name: string
+          metric_value?: number | null
+          recorded_at: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          integration_id?: string
+          metric_metadata?: Json | null
+          metric_name?: string
+          metric_value?: number | null
+          recorded_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "integration_metrics_integration_id_fkey"
+            columns: ["integration_id"]
+            isOneToOne: false
+            referencedRelation: "team_integrations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       market_odds: {
         Row: {
           current_odds: number
@@ -379,6 +417,186 @@ export type Database = {
         }
         Relationships: []
       }
+      team_audit_logs: {
+        Row: {
+          action: string
+          created_at: string | null
+          details: Json | null
+          id: string
+          team_id: string
+          user_id: string | null
+        }
+        Insert: {
+          action: string
+          created_at?: string | null
+          details?: Json | null
+          id?: string
+          team_id: string
+          user_id?: string | null
+        }
+        Update: {
+          action?: string
+          created_at?: string | null
+          details?: Json | null
+          id?: string
+          team_id?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "team_audit_logs_team_id_fkey"
+            columns: ["team_id"]
+            isOneToOne: false
+            referencedRelation: "teams"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      team_integrations: {
+        Row: {
+          config: Json | null
+          connected_by: string
+          created_at: string | null
+          credentials_encrypted: string | null
+          id: string
+          integration_name: string
+          integration_type: string
+          last_sync_at: string | null
+          status: string | null
+          sync_frequency: string | null
+          team_id: string
+        }
+        Insert: {
+          config?: Json | null
+          connected_by: string
+          created_at?: string | null
+          credentials_encrypted?: string | null
+          id?: string
+          integration_name: string
+          integration_type: string
+          last_sync_at?: string | null
+          status?: string | null
+          sync_frequency?: string | null
+          team_id: string
+        }
+        Update: {
+          config?: Json | null
+          connected_by?: string
+          created_at?: string | null
+          credentials_encrypted?: string | null
+          id?: string
+          integration_name?: string
+          integration_type?: string
+          last_sync_at?: string | null
+          status?: string | null
+          sync_frequency?: string | null
+          team_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "team_integrations_team_id_fkey"
+            columns: ["team_id"]
+            isOneToOne: false
+            referencedRelation: "teams"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      team_invite_codes: {
+        Row: {
+          code: string
+          created_at: string | null
+          created_by: string
+          expires_at: string | null
+          id: string
+          is_active: boolean | null
+          max_uses: number | null
+          team_id: string
+          uses_count: number | null
+        }
+        Insert: {
+          code: string
+          created_at?: string | null
+          created_by: string
+          expires_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          max_uses?: number | null
+          team_id: string
+          uses_count?: number | null
+        }
+        Update: {
+          code?: string
+          created_at?: string | null
+          created_by?: string
+          expires_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          max_uses?: number | null
+          team_id?: string
+          uses_count?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "team_invite_codes_team_id_fkey"
+            columns: ["team_id"]
+            isOneToOne: false
+            referencedRelation: "teams"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      team_join_requests: {
+        Row: {
+          created_at: string | null
+          id: string
+          invite_code_id: string | null
+          message: string | null
+          reviewed_at: string | null
+          reviewed_by: string | null
+          status: string | null
+          team_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          invite_code_id?: string | null
+          message?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: string | null
+          team_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          invite_code_id?: string | null
+          message?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: string | null
+          team_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "team_join_requests_invite_code_id_fkey"
+            columns: ["invite_code_id"]
+            isOneToOne: false
+            referencedRelation: "team_invite_codes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "team_join_requests_team_id_fkey"
+            columns: ["team_id"]
+            isOneToOne: false
+            referencedRelation: "teams"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       team_members: {
         Row: {
           created_at: string | null
@@ -424,6 +642,91 @@ export type Database = {
           },
         ]
       }
+      team_permissions: {
+        Row: {
+          can_manage_integrations: boolean | null
+          can_manage_members: boolean | null
+          can_view_analytics: boolean | null
+          created_at: string | null
+          id: string
+          role: string
+          team_id: string
+          user_id: string
+        }
+        Insert: {
+          can_manage_integrations?: boolean | null
+          can_manage_members?: boolean | null
+          can_view_analytics?: boolean | null
+          created_at?: string | null
+          id?: string
+          role: string
+          team_id: string
+          user_id: string
+        }
+        Update: {
+          can_manage_integrations?: boolean | null
+          can_manage_members?: boolean | null
+          can_view_analytics?: boolean | null
+          created_at?: string | null
+          id?: string
+          role?: string
+          team_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "team_permissions_team_id_fkey"
+            columns: ["team_id"]
+            isOneToOne: false
+            referencedRelation: "teams"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      team_profiles: {
+        Row: {
+          ai_analysis: Json | null
+          business_model: string | null
+          company_type: string | null
+          created_at: string | null
+          id: string
+          industry: string | null
+          target_metrics: Json | null
+          team_id: string
+          updated_at: string | null
+        }
+        Insert: {
+          ai_analysis?: Json | null
+          business_model?: string | null
+          company_type?: string | null
+          created_at?: string | null
+          id?: string
+          industry?: string | null
+          target_metrics?: Json | null
+          team_id: string
+          updated_at?: string | null
+        }
+        Update: {
+          ai_analysis?: Json | null
+          business_model?: string | null
+          company_type?: string | null
+          created_at?: string | null
+          id?: string
+          industry?: string | null
+          target_metrics?: Json | null
+          team_id?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "team_profiles_team_id_fkey"
+            columns: ["team_id"]
+            isOneToOne: true
+            referencedRelation: "teams"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       teams: {
         Row: {
           category: string[] | null
@@ -432,12 +735,16 @@ export type Database = {
           devpost_url: string | null
           github_repo: string | null
           id: string
+          invite_code: string | null
           logo_url: string | null
           momentum_score: number | null
           name: string
+          onboarding_completed: boolean | null
+          owner_id: string | null
           status: string | null
           tagline: string | null
           team_size: number | null
+          team_type: string | null
           tech_stack: string[] | null
           updated_at: string | null
         }
@@ -448,12 +755,16 @@ export type Database = {
           devpost_url?: string | null
           github_repo?: string | null
           id?: string
+          invite_code?: string | null
           logo_url?: string | null
           momentum_score?: number | null
           name: string
+          onboarding_completed?: boolean | null
+          owner_id?: string | null
           status?: string | null
           tagline?: string | null
           team_size?: number | null
+          team_type?: string | null
           tech_stack?: string[] | null
           updated_at?: string | null
         }
@@ -464,12 +775,16 @@ export type Database = {
           devpost_url?: string | null
           github_repo?: string | null
           id?: string
+          invite_code?: string | null
           logo_url?: string | null
           momentum_score?: number | null
           name?: string
+          onboarding_completed?: boolean | null
+          owner_id?: string | null
           status?: string | null
           tagline?: string | null
           team_size?: number | null
+          team_type?: string | null
           tech_stack?: string[] | null
           updated_at?: string | null
         }
@@ -540,6 +855,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      generate_team_invite_code: { Args: never; Returns: string }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]

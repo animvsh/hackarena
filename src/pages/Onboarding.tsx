@@ -6,10 +6,11 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { Users, Trophy, Briefcase, Award, Coins } from 'lucide-react';
+import { TeamSetup } from '@/components/onboarding/TeamSetup';
+import { InviteCodeDisplay } from '@/components/onboarding/InviteCodeDisplay';
 
 const roleOptions = [
   { value: 'spectator', label: 'Spectator', icon: Users, description: 'Watch and predict outcomes' },
@@ -26,6 +27,8 @@ export default function Onboarding() {
     bio: '',
     githubUsername: ''
   });
+  const [teamId, setTeamId] = useState<string>('');
+  const [inviteCode, setInviteCode] = useState<string>('');
   const { user, profile } = useAuth();
   const navigate = useNavigate();
 
@@ -37,7 +40,12 @@ export default function Onboarding() {
         .from('user_roles')
         .insert({ user_id: user.id, role: role as any });
       
-      setStep(3);
+      // If hacker, go to team setup, otherwise go to profile
+      if (role === 'hacker') {
+        setStep(2.5);
+      } else {
+        setStep(3);
+      }
     } catch (error) {
       toast.error('Failed to save role');
     }
@@ -63,6 +71,16 @@ export default function Onboarding() {
   const handleComplete = () => {
     toast.success('Welcome to HackCast LIVE! 🎉');
     navigate('/');
+  };
+
+  const handleTeamCreated = (createdTeamId: string, code: string) => {
+    setTeamId(createdTeamId);
+    setInviteCode(code);
+    setStep(4);
+  };
+
+  const handleTeamJoined = () => {
+    setStep(4);
   };
 
   if (step === 1) {
@@ -147,6 +165,20 @@ export default function Onboarding() {
     );
   }
 
+  if (step === 2.5 && role === 'hacker' && user) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background p-4">
+        <div className="w-full max-w-4xl">
+          <TeamSetup
+            userId={user.id}
+            onTeamCreated={handleTeamCreated}
+            onTeamJoined={handleTeamJoined}
+          />
+        </div>
+      </div>
+    );
+  }
+
   if (step === 3) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background p-4">
@@ -186,6 +218,20 @@ export default function Onboarding() {
     );
   }
 
+  if (step === 4 && inviteCode) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background p-4">
+        <div className="w-full max-w-2xl">
+          <InviteCodeDisplay
+            inviteCode={inviteCode}
+            teamName={profileData.username || 'Your Team'}
+            onContinue={handleComplete}
+          />
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen flex items-center justify-center bg-background p-4">
       <Card className="w-full max-w-2xl">
@@ -193,7 +239,9 @@ export default function Onboarding() {
           <Coins className="h-16 w-16 text-primary mx-auto mb-4" />
           <CardTitle className="text-3xl">You're All Set! 🎉</CardTitle>
           <CardDescription className="text-lg mt-2">
-            Start with 1,000 HackCoins
+            {role === 'hacker' 
+              ? 'Your join request has been sent. You\'ll be notified when approved!'
+              : 'Start with 1,000 HackCoins'}
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
