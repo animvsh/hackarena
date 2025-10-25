@@ -3,6 +3,8 @@ import { supabase } from '@/integrations/supabase/client';
 import { useBroadcastQueue } from './useBroadcastQueue';
 import { useBroadcastEvents } from './useBroadcastEvents';
 import { useMemberSpotlight } from './useMemberSpotlight';
+import { useTeamAnalysis } from './useTeamAnalysis';
+import { useHistoricalStats } from './useHistoricalStats';
 import { BroadcastActivityMonitor } from '@/utils/broadcastActivityMonitor';
 import type { BroadcastEvent, FillerContent, BroadcastContentItem } from '@/types/broadcastEvent';
 
@@ -14,8 +16,11 @@ export function useAIBroadcastContent() {
   
   const queue = useBroadcastQueue();
   const { generateSpotlight } = useMemberSpotlight();
+  const { generateAnalysis } = useTeamAnalysis();
+  const { generateHistoricalStat } = useHistoricalStats();
   const activityMonitor = useRef(new BroadcastActivityMonitor());
   const fillerIntervalRef = useRef<NodeJS.Timeout>();
+  const fillerTypeRotation = useRef(0);
 
   // Handle real-time events
   const handleBroadcastEvent = useCallback(async (event: BroadcastEvent) => {
@@ -44,16 +49,31 @@ export function useAIBroadcastContent() {
       return;
     }
 
-    // Generate member spotlight
-    const spotlight = await generateSpotlight();
-    if (spotlight) {
-      queue.addFillerContent(spotlight);
-    } else {
-      // Generate generic filler
-      const genericFiller = generateGenericFiller();
-      queue.addFillerContent(genericFiller);
+    // Rotate through different filler types
+    const fillerTypes = ['spotlight', 'analysis', 'stat', 'generic'];
+    const currentType = fillerTypes[fillerTypeRotation.current % fillerTypes.length];
+    fillerTypeRotation.current++;
+
+    let filler: FillerContent | null = null;
+
+    switch (currentType) {
+      case 'spotlight':
+        filler = await generateSpotlight();
+        break;
+      case 'analysis':
+        filler = generateAnalysis();
+        break;
+      case 'stat':
+        filler = generateHistoricalStat();
+        break;
+      default:
+        filler = generateGenericFiller();
     }
-  }, [queue, generateSpotlight]);
+
+    if (filler) {
+      queue.addFillerContent(filler);
+    }
+  }, [queue, generateSpotlight, generateAnalysis, generateHistoricalStat]);
 
   // Filler content interval based on activity
   useEffect(() => {
