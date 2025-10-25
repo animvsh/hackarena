@@ -23,6 +23,7 @@ import TeamProfile from "./pages/TeamProfile";
 import UserProfile from "./pages/UserProfile";
 import BetDetail from "./pages/BetDetail";
 import TeamInvite from "./pages/TeamInvite";
+import MyProfile from "./pages/MyProfile";
 
 const queryClient = new QueryClient();
 
@@ -59,7 +60,7 @@ const App = () => {
             <Route path="/teams/:teamId" element={<ProtectedRoute><TeamProfile /></ProtectedRoute>} />
             <Route path="/teams/:teamId/settings" element={<ProtectedRoute><TeamSettings /></ProtectedRoute>} />
             <Route path="/users/:userId" element={<ProtectedRoute><UserProfile /></ProtectedRoute>} />
-            <Route path="/profile" element={<ProtectedRoute><UserProfile /></ProtectedRoute>} />
+            <Route path="/profile" element={<ProtectedRoute><MyProfile /></ProtectedRoute>} />
             <Route path="/leaderboard" element={<Leaderboard />} />
             <Route path="/radio" element={<RadioPage />} />
             <Route path="/sponsors" element={<Sponsors />} />

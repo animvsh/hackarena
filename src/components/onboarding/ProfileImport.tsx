@@ -34,10 +34,9 @@ interface ProfileData {
 
 interface ProfileImportProps {
   onComplete: (data: ProfileData, source: string) => void;
-  onSkip: () => void;
 }
 
-export const ProfileImport = ({ onComplete, onSkip }: ProfileImportProps) => {
+export const ProfileImport = ({ onComplete }: ProfileImportProps) => {
   const [loading, setLoading] = useState(false);
   const [profileData, setProfileData] = useState<ProfileData | null>(null);
   const [linkedinUrl, setLinkedinUrl] = useState("");
@@ -72,8 +71,21 @@ export const ProfileImport = ({ onComplete, onSkip }: ProfileImportProps) => {
     }
 
     setLoading(true);
-    toast.info("LinkedIn import coming soon! Use resume upload or manual entry for now.");
-    setLoading(false);
+    try {
+      const { data, error } = await supabase.functions.invoke('import-linkedin-profile', {
+        body: { linkedinUrl },
+      });
+
+      if (error) throw error;
+
+      setProfileData(data.profile);
+      toast.success("LinkedIn profile imported successfully!");
+    } catch (error) {
+      console.error('Error importing LinkedIn profile:', error);
+      toast.error("Failed to import LinkedIn profile. Please try resume upload instead.");
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleGithubImport = async () => {
@@ -125,16 +137,18 @@ export const ProfileImport = ({ onComplete, onSkip }: ProfileImportProps) => {
       <div className="text-center space-y-2">
         <h2 className="text-2xl font-bold">Import Your Profile</h2>
         <p className="text-muted-foreground">
-          Choose how you'd like to set up your profile
+          Please import your profile to continue
+        </p>
+        <p className="text-sm text-primary font-medium">
+          This step is required to create your account
         </p>
       </div>
 
       <Tabs defaultValue="resume" className="w-full">
-        <TabsList className="grid w-full grid-cols-4">
+        <TabsList className="grid w-full grid-cols-3">
           <TabsTrigger value="resume">Resume</TabsTrigger>
           <TabsTrigger value="linkedin">LinkedIn</TabsTrigger>
           <TabsTrigger value="github">GitHub</TabsTrigger>
-          <TabsTrigger value="manual">Manual</TabsTrigger>
         </TabsList>
 
         <TabsContent value="resume" className="space-y-4">
@@ -212,32 +226,7 @@ export const ProfileImport = ({ onComplete, onSkip }: ProfileImportProps) => {
           </Card>
         </TabsContent>
 
-        <TabsContent value="manual" className="space-y-4">
-          <Card className="p-6 space-y-4">
-            <div className="flex items-center gap-3 mb-4">
-              <div className="p-3 rounded-lg bg-primary/10">
-                <FileText className="w-6 h-6 text-primary" />
-              </div>
-              <div>
-                <h3 className="font-semibold">Manual Entry</h3>
-                <p className="text-sm text-muted-foreground">
-                  Fill out your profile manually
-                </p>
-              </div>
-            </div>
-
-            <Button onClick={onSkip} className="w-full">
-              Continue with Manual Entry
-            </Button>
-          </Card>
-        </TabsContent>
       </Tabs>
-
-      <div className="text-center">
-        <Button variant="ghost" onClick={onSkip}>
-          Skip for now
-        </Button>
-      </div>
     </div>
   );
 };

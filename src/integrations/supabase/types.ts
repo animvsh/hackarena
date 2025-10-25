@@ -1460,68 +1460,92 @@ export type Database = {
         Row: {
           avatar_url: string | null
           bio: string | null
+          certifications: Json | null
           correct_predictions: number | null
           created_at: string | null
           education: Json | null
           email: string | null
           experience: Json | null
           github_url: string | null
+          headline: string | null
           id: string
           linkedin_url: string | null
+          location: string | null
           onboarding_completed: boolean | null
           portfolio_url: string | null
+          privacy_settings: Json | null
+          profile_completeness: number | null
           profile_generated_by: string | null
+          projects: Json | null
           resume_url: string | null
           skills: Json | null
+          social_links: Json | null
           total_predictions: number | null
           updated_at: string | null
           username: string
           wallet_balance: number | null
           xp: number | null
+          years_of_experience: number | null
         }
         Insert: {
           avatar_url?: string | null
           bio?: string | null
+          certifications?: Json | null
           correct_predictions?: number | null
           created_at?: string | null
           education?: Json | null
           email?: string | null
           experience?: Json | null
           github_url?: string | null
+          headline?: string | null
           id?: string
           linkedin_url?: string | null
+          location?: string | null
           onboarding_completed?: boolean | null
           portfolio_url?: string | null
+          privacy_settings?: Json | null
+          profile_completeness?: number | null
           profile_generated_by?: string | null
+          projects?: Json | null
           resume_url?: string | null
           skills?: Json | null
+          social_links?: Json | null
           total_predictions?: number | null
           updated_at?: string | null
           username: string
           wallet_balance?: number | null
           xp?: number | null
+          years_of_experience?: number | null
         }
         Update: {
           avatar_url?: string | null
           bio?: string | null
+          certifications?: Json | null
           correct_predictions?: number | null
           created_at?: string | null
           education?: Json | null
           email?: string | null
           experience?: Json | null
           github_url?: string | null
+          headline?: string | null
           id?: string
           linkedin_url?: string | null
+          location?: string | null
           onboarding_completed?: boolean | null
           portfolio_url?: string | null
+          privacy_settings?: Json | null
+          profile_completeness?: number | null
           profile_generated_by?: string | null
+          projects?: Json | null
           resume_url?: string | null
           skills?: Json | null
+          social_links?: Json | null
           total_predictions?: number | null
           updated_at?: string | null
           username?: string
           wallet_balance?: number | null
           xp?: number | null
+          years_of_experience?: number | null
         }
         Relationships: []
       }

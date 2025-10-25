@@ -51,6 +51,10 @@ export const Header = () => {
               </button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-48">
+              <DropdownMenuItem onClick={() => navigate('/profile')}>
+                <User className="mr-2 h-4 w-4" />
+                My Profile
+              </DropdownMenuItem>
               <DropdownMenuItem onClick={() => navigate('/wallet')}>
                 <Wallet className="mr-2 h-4 w-4" />
                 Wallet
