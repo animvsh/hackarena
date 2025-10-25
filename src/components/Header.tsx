@@ -1,4 +1,4 @@
-import { Search, Bell, User, Wallet, Settings, LogOut } from "lucide-react";
+import { Search, Bell, User, Wallet, Settings, LogOut, Pencil } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
 import { useAuth } from "@/contexts/AuthContext";
@@ -43,7 +43,8 @@ export const Header = () => {
                   <p className="text-sm font-semibold">{profile.username}</p>
                   <p className="text-xs text-muted-foreground capitalize">{profile.roles[0] || 'User'}</p>
                 </div>
-                <Avatar className="w-10 h-10">
+                <Avatar className="w-10 h-10 border-2 border-primary/20">
+                  <AvatarImage src={profile.avatar_url || undefined} />
                   <AvatarFallback className="bg-primary text-primary-foreground">
                     {profile.username.substring(0, 2).toUpperCase()}
                   </AvatarFallback>
@@ -54,6 +55,10 @@ export const Header = () => {
               <DropdownMenuItem onClick={() => navigate('/profile')}>
                 <User className="mr-2 h-4 w-4" />
                 My Profile
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => navigate('/profile/edit')}>
+                <Pencil className="mr-2 h-4 w-4" />
+                Edit Profile
               </DropdownMenuItem>
               <DropdownMenuItem onClick={() => navigate('/wallet')}>
                 <Wallet className="mr-2 h-4 w-4" />
