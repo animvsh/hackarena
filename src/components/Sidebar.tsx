@@ -1,72 +1,84 @@
-import { Home, MessageCircle, Users, Calendar, BarChart3, Star, Settings, LogOut } from "lucide-react";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
+import { Tv, TrendingUp, Users, BarChart3, Radio, Trophy, Wallet, Settings, LogOut } from "lucide-react";
+import { Link, useLocation } from "react-router-dom";
 
 const navItems = [
-  { icon: Home, label: "Overview", active: true },
-  { icon: MessageCircle, label: "Messages", badge: "8" },
-  { icon: Users, label: "Clients" },
-  { icon: Calendar, label: "Content Planner" },
-  { icon: BarChart3, label: "Bot Analytics", badge: "NEW", badgeVariant: "info" as const },
-  { icon: Star, label: "Testimonials" },
+  { icon: Tv, label: "Live Broadcast", route: "/", badge: "LIVE" },
+  { icon: TrendingUp, label: "Markets", route: "/markets" },
+  { icon: Users, label: "Teams", route: "/teams" },
+  { icon: BarChart3, label: "Leaderboard", route: "/leaderboard" },
+  { icon: Radio, label: "Commentary", route: "/radio" },
+  { icon: Trophy, label: "Sponsors", route: "/sponsors" },
+  { icon: Wallet, label: "My Wallet", route: "/wallet" },
 ];
 
 export const Sidebar = () => {
+  const location = useLocation();
+  
   return (
-    <aside className="w-[220px] bg-card border-r border-border flex flex-col p-4">
+    <aside className="w-64 bg-card border-r border-border p-6 flex flex-col">
       {/* Logo */}
-      <div className="flex items-center gap-2 mb-8">
-        <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
-          <div className="w-5 h-5 bg-foreground rounded-sm transform rotate-45"></div>
-        </div>
-        <span className="text-xl font-bold">kreatop</span>
+      <div className="mb-8">
+        <h1 className="text-2xl font-bold">
+          <span className="text-primary">HackCast</span>
+          <span className="text-muted-foreground text-sm ml-2">LIVE</span>
+        </h1>
       </div>
 
       {/* Navigation */}
-      <nav className="flex-1 space-y-1">
-        {navItems.map((item) => (
-          <button
-            key={item.label}
-            className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-colors ${
-              item.active
-                ? "bg-primary text-primary-foreground"
-                : "text-muted-foreground hover:bg-secondary hover:text-foreground"
-            }`}
-          >
-            <item.icon className="w-4 h-4" />
-            <span className="flex-1 text-left">{item.label}</span>
-            {item.badge && (
-              <Badge 
-                variant={item.badgeVariant === "info" ? "default" : "secondary"}
-                className={item.badgeVariant === "info" ? "bg-info text-info-foreground" : "bg-info text-info-foreground"}
-              >
-                {item.badge}
-              </Badge>
-            )}
-          </button>
-        ))}
-
-        <button className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium text-muted-foreground hover:bg-secondary hover:text-foreground transition-colors">
-          <Settings className="w-4 h-4" />
-          <span className="flex-1 text-left">Settings</span>
-        </button>
-
-        <button className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium text-muted-foreground hover:bg-secondary hover:text-foreground transition-colors">
-          <LogOut className="w-4 h-4" />
-          <span className="flex-1 text-left">Logout</span>
-        </button>
+      <nav className="flex-1 space-y-2">
+        {navItems.map((item, index) => {
+          const Icon = item.icon;
+          const isActive = location.pathname === item.route;
+          return (
+            <Link
+              key={index}
+              to={item.route}
+              className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-colors ${
+                isActive
+                  ? "bg-primary text-primary-foreground"
+                  : "hover:bg-secondary text-muted-foreground"
+              }`}
+            >
+              <Icon className="w-5 h-5" />
+              <span className="font-medium">{item.label}</span>
+              {item.badge && (
+                <span className={`ml-auto text-xs px-2 py-0.5 rounded-full ${
+                  item.badge === "LIVE" 
+                    ? "bg-destructive text-destructive-foreground animate-pulse" 
+                    : "bg-primary/20 text-primary"
+                }`}>
+                  {item.badge}
+                </span>
+              )}
+            </Link>
+          );
+        })}
       </nav>
 
-      {/* Upgrade Section */}
-      <div className="mt-auto pt-6">
-        <div className="bg-secondary rounded-2xl p-6 text-center">
-          <div className="w-12 h-12 bg-primary rounded-2xl flex items-center justify-center mx-auto mb-4">
-            <div className="w-6 h-6 bg-foreground rounded transform rotate-45"></div>
+      {/* Settings & Logout */}
+      <div className="mt-6 space-y-2">
+        <button className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium text-muted-foreground hover:bg-secondary transition-colors">
+          <Settings className="w-5 h-5" />
+          <span>Settings</span>
+        </button>
+        <button className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium text-muted-foreground hover:bg-secondary transition-colors">
+          <LogOut className="w-5 h-5" />
+          <span>Logout</span>
+        </button>
+      </div>
+
+      {/* HackCast Info */}
+      <div className="mt-6 bg-gradient-to-br from-primary/10 to-neon-blue/10 rounded-2xl p-6 relative overflow-hidden border border-primary/20">
+        <div className="absolute top-0 right-0 w-20 h-20 bg-primary/20 rounded-full -mr-10 -mt-10"></div>
+        <div className="relative z-10">
+          <div className="flex items-center gap-2 mb-2">
+            <div className="w-2 h-2 bg-destructive rounded-full animate-pulse"></div>
+            <span className="text-xs font-bold text-destructive">BROADCASTING</span>
           </div>
-          <h3 className="font-bold text-sm mb-2">Kreto AI Ready to Help You Grow.</h3>
-          <Button className="w-full bg-primary text-primary-foreground hover:bg-primary/90 mt-4">
-            Upgrade Now
-          </Button>
+          <h3 className="font-bold text-sm mb-1">ESPN for Hackathons</h3>
+          <p className="text-xs text-muted-foreground">
+            Real-time predictions & AI commentary
+          </p>
         </div>
       </div>
     </aside>
