@@ -195,7 +195,6 @@ export default function Onboarding() {
         <div className="w-full max-w-2xl">
           <ProfileImport
             onComplete={handleProfileImport}
-            onSkip={() => setStep(3)}
           />
         </div>
       </div>
