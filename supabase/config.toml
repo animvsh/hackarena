@@ -11,3 +11,6 @@ verify_jwt = true
 
 [functions.manage-join-request]
 verify_jwt = true
+
+[functions.generate-broadcast-commentary]
+verify_jwt = false
