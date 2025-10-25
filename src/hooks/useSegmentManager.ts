@@ -22,7 +22,7 @@ const BUMPER_OUT_DURATION = 1500; // 1.5s
 const TRANSITION_DURATION = 1000; // 1s
 
 export function useSegmentManager() {
-  const { generateSegment } = useSegmentContent();
+  const { generateSegment, injectBreakingNews } = useSegmentContent();
   const [currentSceneIndex, setCurrentSceneIndex] = useState(0);
   const [phase, setPhase] = useState<SegmentPhase>('BUMPER_IN');
   const [segmentContent, setSegmentContent] = useState<SegmentContent | null>(null);
@@ -37,13 +37,19 @@ export function useSegmentManager() {
   // Initialize segment content when scene changes
   useEffect(() => {
     setIsInitializing(true);
-    const content = generateSegment(currentScene);
-    setSegmentContent(content);
-    setCurrentCommentaryIndex(0);
-    setProgressPercent(0);
-    // Allow state machine to run on next tick
-    setTimeout(() => setIsInitializing(false), 0);
-  }, [currentScene]); // Remove generateSegment from dependencies
+    
+    // Generate segment asynchronously
+    const loadSegment = async () => {
+      const content = await generateSegment(currentScene);
+      setSegmentContent(content);
+      setCurrentCommentaryIndex(0);
+      setProgressPercent(0);
+      // Allow state machine to run on next tick
+      setTimeout(() => setIsInitializing(false), 0);
+    };
+    
+    loadSegment();
+  }, [currentScene, generateSegment]);
 
   // Segment flow state machine
   useEffect(() => {
@@ -138,6 +144,7 @@ export function useSegmentManager() {
     sceneIndex: currentSceneIndex,
     totalScenes: SCENE_SEQUENCE.length,
     commentaryIndex: currentCommentaryIndex,
-    totalCommentary: segmentContent?.commentary.length || 0
+    totalCommentary: segmentContent?.commentary.length || 0,
+    injectBreakingNews
   };
 }

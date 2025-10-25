@@ -23,10 +23,14 @@ import { EventAnimations } from './effects/EventAnimations';
 import { ProductionEffects } from './effects/ProductionEffects';
 import { useSegmentManager } from '@/hooks/useSegmentManager';
 import { useBroadcastState } from '@/hooks/useBroadcastState';
+import { useRealtimeBroadcastEvents } from '@/hooks/useRealtimeBroadcastEvents';
 import { selectPersonalityForScene } from '@/types/broadcastPersonality';
 import type { BroadcastScene } from '@/types/broadcast';
+import { useToast } from '@/hooks/use-toast';
 
 export function EnhancedBroadcastVideoPlayer() {
+  const { toast } = useToast();
+  
   // Segment-driven content management
   const {
     currentScene,
@@ -39,7 +43,8 @@ export function EnhancedBroadcastVideoPlayer() {
     isTransitioning,
     progressPercent,
     commentaryIndex,
-    totalCommentary
+    totalCommentary,
+    injectBreakingNews
   } = useSegmentManager();
   
   const {
@@ -56,6 +61,23 @@ export function EnhancedBroadcastVideoPlayer() {
   
   // Auto camera movement
   const cameraMovement = useAutoCameraMovement(20000);
+
+  // Real-time event integration
+  useRealtimeBroadcastEvents((event) => {
+    console.log('📡 Broadcast event received:', event);
+    
+    // Show toast for breaking news
+    if (event.priority === 'breaking') {
+      toast({
+        title: "🔴 BREAKING NEWS",
+        description: `${event.teamName}: ${event.metricType} - ${event.currentValue}`,
+        duration: 5000,
+      });
+    }
+
+    // Inject into segment flow
+    injectBreakingNews(event);
+  });
 
   // Show chyron at start of each segment
   useEffect(() => {
