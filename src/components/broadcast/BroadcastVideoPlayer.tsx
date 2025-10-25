@@ -23,7 +23,11 @@ export function BroadcastVideoPlayer() {
   
   const { currentDialogue } = useBroadcastDialogue(narratives);
   
-  const currentNarrative = currentDialogue?.text || "Good evening, and welcome to HackCast Live. We're bringing you real-time coverage from the hackathon floor where teams are competing in real-time.";
+  // Use real-time commentary or default welcome message
+  const currentNarrative = currentDialogue?.text || (
+    commentary?.text || 
+    "Good evening, and welcome to HackCast Live. We're bringing you real-time coverage from the hackathon floor where teams are competing for glory."
+  );
   const activeAnchor = currentDialogue?.anchor || 'left';
 
   return (
@@ -39,7 +43,7 @@ export function BroadcastVideoPlayer() {
           <BroadcastCharacter 
             narrative={currentNarrative}
             isLive={isLive}
-            isSpeaking={false}
+            isSpeaking={!!commentary}
             activeAnchor={activeAnchor}
           />
         </div>
