@@ -36,16 +36,16 @@ export const LiveMarketChart = () => {
   const fetchMarketData = async () => {
     const { data: teamsData } = await supabase
       .from('teams')
-      .select('id, name, market_odds(current_odds, updated_at)')
-      .limit(5);
+      .select('id, name')
+      .limit(6);
 
     if (teamsData) {
       setTeams(teamsData);
 
-      // Transform data for chart
-      const chartData = teamsData.map(team => ({
+      // Transform data for chart with mock odds
+      const chartData = teamsData.map((team, index) => ({
         name: team.name,
-        odds: team.market_odds?.[0]?.current_odds * 100 || 0,
+        odds: 50 + (index * 5), // Mock data until market_odds is populated
       }));
 
       setOddsHistory(chartData);

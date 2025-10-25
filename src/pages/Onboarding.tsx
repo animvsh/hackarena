@@ -1,0 +1,219 @@
+import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { useAuth } from '@/contexts/AuthContext';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+import { Label } from '@/components/ui/label';
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
+import { supabase } from '@/integrations/supabase/client';
+import { toast } from 'sonner';
+import { Users, Trophy, Briefcase, Award, Coins } from 'lucide-react';
+
+const roleOptions = [
+  { value: 'spectator', label: 'Spectator', icon: Users, description: 'Watch and predict outcomes' },
+  { value: 'hacker', label: 'Hacker', icon: Trophy, description: 'Join or create teams' },
+  { value: 'sponsor', label: 'Sponsor', icon: Briefcase, description: 'View analytics (requires approval)' },
+  { value: 'judge', label: 'Judge', icon: Award, description: 'Evaluate projects (requires approval)' }
+];
+
+export default function Onboarding() {
+  const [step, setStep] = useState(1);
+  const [role, setRole] = useState('spectator');
+  const [profileData, setProfileData] = useState({
+    username: '',
+    bio: '',
+    githubUsername: ''
+  });
+  const { user, profile } = useAuth();
+  const navigate = useNavigate();
+
+  const handleRoleSubmit = async () => {
+    if (!user) return;
+    
+    try {
+      await supabase
+        .from('user_roles')
+        .insert({ user_id: user.id, role: role as any });
+      
+      setStep(3);
+    } catch (error) {
+      toast.error('Failed to save role');
+    }
+  };
+
+  const handleProfileSubmit = async () => {
+    if (!user) return;
+    
+    try {
+      await supabase
+        .from('users')
+        .update({
+          username: profileData.username || profile?.username
+        })
+        .eq('id', user.id);
+      
+      setStep(4);
+    } catch (error) {
+      toast.error('Failed to save profile');
+    }
+  };
+
+  const handleComplete = () => {
+    toast.success('Welcome to HackCast LIVE! 🎉');
+    navigate('/');
+  };
+
+  if (step === 1) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background p-4">
+        <Card className="w-full max-w-2xl">
+          <CardHeader className="text-center">
+            <div className="flex items-center justify-center gap-2 mb-4">
+              <h1 className="text-3xl font-bold text-primary">HackCast LIVE</h1>
+              <div className="flex items-center gap-2 px-3 py-1 bg-destructive/10 rounded-full">
+                <div className="w-2 h-2 bg-destructive rounded-full animate-pulse"></div>
+                <span className="text-xs font-bold text-destructive">BROADCASTING</span>
+              </div>
+            </div>
+            <CardTitle className="text-3xl">Welcome! 🚀</CardTitle>
+            <CardDescription className="text-lg mt-2">
+              The world's first AI-powered hackathon prediction market
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-6">
+            <div className="space-y-4">
+              <p className="text-muted-foreground">
+                Predict team outcomes, earn HackCoins, and experience real-time AI commentary as hackers build amazing projects.
+              </p>
+              <div className="grid grid-cols-3 gap-4 text-center">
+                <div className="p-4 bg-secondary rounded-lg">
+                  <p className="text-2xl font-bold text-primary">Live</p>
+                  <p className="text-sm text-muted-foreground">Markets</p>
+                </div>
+                <div className="p-4 bg-secondary rounded-lg">
+                  <p className="text-2xl font-bold text-primary">AI</p>
+                  <p className="text-sm text-muted-foreground">Commentary</p>
+                </div>
+                <div className="p-4 bg-secondary rounded-lg">
+                  <p className="text-2xl font-bold text-primary">Real</p>
+                  <p className="text-sm text-muted-foreground">Rewards</p>
+                </div>
+              </div>
+            </div>
+            <Button onClick={() => setStep(2)} className="w-full" size="lg">
+              Get Started
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
+  if (step === 2) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background p-4">
+        <Card className="w-full max-w-2xl">
+          <CardHeader>
+            <CardTitle>Choose Your Role</CardTitle>
+            <CardDescription>Select how you'd like to participate</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-6">
+            <RadioGroup value={role} onValueChange={setRole}>
+              {roleOptions.map((option) => {
+                const Icon = option.icon;
+                return (
+                  <div key={option.value} className="flex items-center space-x-3 p-4 border rounded-lg hover:bg-secondary cursor-pointer">
+                    <RadioGroupItem value={option.value} id={option.value} />
+                    <Label htmlFor={option.value} className="flex items-center gap-3 cursor-pointer flex-1">
+                      <Icon className="h-6 w-6 text-primary" />
+                      <div className="flex-1">
+                        <p className="font-semibold">{option.label}</p>
+                        <p className="text-sm text-muted-foreground">{option.description}</p>
+                      </div>
+                    </Label>
+                  </div>
+                );
+              })}
+            </RadioGroup>
+            <div className="flex gap-4">
+              <Button variant="outline" onClick={() => setStep(1)}>Back</Button>
+              <Button onClick={handleRoleSubmit} className="flex-1">Continue</Button>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
+  if (step === 3) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background p-4">
+        <Card className="w-full max-w-2xl">
+          <CardHeader>
+            <CardTitle>Complete Your Profile</CardTitle>
+            <CardDescription>Tell us a bit about yourself (optional)</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-6">
+            <div className="space-y-2">
+              <Label htmlFor="username">Display Name</Label>
+              <Input
+                id="username"
+                placeholder={profile?.username || 'Your username'}
+                value={profileData.username}
+                onChange={(e) => setProfileData({ ...profileData, username: e.target.value })}
+              />
+            </div>
+            {role === 'hacker' && (
+              <div className="space-y-2">
+                <Label htmlFor="github">GitHub Username</Label>
+                <Input
+                  id="github"
+                  placeholder="octocat"
+                  value={profileData.githubUsername}
+                  onChange={(e) => setProfileData({ ...profileData, githubUsername: e.target.value })}
+                />
+              </div>
+            )}
+            <div className="flex gap-4">
+              <Button variant="outline" onClick={() => setStep(2)}>Back</Button>
+              <Button onClick={handleProfileSubmit} className="flex-1">Continue</Button>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
+  return (
+    <div className="min-h-screen flex items-center justify-center bg-background p-4">
+      <Card className="w-full max-w-2xl">
+        <CardHeader className="text-center">
+          <Coins className="h-16 w-16 text-primary mx-auto mb-4" />
+          <CardTitle className="text-3xl">You're All Set! 🎉</CardTitle>
+          <CardDescription className="text-lg mt-2">
+            Start with 1,000 HackCoins
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-6">
+          <div className="bg-primary/10 rounded-lg p-6 text-center">
+            <p className="text-4xl font-bold text-primary mb-2">1,000 HC</p>
+            <p className="text-muted-foreground">Your starting balance</p>
+          </div>
+          <div className="space-y-3">
+            <h3 className="font-semibold">How to earn more:</h3>
+            <ul className="space-y-2 text-sm text-muted-foreground">
+              <li>✓ Make accurate predictions on team outcomes</li>
+              <li>✓ Bet on trending teams early</li>
+              <li>✓ Win big in prediction markets</li>
+            </ul>
+          </div>
+          <Button onClick={handleComplete} className="w-full" size="lg">
+            Start Exploring
+          </Button>
+        </CardContent>
+      </Card>
+    </div>
+  );
+}

@@ -1,5 +1,8 @@
 import { Tv, TrendingUp, Users, BarChart3, Radio, Trophy, Wallet, Settings, LogOut } from "lucide-react";
-import { Link, useLocation } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
+import { useAuth } from "@/contexts/AuthContext";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Badge } from "@/components/ui/badge";
 
 const navItems = [
   { icon: Tv, label: "Live Broadcast", route: "/", badge: "LIVE" },
@@ -13,6 +16,13 @@ const navItems = [
 
 export const Sidebar = () => {
   const location = useLocation();
+  const navigate = useNavigate();
+  const { user, profile, signOut } = useAuth();
+
+  const handleLogout = async () => {
+    await signOut();
+    navigate('/auth');
+  };
   
   return (
     <aside className="w-64 bg-card border-r border-border p-6 flex flex-col">
@@ -23,6 +33,29 @@ export const Sidebar = () => {
           <span className="text-muted-foreground text-sm ml-2">LIVE</span>
         </h1>
       </div>
+
+      {/* User Profile */}
+      {user && profile && (
+        <div className="mb-6 p-4 bg-secondary rounded-xl">
+          <div className="flex items-center gap-3">
+            <Avatar>
+              <AvatarFallback className="bg-primary text-primary-foreground">
+                {profile.username.substring(0, 2).toUpperCase()}
+              </AvatarFallback>
+            </Avatar>
+            <div className="flex-1 min-w-0">
+              <p className="font-semibold truncate text-sm">{profile.username}</p>
+              <div className="flex gap-1 mt-1">
+                {profile.roles.map(role => (
+                  <Badge key={role} variant="secondary" className="text-xs">
+                    {role}
+                  </Badge>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Navigation */}
       <nav className="flex-1 space-y-2">
@@ -57,14 +90,28 @@ export const Sidebar = () => {
 
       {/* Settings & Logout */}
       <div className="mt-6 space-y-2">
-        <button className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium text-muted-foreground hover:bg-secondary transition-colors">
-          <Settings className="w-5 h-5" />
-          <span>Settings</span>
-        </button>
-        <button className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium text-muted-foreground hover:bg-secondary transition-colors">
-          <LogOut className="w-5 h-5" />
-          <span>Logout</span>
-        </button>
+        {user ? (
+          <>
+            <button className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium text-muted-foreground hover:bg-secondary transition-colors">
+              <Settings className="w-5 h-5" />
+              <span>Settings</span>
+            </button>
+            <button 
+              onClick={handleLogout}
+              className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium text-muted-foreground hover:bg-secondary transition-colors"
+            >
+              <LogOut className="w-5 h-5" />
+              <span>Logout</span>
+            </button>
+          </>
+        ) : (
+          <Link 
+            to="/auth"
+            className="w-full flex items-center justify-center gap-3 px-4 py-3 rounded-xl bg-primary text-primary-foreground hover:bg-primary/90 transition-colors font-medium text-sm"
+          >
+            Sign In
+          </Link>
+        )}
       </div>
 
       {/* HackCast Info */}
