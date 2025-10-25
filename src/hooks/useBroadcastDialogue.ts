@@ -40,8 +40,9 @@ export function useBroadcastDialogue(narratives: Array<{ id: string; text: strin
     setCurrentDialogue(nextDialogue);
     setLastAnchor(nextDialogue.anchor);
 
-    // Calculate duration based on text length (roughly 50ms per character + 2s buffer)
-    const duration = Math.max(nextDialogue.text.length * 50, 3000);
+    // Calculate duration based on word count (200ms per word + 1s buffer)
+    const wordCount = nextDialogue.text.split(' ').length;
+    const duration = Math.max(wordCount * 200 + 1000, 3000);
 
     const timer = setTimeout(() => {
       setCurrentDialogue(null);

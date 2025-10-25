@@ -5,6 +5,9 @@ import { TickerTape } from './TickerTape';
 import { LiveViewersCounter } from './LiveViewersCounter';
 import { NewsStudioBackground } from './NewsStudioBackground';
 import { NewsDeskOverlay } from './NewsDeskOverlay';
+import { BreakingNewsBanner } from './BreakingNewsBanner';
+import { LiveScoreBoard } from './LiveScoreBoard';
+import { ClockAndDate } from './ClockAndDate';
 import { useSceneRotation } from '@/hooks/useSceneRotation';
 import { useAIBroadcastContent } from '@/hooks/useAIBroadcastContent';
 import { useBroadcastDialogue } from '@/hooks/useBroadcastDialogue';
@@ -46,11 +49,21 @@ export function BroadcastVideoPlayer() {
           <NewsDeskOverlay />
         </div>
 
-        {/* Layer 3: Lower third banner */}
-        {bannerText && (
+        {/* Layer 3: Breaking News Banner (if priority is high) */}
+        {bannerText && bannerText.priority === 'breaking' && (
+          <div className="absolute inset-0 z-50">
+            <BreakingNewsBanner
+              teamName={bannerText.team_name || 'Breaking News'}
+              text={bannerText.text}
+            />
+          </div>
+        )}
+
+        {/* Layer 3: Lower third banner (normal priority) */}
+        {bannerText && bannerText.priority !== 'breaking' && (
           <div className="absolute inset-0 z-30">
             <LowerThirdBanner
-              teamName={bannerText.team_name || 'Breaking News'}
+              teamName={bannerText.team_name || 'Update'}
               metric={bannerText.text}
               value={0}
               change={0}
@@ -68,8 +81,18 @@ export function BroadcastVideoPlayer() {
           <BroadcastHeader currentScene={currentScene} isLive={isLive} />
         </div>
         
+        {/* Clock and Date */}
+        <div className="absolute top-0 left-0 z-40">
+          <ClockAndDate />
+        </div>
+        
+        {/* Live Scoreboard */}
+        <div className="absolute top-0 right-0 z-40">
+          <LiveScoreBoard />
+        </div>
+        
         {/* Live Viewers Counter */}
-        <div className="absolute top-4 right-4 z-40">
+        <div className="absolute bottom-10 right-4 z-40">
           <LiveViewersCounter />
         </div>
       </div>
