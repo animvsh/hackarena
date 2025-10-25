@@ -18,9 +18,10 @@ import { ChyronLower } from './graphics/ChyronLower';
 import { InfoBar } from './graphics/InfoBar';
 import { SegmentBumper } from './graphics/SegmentBumper';
 import { Watermark } from './graphics/Watermark';
-import { CameraEffects, useAutoCameraMovement } from './effects/CameraEffects';
+import { CameraEffects } from './effects/CameraEffects';
 import { EventAnimations } from './effects/EventAnimations';
 import { ProductionEffects } from './effects/ProductionEffects';
+import { VideoPlayerControls } from './VideoPlayerControls';
 import { useSegmentManager } from '@/hooks/useSegmentManager';
 import { useBroadcastState } from '@/hooks/useBroadcastState';
 import { useRealtimeBroadcastEvents } from '@/hooks/useRealtimeBroadcastEvents';
@@ -58,9 +59,8 @@ export function EnhancedBroadcastVideoPlayer() {
   const [showEventAnimation, setShowEventAnimation] = useState(false);
   const [eventType, setEventType] = useState<'big-bet' | 'odds-surge' | 'team-milestone' | 'prediction-win' | 'market-close'>('big-bet');
   const [showChyron, setShowChyron] = useState(false);
-  
-  // Auto camera movement
-  const cameraMovement = useAutoCameraMovement(20000);
+  const [controlsVisible, setControlsVisible] = useState(false);
+  const [controlsTimeout, setControlsTimeout] = useState<NodeJS.Timeout | null>(null);
 
   // Real-time event integration
   useRealtimeBroadcastEvents((event) => {
@@ -121,6 +121,16 @@ export function EnhancedBroadcastVideoPlayer() {
     p.position === (activePersonality === 'left' ? 'left' : 'right')
   ) || personalities[0];
 
+  const isLive = broadcastState === 'live';
+
+  const togglePlayPause = () => {
+    if (broadcastState === 'live') {
+      startCommercialBreak();
+    } else {
+      goLive();
+    }
+  };
+
   // Show splash screen
   if (broadcastState === 'splash') {
     return <BroadcastSplashScreen onComplete={goLive} />;
@@ -131,13 +141,62 @@ export function EnhancedBroadcastVideoPlayer() {
     return <CommercialBreak duration={30} onComplete={endCommercialBreak} />;
   }
 
-  const isLive = broadcastState === 'live';
+  const handleFullscreen = () => {
+    const elem = document.querySelector('.video-player-container');
+    if (elem) {
+      if (!document.fullscreenElement) {
+        elem.requestFullscreen();
+      } else {
+        document.exitFullscreen();
+      }
+    }
+  };
+
+  const handleMouseMove = () => {
+    setControlsVisible(true);
+    if (controlsTimeout) {
+      clearTimeout(controlsTimeout);
+    }
+    const timeout = setTimeout(() => {
+      if (isLive) setControlsVisible(false);
+    }, 3000);
+    setControlsTimeout(timeout);
+  };
+
+  const handleMouseLeave = () => {
+    if (isLive) {
+      setControlsVisible(false);
+    }
+  };
+
+  const handleClick = () => {
+    togglePlayPause();
+  };
+
+  // Keyboard shortcuts
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.code === 'Space') {
+        e.preventDefault();
+        togglePlayPause();
+      } else if (e.code === 'KeyF') {
+        e.preventDefault();
+        handleFullscreen();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isLive, broadcastState]);
 
   return (
     <div className="w-full">
-      <div className="relative aspect-video bg-gradient-to-br from-broadcast-blue to-broadcast-blue-dark border border-border rounded-2xl overflow-hidden shadow-2xl">
+      <div 
+        className="video-player-container relative aspect-video bg-gradient-to-br from-broadcast-blue to-broadcast-blue-dark border border-border rounded-2xl overflow-hidden shadow-2xl group cursor-pointer"
+        onMouseMove={handleMouseMove}
+        onMouseLeave={handleMouseLeave}
+      >
         <ProductionEffects filmGrain vignette colorGrade="warm">
-          <CameraEffects movement={cameraMovement} intensity={0.5}>
+          <CameraEffects movement="static" intensity={0}>
             {/* Layer 0: Professional News Studio Background */}
             <div className="absolute inset-0 z-0">
               <NewsStudioBackground scene={currentScene} />
@@ -280,41 +339,72 @@ export function EnhancedBroadcastVideoPlayer() {
             )}
           </CameraEffects>
         </ProductionEffects>
+
+        {/* Click overlay for play/pause */}
+        <div 
+          className="absolute inset-0 z-[105]"
+          onClick={handleClick}
+        />
+
+        {/* Bottom gradient for controls */}
+        <div className={`absolute bottom-0 left-0 right-0 h-32 bg-gradient-to-t from-black/80 to-transparent z-[100] transition-opacity duration-300 ${
+          controlsVisible || !isLive ? 'opacity-100' : 'opacity-0'
+        }`} />
+
+        {/* Video player controls */}
+        <div className={`absolute bottom-0 left-0 right-0 z-[110] transition-opacity duration-300 ${
+          controlsVisible || !isLive ? 'opacity-100' : 'opacity-0'
+        }`}>
+          <VideoPlayerControls
+            isPlaying={isLive}
+            isLive={isLive}
+            progress={progressPercent}
+            onPlayPause={togglePlayPause}
+            onFullscreen={handleFullscreen}
+          />
+        </div>
+
+        {/* Dev tools - inside video container */}
+        {import.meta.env.DEV && (
+          <div className="absolute bottom-20 left-4 z-[115] opacity-50 hover:opacity-100 transition-opacity">
+            <div className="flex gap-2 flex-wrap max-w-xs">
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setEventType('big-bet');
+                  setShowEventAnimation(true);
+                }}
+                className="px-3 py-1.5 bg-yellow-500/90 text-black rounded-lg text-xs font-bold hover:bg-yellow-600 backdrop-blur-sm"
+              >
+                Big Bet
+              </button>
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setEventType('team-milestone');
+                  setShowEventAnimation(true);
+                }}
+                className="px-3 py-1.5 bg-purple-500/90 text-white rounded-lg text-xs font-bold hover:bg-purple-600 backdrop-blur-sm"
+              >
+                Milestone
+              </button>
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setEventType('odds-surge');
+                  setShowEventAnimation(true);
+                }}
+                className="px-3 py-1.5 bg-green-500/90 text-white rounded-lg text-xs font-bold hover:bg-green-600 backdrop-blur-sm"
+              >
+                Odds Surge
+              </button>
+            </div>
+          </div>
+        )}
       </div>
 
-      {/* Test Panel for Development */}
-      <BroadcastTestPanel />
-      
-      {/* Debug: Trigger event animation button */}
-      <div className="mt-4 flex gap-2 flex-wrap">
-        <button
-          onClick={() => {
-            setEventType('big-bet');
-            setShowEventAnimation(true);
-          }}
-          className="px-4 py-2 bg-yellow-500 text-black rounded-lg text-sm font-bold hover:bg-yellow-600"
-        >
-          Trigger Big Bet
-        </button>
-        <button
-          onClick={() => {
-            setEventType('team-milestone');
-            setShowEventAnimation(true);
-          }}
-          className="px-4 py-2 bg-purple-500 text-white rounded-lg text-sm font-bold hover:bg-purple-600"
-        >
-          Trigger Milestone
-        </button>
-        <button
-          onClick={() => {
-            setEventType('odds-surge');
-            setShowEventAnimation(true);
-          }}
-          className="px-4 py-2 bg-green-500 text-white rounded-lg text-sm font-bold hover:bg-green-600"
-        >
-          Trigger Odds Surge
-        </button>
-      </div>
+      {/* Test Panel for Development - outside video but properly styled */}
+      {import.meta.env.DEV && <BroadcastTestPanel />}
     </div>
   );
 }
