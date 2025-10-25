@@ -27,9 +27,10 @@ const queryClient = new QueryClient();
 
 const App = () => {
   const [showSplash, setShowSplash] = useState(() => {
-    // Only show splash on first visit
     const hasVisited = localStorage.getItem('hasVisited');
-    return !hasVisited;
+    const currentPath = window.location.pathname;
+    // Skip splash on broadcast page or if already visited
+    return !hasVisited && currentPath !== '/broadcast';
   });
 
   const handleSplashComplete = () => {
