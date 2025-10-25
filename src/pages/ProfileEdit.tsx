@@ -10,9 +10,10 @@ import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { toast } from 'sonner';
-import { ArrowLeft, Plus, Trash2, Save, Loader2 } from 'lucide-react';
+import { ArrowLeft, Plus, Trash2, Save, Loader2, Unlink } from 'lucide-react';
 import { calculateProfileCompleteness } from '@/lib/profileCompleteness';
 import { Progress } from '@/components/ui/progress';
+import { PrivacySettings } from '@/components/profile/PrivacySettings';
 
 export default function ProfileEdit() {
   const { user } = useAuth();
@@ -49,6 +50,14 @@ export default function ProfileEdit() {
         education: data.education || [],
         certifications: data.certifications || [],
         projects: data.projects || [],
+        privacy_settings: data.privacy_settings || {
+          bio: 'public',
+          skills: 'public',
+          projects: 'public',
+          experience: 'public',
+          education: 'public',
+          betting: 'private'
+        },
       });
     } catch (error) {
       console.error('Error fetching profile:', error);
@@ -77,6 +86,9 @@ export default function ProfileEdit() {
           projects: profile.projects,
           portfolio_url: profile.portfolio_url,
           profile_completeness: completeness,
+          privacy_settings: profile.privacy_settings,
+          linkedin_url: profile.linkedin_url,
+          github_url: profile.github_url,
         })
         .eq('id', user!.id);
 
@@ -90,6 +102,50 @@ export default function ProfileEdit() {
     } finally {
       setSaving(false);
     }
+  };
+
+  const handleDisconnectLinkedIn = async () => {
+    try {
+      const { error } = await supabase
+        .from('users')
+        .update({ linkedin_url: null })
+        .eq('id', user!.id);
+
+      if (error) throw error;
+
+      setProfile({ ...profile, linkedin_url: null });
+      toast.success('LinkedIn account disconnected');
+    } catch (error) {
+      console.error('Error disconnecting LinkedIn:', error);
+      toast.error('Failed to disconnect LinkedIn');
+    }
+  };
+
+  const handleDisconnectGitHub = async () => {
+    try {
+      const { error } = await supabase
+        .from('users')
+        .update({ github_url: null })
+        .eq('id', user!.id);
+
+      if (error) throw error;
+
+      setProfile({ ...profile, github_url: null });
+      toast.success('GitHub account disconnected');
+    } catch (error) {
+      console.error('Error disconnecting GitHub:', error);
+      toast.error('Failed to disconnect GitHub');
+    }
+  };
+
+  const handlePrivacyChange = (section: string, value: string) => {
+    setProfile({
+      ...profile,
+      privacy_settings: {
+        ...profile.privacy_settings,
+        [section]: value,
+      },
+    });
   };
 
   const addSkill = () => {
@@ -582,6 +638,72 @@ export default function ProfileEdit() {
           ))}
         </div>
       </Card>
+
+      {/* Connected Accounts */}
+      <Card className="p-6 space-y-4">
+        <h2 className="text-2xl font-bold">Connected Accounts</h2>
+        <p className="text-sm text-muted-foreground">
+          Manage your connected social accounts
+        </p>
+
+        <div className="space-y-3">
+          {profile.linkedin_url && (
+            <div className="flex items-center justify-between p-4 bg-muted/30 rounded-lg">
+              <div className="flex items-center gap-3">
+                <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center">
+                  <span className="text-primary font-bold">in</span>
+                </div>
+                <div>
+                  <p className="font-semibold">LinkedIn</p>
+                  <p className="text-xs text-muted-foreground">Connected</p>
+                </div>
+              </div>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleDisconnectLinkedIn}
+              >
+                <Unlink className="h-4 w-4 mr-2" />
+                Disconnect
+              </Button>
+            </div>
+          )}
+
+          {profile.github_url && (
+            <div className="flex items-center justify-between p-4 bg-muted/30 rounded-lg">
+              <div className="flex items-center gap-3">
+                <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center">
+                  <span className="text-primary font-bold">GH</span>
+                </div>
+                <div>
+                  <p className="font-semibold">GitHub</p>
+                  <p className="text-xs text-muted-foreground">Connected</p>
+                </div>
+              </div>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleDisconnectGitHub}
+              >
+                <Unlink className="h-4 w-4 mr-2" />
+                Disconnect
+              </Button>
+            </div>
+          )}
+
+          {!profile.linkedin_url && !profile.github_url && (
+            <p className="text-sm text-muted-foreground text-center py-4">
+              No connected accounts. Connect accounts from your profile page.
+            </p>
+          )}
+        </div>
+      </Card>
+
+      {/* Privacy Settings */}
+      <PrivacySettings
+        settings={profile.privacy_settings || {}}
+        onChange={handlePrivacyChange}
+      />
 
       {/* Save Button */}
       <div className="flex justify-end gap-2 sticky bottom-0 bg-background/95 backdrop-blur p-4 border-t">
