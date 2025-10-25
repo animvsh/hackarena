@@ -231,6 +231,51 @@ export type Database = {
           },
         ]
       }
+      odds_history: {
+        Row: {
+          created_at: string | null
+          id: string
+          market_id: string | null
+          odds: number
+          team_id: string | null
+          timestamp: string | null
+          volume: number | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          market_id?: string | null
+          odds: number
+          team_id?: string | null
+          timestamp?: string | null
+          volume?: number | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          market_id?: string | null
+          odds?: number
+          team_id?: string | null
+          timestamp?: string | null
+          volume?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "odds_history_market_id_fkey"
+            columns: ["market_id"]
+            isOneToOne: false
+            referencedRelation: "prediction_markets"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "odds_history_team_id_fkey"
+            columns: ["team_id"]
+            isOneToOne: false
+            referencedRelation: "teams"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       prediction_markets: {
         Row: {
           category: string
