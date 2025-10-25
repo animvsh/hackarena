@@ -64,35 +64,25 @@ export function BroadcastCharacter({ narrative, isLive, isSpeaking = false }: Br
   if (!narrative) return null;
 
   return (
-    <div className="absolute bottom-20 left-8 z-30 flex items-end gap-4 animate-in slide-in-from-bottom-4 duration-500">
+    <div className="flex items-end gap-2 animate-in slide-in-from-bottom-2 duration-500">
       {/* Speech Bubble */}
-      <div className="relative bg-card/95 backdrop-blur-sm border-2 border-primary/30 rounded-2xl px-6 py-4 max-w-2xl shadow-2xl">
+      <div className="relative bg-card/95 backdrop-blur-sm border border-primary/30 rounded-lg px-3 py-2 max-w-xs shadow-lg">
         {/* Bubble tail */}
-        <div className="absolute -bottom-3 left-8 w-6 h-6 bg-card border-l-2 border-b-2 border-primary/30 transform rotate-45" />
+        <div className="absolute -bottom-1.5 left-4 w-3 h-3 bg-card border-l border-b border-primary/30 transform rotate-45" />
         
         {/* Content */}
         <div className="relative">
-          <p className="text-lg md:text-xl font-bold text-foreground leading-relaxed">
+          <p className="text-sm font-semibold text-foreground leading-snug">
             {displayedText}
             {isTyping && <span className="animate-pulse text-primary">|</span>}
           </p>
-          
-          {/* Live indicator inside bubble */}
-          {isLive && (
-            <div className="flex items-center gap-2 mt-2 pt-2 border-t border-primary/20">
-              <div className="w-2 h-2 bg-destructive rounded-full animate-pulse" />
-              <span className="text-xs font-bold text-muted-foreground uppercase tracking-wider">
-                LIVE
-              </span>
-            </div>
-          )}
         </div>
       </div>
 
       {/* Character Avatar */}
-      <div className="relative mb-2">
-        <div className={`w-24 h-24 rounded-full bg-gradient-to-br ${getCharacterColor()} flex items-center justify-center shadow-lg ring-4 ring-background`}>
-          <Mic className={`w-12 h-12 text-background ${characterState === 'speaking' ? 'animate-pulse' : ''}`} />
+      <div className="relative mb-1 flex-shrink-0">
+        <div className={`w-12 h-12 rounded-full bg-gradient-to-br ${getCharacterColor()} flex items-center justify-center shadow-md ring-2 ring-background`}>
+          <Mic className={`w-6 h-6 text-background ${characterState === 'speaking' ? 'animate-pulse' : ''}`} />
         </div>
         
         {/* Speaking animation ring */}
