@@ -56,6 +56,12 @@ All colors MUST be HSL.
     --neon-blue: 199 89% 48%;
     --neon-purple: 270 80% 65%;
     --neon-pink: 330 85% 65%;
+    
+    /* Premium effects */
+    --glow-sm: 0 0 10px;
+    --glow-md: 0 0 20px;
+    --glow-lg: 0 0 40px;
+    --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   }
 }
 
@@ -65,7 +71,74 @@ All colors MUST be HSL.
   }
 
   body {
-    @apply bg-background text-foreground;
+    @apply bg-background text-foreground font-sans antialiased;
+  }
+}
+
+@layer components {
+  /* Glassmorphism utilities */
+  .glass {
+    background: rgba(255, 255, 255, 0.03);
+    backdrop-filter: blur(20px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+  }
+  
+  .glass-strong {
+    background: rgba(255, 255, 255, 0.05);
+    backdrop-filter: blur(30px);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+  }
+  
+  /* Glow effects */
+  .glow-primary {
+    box-shadow: 0 0 20px hsl(var(--primary) / 0.5);
+  }
+  
+  .glow-neon-blue {
+    box-shadow: 0 0 20px hsl(var(--neon-blue) / 0.5);
+  }
+  
+  .glow-neon-purple {
+    box-shadow: 0 0 20px hsl(var(--neon-purple) / 0.5);
+  }
+  
+  /* Hover effects */
+  .hover-lift {
+    transition: var(--transition-smooth);
+  }
+  
+  .hover-lift:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 12px 24px rgba(0, 0, 0, 0.3);
+  }
+  
+  .hover-glow:hover {
+    box-shadow: 0 0 30px hsl(var(--primary) / 0.6);
+  }
+  
+  /* Shimmer effect */
+  .shimmer {
+    background: linear-gradient(
+      90deg,
+      hsl(var(--muted)) 0%,
+      hsl(var(--muted) / 0.5) 50%,
+      hsl(var(--muted)) 100%
+    );
+    background-size: 200% 100%;
+    animation: shimmer 1.5s ease-in-out infinite;
+  }
+  
+  /* Gradient text */
+  .gradient-text {
+    background: linear-gradient(
+      135deg,
+      hsl(var(--primary)),
+      hsl(var(--neon-blue)),
+      hsl(var(--neon-purple))
+    );
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
   }
 }
 
@@ -141,5 +214,20 @@ All colors MUST be HSL.
 
   .animate-camera-shake {
     animation: camera-shake 0.5s ease-in-out;
+  }
+  
+  /* Shimmer animation for loading states */
+  @keyframes shimmer {
+    0% {
+      background-position: 200% 0;
+    }
+    100% {
+      background-position: -200% 0;
+    }
+  }
+  
+  /* Tabular numbers */
+  .tabular-nums {
+    font-variant-numeric: tabular-nums;
   }
 }
