@@ -24,6 +24,7 @@ import UserProfile from "./pages/UserProfile";
 import BetDetail from "./pages/BetDetail";
 import TeamInvite from "./pages/TeamInvite";
 import MyProfile from "./pages/MyProfile";
+import ProfileEdit from "./pages/ProfileEdit";
 
 const queryClient = new QueryClient();
 
@@ -61,6 +62,7 @@ const App = () => {
             <Route path="/teams/:teamId/settings" element={<ProtectedRoute><TeamSettings /></ProtectedRoute>} />
             <Route path="/users/:userId" element={<ProtectedRoute><UserProfile /></ProtectedRoute>} />
             <Route path="/profile" element={<ProtectedRoute><MyProfile /></ProtectedRoute>} />
+            <Route path="/profile/edit" element={<ProtectedRoute><ProfileEdit /></ProtectedRoute>} />
             <Route path="/leaderboard" element={<Leaderboard />} />
             <Route path="/radio" element={<RadioPage />} />
             <Route path="/sponsors" element={<Sponsors />} />
