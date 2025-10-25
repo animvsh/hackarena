@@ -7,6 +7,7 @@ import { TrendingTeams } from "@/components/TrendingTeams";
 import { RevenueDrivers } from "@/components/RevenueDrivers";
 import { LiveMarketChart } from "@/components/LiveMarketChart";
 import { LiveCommentaryTicker } from "@/components/LiveCommentaryTicker";
+import { BroadcastVideoPlayer } from "@/components/broadcast/BroadcastVideoPlayer";
 import { Users, TrendingUp, Zap, Trophy, Radio, BarChart3 } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
@@ -201,13 +202,18 @@ const Index = () => {
         </div>
 
         {/* Charts and Stats Grid */}
-        <div className="grid grid-cols-3 gap-6 mb-20">
+        <div className="grid grid-cols-3 gap-6 mb-6">
           <LiveMarketChart />
 
           <div className="space-y-6">
             <UserWallet />
             <TrendingTeams />
             <RevenueDrivers />
+          </div>
+
+          {/* Live Broadcast Widget */}
+          <div className="col-span-1">
+            <BroadcastVideoPlayer />
           </div>
         </div>
 
