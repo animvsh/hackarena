@@ -12,6 +12,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { StatsCard } from '@/components/profile/StatsCard';
 import { TeamActivityFeed } from '@/components/profile/TeamActivityFeed';
 import { QuickBetWidget } from '@/components/profile/QuickBetWidget';
+import { UserHoverCard } from '@/components/profile/UserHoverCard';
 import { useMarketOdds } from '@/hooks/useMarketOdds';
 import { useOddsHistory } from '@/hooks/useOddsHistory';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
@@ -307,22 +308,29 @@ export default function TeamProfile() {
                     <h3 className="font-semibold mb-4">Team Members ({members.length})</h3>
                     <div className="grid grid-cols-2 gap-4">
                       {members.map((member) => (
-                        <Card 
-                          key={member.id} 
-                          className="p-4 hover:border-primary/50 transition-colors cursor-pointer"
-                          onClick={() => member.user_id && navigate(`/users/${member.user_id}`)}
+                        <UserHoverCard
+                          key={member.id}
+                          userId={member.user_id || ''}
+                          username={member.users?.username || member.name}
+                          avatarUrl={member.users?.avatar_url}
                         >
-                          <div className="flex items-center gap-3">
-                            <Avatar>
-                              <AvatarImage src={member.users?.avatar_url} />
-                              <AvatarFallback>{member.name[0]}</AvatarFallback>
-                            </Avatar>
-                            <div>
-                              <p className="font-medium">{member.users?.username || member.name}</p>
-                              <p className="text-sm text-muted-foreground">{member.role}</p>
+                          <Card className="p-4 hover:border-primary/50 transition-colors">
+                            <div className="flex items-center gap-3">
+                              <Avatar className="border-2 border-primary/20">
+                                <AvatarImage src={member.users?.avatar_url} />
+                                <AvatarFallback className="bg-primary/10">
+                                  {(member.users?.username || member.name)[0].toUpperCase()}
+                                </AvatarFallback>
+                              </Avatar>
+                              <div>
+                                <p className="font-medium hover:text-primary transition-colors">
+                                  {member.users?.username || member.name}
+                                </p>
+                                <p className="text-sm text-muted-foreground">{member.role}</p>
+                              </div>
                             </div>
-                          </div>
-                        </Card>
+                          </Card>
+                        </UserHoverCard>
                       ))}
                     </div>
                   </Card>

@@ -36,9 +36,12 @@ export const Sidebar = () => {
 
       {/* User Profile */}
       {user && profile && (
-        <div className="mb-6 p-4 bg-secondary rounded-xl">
+        <div 
+          className="mb-6 p-4 bg-secondary rounded-xl cursor-pointer hover:bg-secondary/80 transition-colors"
+          onClick={() => navigate('/profile')}
+        >
           <div className="flex items-center gap-3">
-            <Avatar>
+            <Avatar className="border-2 border-primary/20">
               <AvatarFallback className="bg-primary text-primary-foreground">
                 {profile.username.substring(0, 2).toUpperCase()}
               </AvatarFallback>
