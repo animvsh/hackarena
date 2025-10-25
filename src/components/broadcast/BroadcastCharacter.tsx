@@ -22,7 +22,7 @@ export function BroadcastCharacter({ narrative, isLive, isSpeaking = false, acti
   const [headTilt, setHeadTilt] = useState(0);
   const [shoulderMove, setShoulderMove] = useState(0);
 
-  // Typing effect with mouth animation
+  // Smooth text reveal effect
   useEffect(() => {
     if (!narrative) return;
 
@@ -31,12 +31,11 @@ export function BroadcastCharacter({ narrative, isLive, isSpeaking = false, acti
     setCharacterState('speaking');
     
     let currentIndex = 0;
-    const typingSpeed = 30;
+    const typingSpeed = 20; // Faster for better readability
 
     const typeInterval = setInterval(() => {
       if (currentIndex < narrative.length) {
         setDisplayedText(narrative.slice(0, currentIndex + 1));
-        // Animate mouth during typing (simulates speaking)
         setMouthOpen(prev => !prev);
         currentIndex++;
       } else {
@@ -46,7 +45,7 @@ export function BroadcastCharacter({ narrative, isLive, isSpeaking = false, acti
           if (!isSpeaking) {
             setCharacterState('idle');
           }
-        }, 2000);
+        }, 1500);
         clearInterval(typeInterval);
       }
     }, typingSpeed);
@@ -188,14 +187,14 @@ export function BroadcastCharacter({ narrative, isLive, isSpeaking = false, acti
         </div>
       </div>
 
-      {/* Professional Speech Bubble - higher z-index to appear above banners */}
+      {/* Enhanced Speech Bubble with fade transitions */}
       {displayedText && (
-        <div className="absolute bottom-24 md:bottom-28 lg:bottom-32 left-1/2 transform -translate-x-1/2 max-w-4xl w-full px-4 z-50">
+        <div className="absolute bottom-24 md:bottom-28 lg:bottom-32 left-1/2 transform -translate-x-1/2 max-w-4xl w-full px-4 z-50 animate-in fade-in slide-in-from-bottom-4 duration-500">
           <div className="bg-gradient-to-r from-card/98 to-card/95 backdrop-blur-md border-2 border-primary/40 rounded-xl shadow-2xl overflow-hidden">
             <div className="h-1 bg-gradient-to-r from-primary via-primary/60 to-transparent" />
             
-            <div className="p-4">
-              <div className="flex items-center justify-between mb-2 pb-2 border-b border-primary/20">
+            <div className="p-4 md:p-5">
+              <div className="flex items-center justify-between mb-3 pb-2 border-b border-primary/20">
                 <div className="flex items-center gap-2">
                   <div className="w-2 h-2 bg-primary rounded-full animate-pulse" />
                   <span className="text-xs font-black text-primary uppercase tracking-wider">
@@ -211,7 +210,7 @@ export function BroadcastCharacter({ narrative, isLive, isSpeaking = false, acti
                 </div>
               </div>
               
-              <p className="text-base text-foreground leading-relaxed font-medium">
+              <p className="text-base md:text-lg text-foreground leading-relaxed font-medium">
                 {displayedText}
                 {isTyping && (
                   <span className="inline-block w-1.5 h-5 ml-1 bg-primary animate-pulse" />
