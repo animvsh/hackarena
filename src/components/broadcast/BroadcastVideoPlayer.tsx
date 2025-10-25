@@ -20,7 +20,7 @@ export function BroadcastVideoPlayer() {
 
   return (
     <div className="w-full">
-      <div className="relative aspect-video bg-gradient-to-br from-card to-secondary/50 border border-border rounded-lg overflow-hidden shadow-lg">
+      <div className="relative aspect-video bg-gradient-to-br from-card via-card to-secondary/30 border border-border rounded-2xl overflow-hidden shadow-2xl">
         {/* Compact Header */}
         <BroadcastHeader currentScene={currentScene} isLive={isLive} />
 

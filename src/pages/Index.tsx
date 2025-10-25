@@ -110,6 +110,19 @@ const Index = () => {
       <main className="flex-1 p-8">
         <Header />
 
+        {/* Live Broadcast - Hero Section */}
+        <div className="mb-8">
+          <div className="mb-4">
+            <h2 className="text-3xl font-bold mb-2 bg-gradient-to-r from-neon-yellow via-neon-blue to-neon-purple bg-clip-text text-transparent">
+              Live Broadcast
+            </h2>
+            <p className="text-muted-foreground text-sm">
+              Real-time AI commentary from the hackathon floor
+            </p>
+          </div>
+          <BroadcastVideoPlayer />
+        </div>
+
         {/* Live Statistics */}
         <div className="mb-6">
           <div className="flex items-center justify-between mb-6">
@@ -199,12 +212,6 @@ const Index = () => {
               </div>
             </>
           )}
-        </div>
-
-        {/* Live Broadcast - Main Feature */}
-        <div className="mb-6">
-          <h2 className="text-xl font-bold mb-4">Live Broadcast</h2>
-          <BroadcastVideoPlayer />
         </div>
 
         {/* Charts and Stats Grid */}
