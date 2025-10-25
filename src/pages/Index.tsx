@@ -201,6 +201,12 @@ const Index = () => {
           )}
         </div>
 
+        {/* Live Broadcast - Main Feature */}
+        <div className="mb-6">
+          <h2 className="text-xl font-bold mb-4">Live Broadcast</h2>
+          <BroadcastVideoPlayer />
+        </div>
+
         {/* Charts and Stats Grid */}
         <div className="grid grid-cols-3 gap-6 mb-6">
           <LiveMarketChart />
@@ -209,11 +215,6 @@ const Index = () => {
             <UserWallet />
             <TrendingTeams />
             <RevenueDrivers />
-          </div>
-
-          {/* Live Broadcast Widget */}
-          <div className="col-span-1">
-            <BroadcastVideoPlayer />
           </div>
         </div>
 
