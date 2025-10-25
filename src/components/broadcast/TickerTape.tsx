@@ -1,24 +1,19 @@
-import { useState, useEffect } from 'react';
-import type { TickerItem } from '@/types/broadcast';
+interface BroadcastContentItem {
+  id: string;
+  text: string;
+  team_name: string;
+  priority: string;
+}
 
-export function TickerTape() {
-  const [items, setItems] = useState<TickerItem[]>([
-    { id: '1', text: 'TechCorp: 47 commits', type: 'stat' },
-    { id: '2', text: 'StartupX: 3 deals closed', type: 'achievement' },
-    { id: '3', text: 'CodeNinjas: 3.2x odds', type: 'market' },
-    { id: '4', text: 'TeamAI: 5 meetings today', type: 'stat' },
-    { id: '5', text: 'InnovateCo: Production deploy', type: 'achievement' },
-  ]);
+interface TickerTapeProps {
+  items?: BroadcastContentItem[];
+}
 
-  // In a real implementation, this would subscribe to live data
-  useEffect(() => {
-    const interval = setInterval(() => {
-      // Rotate items for demo purposes
-      setItems(prev => [...prev.slice(1), prev[0]]);
-    }, 5000);
-
-    return () => clearInterval(interval);
-  }, []);
+export function TickerTape({ items = [] }: TickerTapeProps) {
+  // Use provided items or fallback to empty array
+  const displayItems = items.length > 0 ? items : [
+    { id: '1', text: 'Waiting for live updates...', team_name: 'System', priority: 'normal' }
+  ];
 
   return (
     <div className="absolute bottom-0 left-0 right-0 h-16 bg-card/90 border-t border-primary/20 overflow-hidden">
@@ -32,9 +27,9 @@ export function TickerTape() {
         {/* Scrolling ticker content */}
         <div className="flex-1 overflow-hidden relative">
           <div className="animate-scroll flex gap-12">
-            {[...items, ...items, ...items].map((item, index) => (
+            {[...displayItems, ...displayItems, ...displayItems].map((item, index) => (
               <div key={`${item.id}-${index}`} className="flex items-center gap-3 whitespace-nowrap">
-                <span className="text-primary font-bold">●</span>
+                <span className={`font-bold ${item.priority === 'breaking' ? 'text-destructive' : 'text-primary'}`}>●</span>
                 <span className="text-sm font-medium text-foreground uppercase tracking-wide">
                   {item.text}
                 </span>

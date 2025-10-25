@@ -59,6 +59,50 @@ export type Database = {
           },
         ]
       }
+      broadcast_content: {
+        Row: {
+          content_type: string
+          created_at: string
+          duration: number | null
+          id: string
+          metadata: Json | null
+          priority: string
+          team_id: string | null
+          team_name: string | null
+          text: string
+        }
+        Insert: {
+          content_type: string
+          created_at?: string
+          duration?: number | null
+          id?: string
+          metadata?: Json | null
+          priority?: string
+          team_id?: string | null
+          team_name?: string | null
+          text: string
+        }
+        Update: {
+          content_type?: string
+          created_at?: string
+          duration?: number | null
+          id?: string
+          metadata?: Json | null
+          priority?: string
+          team_id?: string | null
+          team_name?: string | null
+          text?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "broadcast_content_team_id_fkey"
+            columns: ["team_id"]
+            isOneToOne: false
+            referencedRelation: "teams"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       commentary_feed: {
         Row: {
           audio_url: string | null
