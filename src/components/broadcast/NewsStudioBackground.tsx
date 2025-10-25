@@ -23,41 +23,30 @@ export function NewsStudioBackground({ scene }: NewsStudioBackgroundProps) {
   }, []);
 
   return (
-    <div className="absolute inset-0 overflow-hidden">
-      {/* Professional Broadcast Blue Background */}
-      <div 
-        className="absolute inset-0 bg-gradient-to-b from-[#2563eb] via-[#1e40af] to-[#1e3a8a]"
-        style={{
-          background: `linear-gradient(180deg, 
-            hsl(217, 91%, 60%) 0%, 
-            hsl(224, 76%, 48%) 50%, 
-            hsl(224, 64%, 33%) 100%)`
-        }}
-      />
-
+    <div className="absolute inset-0 overflow-hidden bg-gradient-to-b from-broadcast-blue to-broadcast-blue-dark">
       {/* Subtle studio lighting effect */}
       <div 
-        className="absolute inset-0 opacity-30"
+        className="absolute inset-0 opacity-40"
         style={{
-          background: `radial-gradient(circle at ${lightPosition}% 40%, 
-            rgba(255, 255, 255, 0.15) 0%, 
-            transparent 50%)`
+          background: `radial-gradient(ellipse at ${lightPosition}% 35%, rgba(255,255,255,0.2) 0%, transparent 60%)`
         }}
       />
 
       {/* Subtle vignette for depth */}
-      <div className="absolute inset-0 bg-gradient-radial from-transparent via-transparent to-black/20" />
+      <div className="absolute inset-0" style={{
+        background: 'radial-gradient(ellipse at center, transparent 0%, rgba(0,0,0,0.15) 100%)'
+      }} />
 
       {/* Professional studio floor gradient */}
-      <div className="absolute bottom-0 left-0 right-0 h-1/3 bg-gradient-to-t from-[#1e3a8a]/40 to-transparent" />
+      <div className="absolute bottom-0 left-0 right-0 h-1/2 bg-gradient-to-t from-black/15 to-transparent" />
 
       {/* Scene-specific accent lighting (very subtle) */}
       {scene === 'highlight' && (
-        <div className="absolute top-0 left-0 right-0 h-1/4 bg-gradient-to-b from-destructive/10 to-transparent animate-pulse" />
+        <div className="absolute inset-0 bg-gradient-to-br from-destructive/8 to-transparent animate-pulse" />
       )}
       
       {scene === 'market' && (
-        <div className="absolute top-0 left-0 right-0 h-1/4 bg-gradient-to-b from-primary/10 to-transparent" />
+        <div className="absolute inset-0 bg-gradient-to-tr from-primary/8 to-transparent" />
       )}
     </div>
   );

@@ -1,8 +1,8 @@
 export function NewsDeskOverlay() {
   return (
-    <div className="absolute bottom-0 left-0 right-0 h-[30%] z-20 pointer-events-none">
+    <div className="absolute bottom-0 left-0 right-0 h-[22%] z-20 pointer-events-none">
       {/* Desk surface with wood grain gradient */}
-      <div className="relative w-full h-full bg-gradient-to-b from-[#5d4037] via-[#4e342e] to-[#3e2723] shadow-[0_-8px_32px_rgba(0,0,0,0.6)]">
+      <div className="relative w-full h-full bg-gradient-to-b from-desk-brown via-[#4e342e] to-desk-brown-dark shadow-[0_-8px_32px_rgba(0,0,0,0.6)]">
         {/* Top edge highlight for depth */}
         <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-transparent via-[#6d4c41]/50 to-transparent" />
         
