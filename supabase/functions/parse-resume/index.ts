@@ -1,5 +1,3 @@
-import "jsr:@supabase/functions-js/edge-runtime.d.ts";
-
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
@@ -139,8 +137,9 @@ ${resumeText.substring(0, 10000)}`
 
   } catch (error) {
     console.error('Error parsing resume:', error);
+    const errorMessage = error instanceof Error ? error.message : 'Failed to parse resume';
     return new Response(
-      JSON.stringify({ error: error.message }),
+      JSON.stringify({ error: errorMessage }),
       { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
   }
