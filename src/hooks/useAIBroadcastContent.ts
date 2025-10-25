@@ -149,22 +149,6 @@ async function generateEventCommentary(event: BroadcastEvent): Promise<{
   duration: number;
 } | null> {
   try {
-    let prompt = '';
-    
-    switch (event.type) {
-      case 'bet_placed':
-        prompt = `A ${event.currentValue} coin bet was just placed on ${event.teamName}! Generate exciting 15-second commentary.`;
-        break;
-      case 'odds_change':
-        prompt = `${event.teamName}'s odds just ${event.change > 0 ? 'surged' : 'dropped'} by ${Math.abs(event.change).toFixed(1)}%! Generate thrilling commentary.`;
-        break;
-      case 'team_update':
-        prompt = `${event.teamName} made progress: +${event.change} points! Generate energetic commentary.`;
-        break;
-      default:
-        prompt = `${event.teamName} - ${event.metricType}: ${event.currentValue}. Generate brief commentary.`;
-    }
-
     const { data, error } = await supabase.functions.invoke('generate-broadcast-content', {
       body: {
         teamName: event.teamName,
@@ -184,8 +168,49 @@ async function generateEventCommentary(event: BroadcastEvent): Promise<{
       duration: data.duration || 8000
     };
   } catch (error) {
-    console.error('Failed to generate event commentary:', error);
-    return null;
+    console.error('Failed to generate event commentary, using fallback:', error);
+    
+    // Fallback to template-based commentary
+    return {
+      text: generateFallbackCommentary(event),
+      content_type: 'commentary',
+      duration: 8000
+    };
+  }
+}
+
+// Generate fallback commentary when AI fails
+function generateFallbackCommentary(event: BroadcastEvent): string {
+  switch (event.type) {
+    case 'bet_placed':
+      if (event.currentValue > 500) {
+        return `🔥 HUGE BET just placed on ${event.teamName}! ${event.currentValue} coins on the line!`;
+      }
+      return `${event.teamName} receives a ${event.currentValue} coin bet. The stakes are rising!`;
+    
+    case 'odds_change':
+      if (Math.abs(event.change) > 15) {
+        return `BREAKING: ${event.teamName}'s odds just ${event.change > 0 ? 'SURGED' : 'PLUMMETED'} by ${Math.abs(event.change).toFixed(1)}%! Major market movement!`;
+      }
+      return `${event.teamName} odds ${event.change > 0 ? 'up' : 'down'} ${Math.abs(event.change).toFixed(1)}%. The market is reacting!`;
+    
+    case 'team_update':
+      if (event.change >= 10) {
+        return `${event.teamName} makes MASSIVE progress! +${event.change} points in one move! They're on fire!`;
+      }
+      return `${event.teamName} advances with +${event.change} progress. Steady momentum building!`;
+    
+    case 'milestone':
+      return `🎯 MILESTONE REACHED! ${event.teamName} hits ${event.currentValue}! What an achievement!`;
+    
+    case 'prediction_won':
+      return `💰 Winner! A bet on ${event.teamName} just paid out ${event.currentValue} coins!`;
+    
+    case 'prediction_lost':
+      return `${event.teamName} bet settles. ${event.currentValue} coins return to the pool.`;
+    
+    default:
+      return `${event.teamName} - ${event.metricType}: ${event.currentValue}. Something's happening!`;
   }
 }
 

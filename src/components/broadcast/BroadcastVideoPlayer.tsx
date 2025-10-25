@@ -8,6 +8,7 @@ import { NewsDeskOverlay } from './NewsDeskOverlay';
 import { BreakingNewsBanner } from './BreakingNewsBanner';
 import { LiveScoreBoard } from './LiveScoreBoard';
 import { ClockAndDate } from './ClockAndDate';
+import { BroadcastTestPanel } from './BroadcastTestPanel';
 import { useSceneRotation } from '@/hooks/useSceneRotation';
 import { useAIBroadcastContent } from '@/hooks/useAIBroadcastContent';
 import { useBroadcastDialogue } from '@/hooks/useBroadcastDialogue';
@@ -100,6 +101,9 @@ export function BroadcastVideoPlayer() {
           <LiveViewersCounter />
         </div>
       </div>
+
+      {/* Test Panel for Development */}
+      <BroadcastTestPanel />
     </div>
   );
 }
