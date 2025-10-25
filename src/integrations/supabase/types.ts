@@ -820,6 +820,30 @@ export type Database = {
           },
         ]
       }
+      profile_views: {
+        Row: {
+          id: string
+          profile_user_id: string
+          referrer: string | null
+          viewed_at: string | null
+          viewer_user_id: string | null
+        }
+        Insert: {
+          id?: string
+          profile_user_id: string
+          referrer?: string | null
+          viewed_at?: string | null
+          viewer_user_id?: string | null
+        }
+        Update: {
+          id?: string
+          profile_user_id?: string
+          referrer?: string | null
+          viewed_at?: string | null
+          viewer_user_id?: string | null
+        }
+        Relationships: []
+      }
       progress_updates: {
         Row: {
           content: string | null

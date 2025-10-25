@@ -11,17 +11,23 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Progress } from "@/components/ui/progress";
 
 import { UserBettingHistory } from "@/components/profile/UserBettingHistory";
+import { AvatarUpload } from "@/components/profile/AvatarUpload";
+import { UserTeamsSection } from "@/components/profile/UserTeamsSection";
 
-import { Pencil, MapPin, Linkedin, Github, Globe, Mail, Trophy, Target, TrendingUp, Award } from "lucide-react";
+import { Pencil, MapPin, Linkedin, Github, Globe, Mail, Trophy, Target, TrendingUp, Award, Eye, Users } from "lucide-react";
 import { toast } from "sonner";
 import { EmptyState } from "@/components/EmptyState";
 import { StatsCard } from "@/components/profile/StatsCard";
+import { useTeamMemberships } from "@/hooks/useTeamMemberships";
+import { useProfileViews } from "@/hooks/useProfileViews";
 
 export default function MyProfile() {
   const { user, profile } = useAuth();
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
   const [fullProfile, setFullProfile] = useState<any>(null);
+  const { memberships: teamMemberships, loading: teamsLoading } = useTeamMemberships(user?.id);
+  const { viewCount } = useProfileViews(user?.id);
 
   useEffect(() => {
     if (!user) {
@@ -68,6 +74,23 @@ export default function MyProfile() {
     }
   };
 
+  const handleGitHubConnect = async () => {
+    try {
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: 'github',
+        options: {
+          redirectTo: `${window.location.origin}/profile`,
+          scopes: 'read:user user:email'
+        }
+      });
+      
+      if (error) throw error;
+    } catch (error) {
+      console.error("Error connecting GitHub:", error);
+      toast.error("Failed to connect GitHub account");
+    }
+  };
+
   if (loading) {
     return (
       <div className="container max-w-6xl mx-auto p-6 space-y-6">
@@ -92,12 +115,13 @@ export default function MyProfile() {
           <div className="flex flex-col lg:flex-row gap-6 items-start">
             {/* Avatar Section */}
             <div className="flex flex-col items-center lg:items-start gap-4">
-              <Avatar className="h-32 w-32 border-4 border-background shadow-xl">
-                <AvatarImage src={fullProfile.avatar_url} />
-                <AvatarFallback className="text-4xl font-bold bg-gradient-to-br from-primary to-primary/70 text-primary-foreground">
-                  {fullProfile.username?.[0]?.toUpperCase()}
-                </AvatarFallback>
-              </Avatar>
+              <AvatarUpload
+                currentAvatarUrl={fullProfile.avatar_url}
+                userId={user.id}
+                username={fullProfile.username}
+                size="xl"
+                onUploadComplete={(url) => setFullProfile({ ...fullProfile, avatar_url: url })}
+              />
               <Button onClick={() => navigate("/profile/edit")} size="sm" className="w-full lg:w-auto">
                 <Pencil className="h-4 w-4 mr-2" />
                 Edit Profile
@@ -142,12 +166,17 @@ export default function MyProfile() {
                     Connect LinkedIn
                   </Button>
                 )}
-                {fullProfile.github_url && (
+                {fullProfile.github_url ? (
                   <Button variant="outline" size="sm" asChild>
                     <a href={fullProfile.github_url} target="_blank" rel="noopener noreferrer">
                       <Github className="h-4 w-4 mr-2" />
                       GitHub
                     </a>
+                  </Button>
+                ) : (
+                  <Button variant="outline" size="sm" onClick={handleGitHubConnect}>
+                    <Github className="h-4 w-4 mr-2" />
+                    Connect GitHub
                   </Button>
                 )}
                 {fullProfile.portfolio_url && (
@@ -212,13 +241,29 @@ export default function MyProfile() {
           icon={Award}
           className="hover:shadow-lg transition-shadow"
         />
+        <StatsCard
+          title="Profile Views"
+          value={viewCount}
+          icon={Eye}
+          description="Last 30 days"
+          className="hover:shadow-lg transition-shadow"
+        />
+        <StatsCard
+          title="Teams"
+          value={teamMemberships.length}
+          icon={Users}
+          className="hover:shadow-lg transition-shadow"
+        />
       </div>
 
       {/* Tabs Section */}
       <Tabs defaultValue="overview" className="space-y-6">
-        <TabsList className="grid w-full grid-cols-2 lg:grid-cols-4 h-auto p-1">
+        <TabsList className="grid w-full grid-cols-2 lg:grid-cols-5 h-auto p-1">
           <TabsTrigger value="overview" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
             Overview
+          </TabsTrigger>
+          <TabsTrigger value="teams" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
+            Teams
           </TabsTrigger>
           <TabsTrigger value="experience" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
             Experience
@@ -294,6 +339,16 @@ export default function MyProfile() {
               </div>
             </Card>
           ) : null}
+        </TabsContent>
+
+        <TabsContent value="teams" className="space-y-6">
+          <Card className="p-6">
+            <h2 className="text-2xl font-bold mb-6 flex items-center gap-2">
+              <div className="h-1 w-8 bg-primary rounded" />
+              My Teams
+            </h2>
+            <UserTeamsSection memberships={teamMemberships} isOwnProfile={true} />
+          </Card>
         </TabsContent>
 
         <TabsContent value="experience" className="space-y-6">
