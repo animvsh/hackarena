@@ -21,15 +21,15 @@ import { CameraEffects, useAutoCameraMovement } from './effects/CameraEffects';
 import { EventAnimations } from './effects/EventAnimations';
 import { ProductionEffects } from './effects/ProductionEffects';
 import { useSceneRotation } from '@/hooks/useSceneRotation';
-import { useAIBroadcastContent } from '@/hooks/useAIBroadcastContent';
+import { useMockBroadcastContent } from '@/hooks/useMockBroadcastContent';
 import { useBroadcastDialogue } from '@/hooks/useBroadcastDialogue';
 import { useBroadcastState } from '@/hooks/useBroadcastState';
 import { selectPersonalityForScene } from '@/types/broadcastPersonality';
 import type { BroadcastScene } from '@/types/broadcast';
 
 export function EnhancedBroadcastVideoPlayer() {
-  const { currentScene, sceneIndex } = useSceneRotation(30000);
-  const { commentary, tickerItems, bannerText, isLive } = useAIBroadcastContent();
+  const { currentScene, sceneIndex } = useSceneRotation(25000);
+  const { commentary, tickerItems, bannerText, isLive } = useMockBroadcastContent();
   const {
     broadcastState,
     isTransitioning,
@@ -50,19 +50,11 @@ export function EnhancedBroadcastVideoPlayer() {
   // Auto camera movement
   const cameraMovement = useAutoCameraMovement(20000);
 
-  // Convert commentary to dialogue with turn-taking
-  const narratives = commentary 
-    ? [{ id: commentary.id || '1', text: commentary.text || '', timestamp: commentary.created_at || new Date().toISOString() }]
-    : [];
+  // Use real-time commentary directly (no dialogue processing needed for mock data)
+  const currentNarrative = commentary?.text || 
+    "Good evening, and welcome to HackCast Live. We're bringing you real-time coverage from the hackathon floor where teams are competing for glory.";
   
-  const { currentDialogue } = useBroadcastDialogue(narratives);
-  
-  // Use real-time commentary or default welcome message
-  const currentNarrative = currentDialogue?.text || (
-    commentary?.text || 
-    "Good evening, and welcome to HackCast Live. We're bringing you real-time coverage from the hackathon floor where teams are competing for glory."
-  );
-  const activeAnchor = currentDialogue?.anchor || 'left';
+  const activeAnchor = 'left'; // Simplified for mock data
 
   // Get personalities for current scene
   const personalities = selectPersonalityForScene(currentScene);
@@ -95,9 +87,22 @@ export function EnhancedBroadcastVideoPlayer() {
     }
   }, [currentScene, previousScene, broadcastState, startTransition, endTransition]);
 
-  // Commercial break every 5 scenes (approx 2.5 minutes)
+  // Auto-trigger event animations based on commentary priority
   useEffect(() => {
-    if (broadcastState === 'live' && sceneIndex > 0 && sceneIndex % 5 === 0) {
+    if (commentary?.priority === 'breaking') {
+      const eventTypes: Array<'big-bet' | 'odds-surge' | 'team-milestone' | 'prediction-win' | 'market-close'> = 
+        ['big-bet', 'team-milestone', 'odds-surge'];
+      const randomEvent = eventTypes[Math.floor(Math.random() * eventTypes.length)];
+      setEventType(randomEvent);
+      setShowEventAnimation(true);
+      
+      setTimeout(() => setShowEventAnimation(false), 3000);
+    }
+  }, [commentary?.id, commentary?.priority]);
+
+  // Commercial break every 8 scenes
+  useEffect(() => {
+    if (broadcastState === 'live' && sceneIndex > 0 && sceneIndex % 8 === 0) {
       startCommercialBreak();
     }
   }, [sceneIndex, broadcastState, startCommercialBreak]);

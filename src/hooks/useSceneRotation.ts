@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import type { BroadcastScene } from '@/types/broadcast';
 
-export function useSceneRotation(interval = 30000) {
+export function useSceneRotation(interval = 25000) {
   const scenes: BroadcastScene[] = ['anchor', 'team', 'market', 'stats', 'highlight'];
   const [currentSceneIndex, setCurrentSceneIndex] = useState(0);
 
