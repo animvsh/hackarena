@@ -111,4 +111,35 @@ All colors MUST be HSL.
   .animate-glow-pulse {
     animation: glow-pulse 2s ease-in-out infinite;
   }
+
+  /* Ticker scroll animation */
+  @keyframes ticker-scroll {
+    0% { transform: translateX(100%); }
+    100% { transform: translateX(-100%); }
+  }
+
+  .animate-ticker-scroll {
+    animation: ticker-scroll 30s linear infinite;
+  }
+
+  /* Intense glow pulse for dramatic moments */
+  @keyframes glow-pulse-intense {
+    0%, 100% { box-shadow: 0 0 20px rgba(139, 92, 246, 0.5); }
+    50% { box-shadow: 0 0 40px rgba(139, 92, 246, 0.9); }
+  }
+
+  .animate-glow-intense {
+    animation: glow-pulse-intense 2s ease-in-out infinite;
+  }
+
+  /* Camera shake effect */
+  @keyframes camera-shake {
+    0%, 100% { transform: translate(0, 0) rotate(0deg); }
+    25% { transform: translate(-2px, 2px) rotate(-0.5deg); }
+    75% { transform: translate(2px, -2px) rotate(0.5deg); }
+  }
+
+  .animate-camera-shake {
+    animation: camera-shake 0.5s ease-in-out;
+  }
 }

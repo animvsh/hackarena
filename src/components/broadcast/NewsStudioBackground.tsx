@@ -7,13 +7,26 @@ interface NewsStudioBackgroundProps {
 
 export function NewsStudioBackground({ scene }: NewsStudioBackgroundProps) {
   const [lightPosition, setLightPosition] = useState(0);
+  const [particlesVisible, setParticlesVisible] = useState(false);
 
   // Subtle camera movement simulation
   useEffect(() => {
     const interval = setInterval(() => {
       setLightPosition(prev => (prev + 1) % 360);
     }, 50);
-    return () => clearInterval(interval);
+
+    // Randomly show particle effects
+    const particleInterval = setInterval(() => {
+      if (Math.random() > 0.7) {
+        setParticlesVisible(true);
+        setTimeout(() => setParticlesVisible(false), 3000);
+      }
+    }, 10000);
+
+    return () => {
+      clearInterval(interval);
+      clearInterval(particleInterval);
+    };
   }, []);
 
   return (
@@ -102,6 +115,30 @@ export function NewsStudioBackground({ scene }: NewsStudioBackgroundProps) {
       
       {/* Spotlight effect */}
       <div className="absolute inset-0 bg-gradient-radial from-transparent via-transparent to-background/20" />
+
+      {/* Particle effects for dramatic moments */}
+      {particlesVisible && (
+        <div className="absolute inset-0 overflow-hidden pointer-events-none">
+          {[...Array(20)].map((_, i) => (
+            <div
+              key={i}
+              className="absolute w-1 h-1 bg-primary/30 rounded-full animate-fade-in"
+              style={{
+                left: `${Math.random() * 100}%`,
+                top: `${Math.random() * 100}%`,
+                animation: `fade-in 2s ease-out ${Math.random() * 0.5}s`,
+              }}
+            />
+          ))}
+        </div>
+      )}
+
+      {/* Animated news ticker at bottom */}
+      <div className="absolute bottom-0 left-0 right-0 h-8 bg-primary/10 backdrop-blur-sm border-t border-primary/20 overflow-hidden">
+        <div className="animate-ticker-scroll whitespace-nowrap py-1.5 text-xs text-primary/60 font-mono">
+          LIVE BETTING • REAL-TIME ODDS • HACKATHON MARKETS • TEAM PERFORMANCE TRACKING • SPONSOR INTEGRATIONS • LIVE BETTING • REAL-TIME ODDS
+        </div>
+      </div>
     </div>
   );
 }

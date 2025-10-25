@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { ArrowLeft, Maximize2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { BroadcastVideoPlayer } from '@/components/broadcast/BroadcastVideoPlayer';
@@ -6,6 +6,8 @@ import { BettingSidebar } from '@/components/broadcast/BettingSidebar';
 import { MarketCarousel } from '@/components/broadcast/MarketCarousel';
 import { MarketDetailModal } from '@/components/MarketDetailModal';
 import { useNavigate } from 'react-router-dom';
+import { toast } from 'sonner';
+import { supabase } from '@/integrations/supabase/client';
 
 export default function BroadcastStream() {
   const navigate = useNavigate();
@@ -21,6 +23,52 @@ export default function BroadcastStream() {
       setIsFullscreen(false);
     }
   };
+
+  // Real-time betting notifications
+  useEffect(() => {
+    const channel = supabase
+      .channel('betting-events')
+      .on('postgres_changes', {
+        event: 'INSERT',
+        schema: 'public',
+        table: 'predictions'
+      }, async (payload) => {
+        const bet = payload.new as any;
+        
+        // Fetch team name for the bet
+        const { data: teamData } = await supabase
+          .from('teams')
+          .select('name')
+          .eq('id', bet.team_id)
+          .single();
+
+        if (bet.amount > 500) {
+          toast.success(`🚨 Big bet alert! ${bet.amount} HC on ${teamData?.name || 'Unknown Team'}`, {
+            duration: 5000,
+          });
+        }
+      })
+      .on('postgres_changes', {
+        event: 'UPDATE',
+        schema: 'public',
+        table: 'market_odds'
+      }, (payload) => {
+        const oldOdds = Number((payload.old as any).current_odds);
+        const newOdds = Number((payload.new as any).current_odds);
+        const change = Math.abs(newOdds - oldOdds);
+        
+        if (change > 10) {
+          toast.info(`📊 Odds shift! ${change.toFixed(1)}% change detected`, {
+            duration: 4000,
+          });
+        }
+      })
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, []);
 
   return (
     <div className="min-h-screen bg-background flex flex-col">
