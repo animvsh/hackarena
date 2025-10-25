@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { BroadcastCharacter } from './BroadcastCharacter';
 import { BroadcastHeader } from './BroadcastHeader';
 import { LowerThirdBanner } from './LowerThirdBanner';
@@ -20,92 +21,83 @@ import { Watermark } from './graphics/Watermark';
 import { CameraEffects, useAutoCameraMovement } from './effects/CameraEffects';
 import { EventAnimations } from './effects/EventAnimations';
 import { ProductionEffects } from './effects/ProductionEffects';
-import { useSceneRotation } from '@/hooks/useSceneRotation';
-import { useMockBroadcastContent } from '@/hooks/useMockBroadcastContent';
-import { useBroadcastDialogue } from '@/hooks/useBroadcastDialogue';
+import { useSegmentManager } from '@/hooks/useSegmentManager';
 import { useBroadcastState } from '@/hooks/useBroadcastState';
 import { selectPersonalityForScene } from '@/types/broadcastPersonality';
 import type { BroadcastScene } from '@/types/broadcast';
 
 export function EnhancedBroadcastVideoPlayer() {
-  const { currentScene, sceneIndex } = useSceneRotation(25000);
-  const { commentary, tickerItems, bannerText, isLive } = useMockBroadcastContent();
+  // Segment-driven content management
+  const {
+    currentScene,
+    phase,
+    segmentContent,
+    currentCommentary,
+    activePersonality,
+    currentPriority,
+    showBumper,
+    isTransitioning,
+    progressPercent,
+    commentaryIndex,
+    totalCommentary
+  } = useSegmentManager();
+  
   const {
     broadcastState,
-    isTransitioning,
-    fromScene,
-    toScene,
     goLive,
     startCommercialBreak,
     endCommercialBreak,
-    startTransition,
-    endTransition,
   } = useBroadcastState();
-
-  const [previousScene, setPreviousScene] = useState<BroadcastScene>(currentScene);
-  const [showBumper, setShowBumper] = useState(false);
+  
+  // Event animation states
   const [showEventAnimation, setShowEventAnimation] = useState(false);
   const [eventType, setEventType] = useState<'big-bet' | 'odds-surge' | 'team-milestone' | 'prediction-win' | 'market-close'>('big-bet');
+  const [showChyron, setShowChyron] = useState(false);
   
   // Auto camera movement
   const cameraMovement = useAutoCameraMovement(20000);
 
-  // Use real-time commentary directly (no dialogue processing needed for mock data)
-  const currentNarrative = commentary?.text || 
-    "Good evening, and welcome to HackCast Live. We're bringing you real-time coverage from the hackathon floor where teams are competing for glory.";
-  
-  const activeAnchor = 'left'; // Simplified for mock data
-
-  // Get personalities for current scene
-  const personalities = selectPersonalityForScene(currentScene);
-  const currentPersonality = personalities[0]; // For now, use first personality
-
-  // Handle scene transitions
+  // Show chyron at start of each segment
   useEffect(() => {
-    if (broadcastState !== 'live') return;
-
-    if (currentScene !== previousScene) {
-      // Show bumper first
-      setShowBumper(true);
-      
-      // After bumper, start transition
-      const bumperTimer = setTimeout(() => {
-        setShowBumper(false);
-        startTransition(previousScene, currentScene);
-      }, 2500);
-
-      // After transition, update scene
-      const transitionTimer = setTimeout(() => {
-        endTransition();
-        setPreviousScene(currentScene);
-      }, 3500);
-
-      return () => {
-        clearTimeout(bumperTimer);
-        clearTimeout(transitionTimer);
-      };
+    if (phase === 'CONTENT_DELIVERY' && commentaryIndex === 0) {
+      setShowChyron(true);
+      const timer = setTimeout(() => setShowChyron(false), 8000);
+      return () => clearTimeout(timer);
     }
-  }, [currentScene, previousScene, broadcastState, startTransition, endTransition]);
+  }, [phase, commentaryIndex]);
 
-  // Auto-trigger event animations based on commentary priority
+  // Trigger event animations on breaking news
   useEffect(() => {
-    if (commentary?.priority === 'breaking') {
+    if (currentPriority === 'breaking' && phase === 'CONTENT_DELIVERY') {
       const eventTypes: Array<'big-bet' | 'odds-surge' | 'team-milestone' | 'prediction-win' | 'market-close'> = 
         ['big-bet', 'team-milestone', 'odds-surge'];
       const randomEvent = eventTypes[Math.floor(Math.random() * eventTypes.length)];
       setEventType(randomEvent);
       setShowEventAnimation(true);
-      
-      setTimeout(() => setShowEventAnimation(false), 3000);
+      const timer = setTimeout(() => setShowEventAnimation(false), 3000);
+      return () => clearTimeout(timer);
     }
-  }, [commentary?.id, commentary?.priority]);
+  }, [currentCommentary, currentPriority, phase]);
 
-  // Commercial break every 8 scenes
+  // Commercial breaks every 5 complete segments (after highlight)
   useEffect(() => {
-    if (broadcastState === 'live' && sceneIndex > 0 && sceneIndex % 8 === 0) {
-      startCommercialBreak();
+    if (broadcastState !== 'live') return;
+    if (phase !== 'BUMPER_OUT') return;
+    
+    // Trigger commercial after highlight segment
+    if (currentScene === 'highlight') {
+      const commercialTimer = setTimeout(() => {
+        startCommercialBreak();
+      }, 1000);
+      return () => clearTimeout(commercialTimer);
     }
-  }, [sceneIndex, broadcastState, startCommercialBreak]);
+  }, [broadcastState, phase, currentScene, startCommercialBreak]);
+
+  // Get personality for current segment
+  const personalities = selectPersonalityForScene(currentScene);
+  const activePersonalityData = personalities.find(p => 
+    p.position === (activePersonality === 'left' ? 'left' : 'right')
+  ) || personalities[0];
 
   // Show splash screen
   if (broadcastState === 'splash') {
@@ -117,119 +109,153 @@ export function EnhancedBroadcastVideoPlayer() {
     return <CommercialBreak duration={30} onComplete={endCommercialBreak} />;
   }
 
+  const isLive = broadcastState === 'live';
+
   return (
     <div className="w-full">
       <div className="relative aspect-video bg-gradient-to-br from-broadcast-blue to-broadcast-blue-dark border border-border rounded-2xl overflow-hidden shadow-2xl">
         <ProductionEffects filmGrain vignette colorGrade="warm">
           <CameraEffects movement={cameraMovement} intensity={0.5}>
-        {/* Layer 0: Professional News Studio Background */}
-        <div className="absolute inset-0 z-0">
-          <NewsStudioBackground scene={currentScene} />
-        </div>
-        
-        {/* Layer 1: News Anchors positioned at desk level */}
-        <div className="absolute inset-0 z-10">
-          <BroadcastCharacter 
-            narrative={currentNarrative}
-            isLive={isLive}
-            isSpeaking={!!commentary}
-            activeAnchor={activeAnchor}
-          />
-        </div>
+            {/* Layer 0: Professional News Studio Background */}
+            <div className="absolute inset-0 z-0">
+              <NewsStudioBackground scene={currentScene} />
+            </div>
+            
+            {/* Layer 1: News Anchors positioned at desk level */}
+            <div className="absolute inset-0 z-10">
+              {currentCommentary && phase === 'CONTENT_DELIVERY' && (
+                <BroadcastCharacter 
+                  narrative={currentCommentary} 
+                  isLive={isLive}
+                  isSpeaking={phase === 'CONTENT_DELIVERY'}
+                  activeAnchor={activePersonality}
+                />
+              )}
+            </div>
 
-        {/* Layer 2: News Desk Overlay (foreground - in front of anchors) */}
-        <div className="absolute inset-0 z-20">
-          <NewsDeskOverlay />
-        </div>
+            {/* Layer 2: News Desk Overlay (foreground - in front of anchors) */}
+            <div className="absolute inset-0 z-20">
+              <NewsDeskOverlay />
+            </div>
 
-        {/* Layer 3: Info Bar at top */}
-        <InfoBar />
+            {/* Layer 3: Info Bar at top */}
+            <InfoBar />
 
-        {/* Layer 4: Breaking News Banner (if priority is high) */}
-        {bannerText && bannerText.priority === 'breaking' && (
-          <div className="absolute inset-0 z-50">
-            <BreakingNewsBanner
-              teamName={bannerText.team_name || 'Breaking News'}
-              text={bannerText.text}
+            {/* Layer 4: Breaking News Banner (if priority is breaking) */}
+            {currentPriority === 'breaking' && phase === 'CONTENT_DELIVERY' && (
+              <div className="absolute inset-0 z-50">
+                <BreakingNewsBanner
+                  teamName={segmentContent?.title || 'Breaking News'}
+                  text={currentCommentary}
+                />
+              </div>
+            )}
+
+            {/* Layer 5: Lower third banner with segment-specific text */}
+            {segmentContent?.bannerText && phase === 'CONTENT_DELIVERY' && !showBumper && currentPriority !== 'breaking' && (
+              <div className="absolute inset-0 z-30">
+                <LowerThirdBanner
+                  teamName={segmentContent.title}
+                  metric={segmentContent.bannerText}
+                  value={0}
+                  change={0}
+                />
+              </div>
+            )}
+
+            {/* Layer 6: Chyron for personality intro - shown at segment start */}
+            {showChyron && activePersonalityData && (
+              <ChyronLower
+                name={activePersonalityData.name}
+                title={activePersonalityData.title}
+                position={activePersonality}
+                accentColor={activePersonalityData.primaryColor}
+              />
+            )}
+
+            {/* Layer 7: Bottom ticker tape with segment-specific content */}
+            <div className="absolute inset-0 z-30">
+              <TickerTape items={segmentContent?.tickerItems.map((item, idx) => ({
+                id: `ticker-${idx}`,
+                text: item.text,
+                team_name: segmentContent.title,
+                priority: currentPriority,
+                content_type: 'ticker' as const,
+                duration: 5,
+                created_at: new Date().toISOString()
+              })) || []} />
+            </div>
+
+            {/* Layer 8: Header & UI Elements */}
+            <div className="absolute top-0 left-0 right-0 z-40">
+              <BroadcastHeader currentScene={currentScene} isLive={isLive} />
+            </div>
+            
+            {/* Clock and Date */}
+            <div className="absolute top-0 left-0 z-40">
+              <ClockAndDate />
+            </div>
+            
+            {/* Live Scoreboard */}
+            <div className="absolute top-0 right-0 z-40">
+              <LiveScoreBoard />
+            </div>
+            
+            {/* Live Viewers Counter */}
+            <div className="absolute bottom-10 right-4 z-40">
+              <LiveViewersCounter />
+            </div>
+
+            {/* Watermark */}
+            <Watermark showLiveIndicator={isLive} />
+
+            {/* Event Animations */}
+            <EventAnimations
+              isActive={showEventAnimation}
+              eventType={eventType}
+              data={{ teamName: 'Team Alpha', amount: 5000 }}
+              onComplete={() => setShowEventAnimation(false)}
             />
-          </div>
-        )}
 
-        {/* Layer 5: Lower third banner (normal priority) */}
-        {bannerText && bannerText.priority !== 'breaking' && (
-          <div className="absolute inset-0 z-30">
-            <LowerThirdBanner
-              teamName={bannerText.team_name || 'Update'}
-              metric={bannerText.text}
-              value={0}
-              change={0}
-            />
-          </div>
-        )}
+            {/* Segment Bumper */}
+            <AnimatePresence>
+              {showBumper && segmentContent && (
+                <SegmentBumper 
+                  scene={currentScene} 
+                  onComplete={() => {}}
+                />
+              )}
+            </AnimatePresence>
 
-        {/* Layer 6: Chyron for current personality */}
-        {currentPersonality && (
-          <ChyronLower
-            name={currentPersonality.name}
-            title={currentPersonality.title}
-            position={activeAnchor as 'left' | 'right' | 'center'}
-            accentColor={currentPersonality.primaryColor}
-          />
-        )}
+            {/* Segment Transition */}
+            {isTransitioning && (
+              <SegmentTransition
+                isActive={isTransitioning}
+                fromScene={currentScene}
+                toScene={currentScene}
+                onComplete={() => {}}
+              />
+            )}
 
-        {/* Layer 7: Bottom ticker tape */}
-        <div className="absolute inset-0 z-30">
-          <TickerTape items={tickerItems} />
-        </div>
-
-        {/* Layer 8: Header & UI Elements */}
-        <div className="absolute top-0 left-0 right-0 z-40">
-          <BroadcastHeader currentScene={currentScene} isLive={isLive} />
-        </div>
-        
-        {/* Clock and Date */}
-        <div className="absolute top-0 left-0 z-40">
-          <ClockAndDate />
-        </div>
-        
-        {/* Live Scoreboard */}
-        <div className="absolute top-0 right-0 z-40">
-          <LiveScoreBoard />
-        </div>
-        
-        {/* Live Viewers Counter */}
-        <div className="absolute bottom-10 right-4 z-40">
-          <LiveViewersCounter />
-        </div>
-
-        {/* Watermark */}
-        <Watermark showLiveIndicator={isLive} />
-
-        {/* Event Animations */}
-        <EventAnimations
-          isActive={showEventAnimation}
-          eventType={eventType}
-          data={{ teamName: 'Team Alpha', amount: 5000 }}
-          onComplete={() => setShowEventAnimation(false)}
-        />
-
-        {/* Segment Bumper */}
-        {showBumper && (
-          <SegmentBumper 
-            scene={currentScene} 
-            onComplete={() => setShowBumper(false)} 
-          />
-        )}
-
-        {/* Segment Transition */}
-        {isTransitioning && (
-          <SegmentTransition
-            isActive={isTransitioning}
-            fromScene={fromScene}
-            toScene={toScene}
-            onComplete={endTransition}
-          />
-        )}
+            {/* Segment progress indicator */}
+            {phase === 'CONTENT_DELIVERY' && (
+              <div className="absolute top-4 right-4 bg-card/90 backdrop-blur-sm px-3 py-2 rounded-lg border border-primary/20 z-50">
+                <div className="text-xs text-muted-foreground mb-1">
+                  {segmentContent?.title} • {commentaryIndex + 1}/{totalCommentary}
+                </div>
+                <div className="w-32 h-1 bg-muted rounded-full overflow-hidden">
+                  <motion.div 
+                    className="h-full bg-primary"
+                    initial={{ width: 0 }}
+                    animate={{ width: `${progressPercent}%` }}
+                    transition={{ duration: 0.5 }}
+                  />
+                </div>
+                <div className="text-xs text-primary mt-1 font-mono">
+                  Phase: {phase}
+                </div>
+              </div>
+            )}
           </CameraEffects>
         </ProductionEffects>
       </div>
