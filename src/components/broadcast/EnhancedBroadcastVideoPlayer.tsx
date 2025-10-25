@@ -16,6 +16,10 @@ import { CommercialBreak } from './CommercialBreak';
 import { ChyronLower } from './graphics/ChyronLower';
 import { InfoBar } from './graphics/InfoBar';
 import { SegmentBumper } from './graphics/SegmentBumper';
+import { Watermark } from './graphics/Watermark';
+import { CameraEffects, useAutoCameraMovement } from './effects/CameraEffects';
+import { EventAnimations } from './effects/EventAnimations';
+import { ProductionEffects } from './effects/ProductionEffects';
 import { useSceneRotation } from '@/hooks/useSceneRotation';
 import { useAIBroadcastContent } from '@/hooks/useAIBroadcastContent';
 import { useBroadcastDialogue } from '@/hooks/useBroadcastDialogue';
@@ -40,6 +44,11 @@ export function EnhancedBroadcastVideoPlayer() {
 
   const [previousScene, setPreviousScene] = useState<BroadcastScene>(currentScene);
   const [showBumper, setShowBumper] = useState(false);
+  const [showEventAnimation, setShowEventAnimation] = useState(false);
+  const [eventType, setEventType] = useState<'big-bet' | 'odds-surge' | 'team-milestone' | 'prediction-win' | 'market-close'>('big-bet');
+  
+  // Auto camera movement
+  const cameraMovement = useAutoCameraMovement(20000);
 
   // Convert commentary to dialogue with turn-taking
   const narratives = commentary 
@@ -106,6 +115,8 @@ export function EnhancedBroadcastVideoPlayer() {
   return (
     <div className="w-full">
       <div className="relative aspect-video bg-gradient-to-br from-broadcast-blue to-broadcast-blue-dark border border-border rounded-2xl overflow-hidden shadow-2xl">
+        <ProductionEffects filmGrain vignette colorGrade="warm">
+          <CameraEffects movement={cameraMovement} intensity={0.5}>
         {/* Layer 0: Professional News Studio Background */}
         <div className="absolute inset-0 z-0">
           <NewsStudioBackground scene={currentScene} />
@@ -186,6 +197,17 @@ export function EnhancedBroadcastVideoPlayer() {
           <LiveViewersCounter />
         </div>
 
+        {/* Watermark */}
+        <Watermark showLiveIndicator={isLive} />
+
+        {/* Event Animations */}
+        <EventAnimations
+          isActive={showEventAnimation}
+          eventType={eventType}
+          data={{ teamName: 'Team Alpha', amount: 5000 }}
+          onComplete={() => setShowEventAnimation(false)}
+        />
+
         {/* Segment Bumper */}
         {showBumper && (
           <SegmentBumper 
@@ -203,10 +225,43 @@ export function EnhancedBroadcastVideoPlayer() {
             onComplete={endTransition}
           />
         )}
+          </CameraEffects>
+        </ProductionEffects>
       </div>
 
       {/* Test Panel for Development */}
       <BroadcastTestPanel />
+      
+      {/* Debug: Trigger event animation button */}
+      <div className="mt-4 flex gap-2 flex-wrap">
+        <button
+          onClick={() => {
+            setEventType('big-bet');
+            setShowEventAnimation(true);
+          }}
+          className="px-4 py-2 bg-yellow-500 text-black rounded-lg text-sm font-bold hover:bg-yellow-600"
+        >
+          Trigger Big Bet
+        </button>
+        <button
+          onClick={() => {
+            setEventType('team-milestone');
+            setShowEventAnimation(true);
+          }}
+          className="px-4 py-2 bg-purple-500 text-white rounded-lg text-sm font-bold hover:bg-purple-600"
+        >
+          Trigger Milestone
+        </button>
+        <button
+          onClick={() => {
+            setEventType('odds-surge');
+            setShowEventAnimation(true);
+          }}
+          className="px-4 py-2 bg-green-500 text-white rounded-lg text-sm font-bold hover:bg-green-600"
+        >
+          Trigger Odds Surge
+        </button>
+      </div>
     </div>
   );
 }
