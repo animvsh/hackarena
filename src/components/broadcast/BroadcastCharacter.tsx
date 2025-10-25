@@ -84,6 +84,21 @@ export function BroadcastCharacter({ narrative, isLive, isSpeaking = false, acti
     return () => clearInterval(movementInterval);
   }, []);
 
+  // Continuous mouth animation during speaking
+  useEffect(() => {
+    if (!isSpeaking || characterState !== 'speaking') {
+      setMouthOpen(false);
+      return;
+    }
+
+    // Mouth animation during active speaking - runs continuously
+    const mouthInterval = setInterval(() => {
+      setMouthOpen(prev => !prev);
+    }, 250); // Toggle every 250ms for natural speech rhythm
+
+    return () => clearInterval(mouthInterval);
+  }, [isSpeaking, characterState]);
+
   useEffect(() => {
     if (isSpeaking) {
       setCharacterState('speaking');

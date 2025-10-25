@@ -30,19 +30,25 @@ export function useSegmentManager() {
   const [showBumper, setShowBumper] = useState(true);
   const [isTransitioning, setIsTransitioning] = useState(false);
   const [progressPercent, setProgressPercent] = useState(0);
+  const [isInitializing, setIsInitializing] = useState(false);
 
   const currentScene = SCENE_SEQUENCE[currentSceneIndex];
 
   // Initialize segment content when scene changes
   useEffect(() => {
+    setIsInitializing(true);
     const content = generateSegment(currentScene);
     setSegmentContent(content);
     setCurrentCommentaryIndex(0);
     setProgressPercent(0);
+    // Allow state machine to run on next tick
+    setTimeout(() => setIsInitializing(false), 0);
   }, [currentScene]); // Remove generateSegment from dependencies
 
   // Segment flow state machine
   useEffect(() => {
+    // Don't run while initializing new scene
+    if (isInitializing) return;
     let timer: NodeJS.Timeout;
 
     switch (phase) {
@@ -102,7 +108,7 @@ export function useSegmentManager() {
     }
 
     return () => clearTimeout(timer);
-  }, [phase, currentCommentaryIndex, segmentContent]);
+  }, [phase, currentCommentaryIndex, isInitializing]);
 
   const getCurrentCommentary = useCallback(() => {
     if (!segmentContent || phase !== 'CONTENT_DELIVERY') return '';
