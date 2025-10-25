@@ -27,7 +27,7 @@ export function TVStudioBroadcast() {
       {/* Static background layer */}
       <StudioBackground scene={currentScene} />
 
-      {/* AI Character with speech bubble */}
+      {/* AI Character with speech bubble - now powered by real-time events */}
       {commentary && (
         <BroadcastCharacter 
           narrative={commentary.text} 
@@ -49,14 +49,19 @@ export function TVStudioBroadcast() {
       {/* Stat panel (visible on certain scenes) */}
       <StatPanel visible={showStatPanel} />
 
-      {/* Bottom ticker tape with AI content */}
+      {/* Bottom ticker tape with real-time content */}
       <TickerTape items={tickerItems} />
 
-      {/* Scene indicator (debug mode) */}
+      {/* Scene indicator with activity status */}
       <div className="absolute top-4 left-4 bg-card/80 backdrop-blur-sm px-4 py-2 rounded-lg border border-primary/20 z-50">
         <p className="text-xs font-mono text-muted-foreground">
           Scene: <span className="text-primary font-bold uppercase">{currentScene}</span>
           {isLive && <span className="ml-2 text-success">● LIVE</span>}
+          {commentary && (
+            <span className="ml-2 text-accent">
+              {commentary.priority === 'breaking' ? '🔴 BREAKING' : commentary.priority === 'normal' ? '📢' : '💬'}
+            </span>
+          )}
         </p>
       </div>
     </div>
