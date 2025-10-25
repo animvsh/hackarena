@@ -22,6 +22,7 @@ import NotFound from "./pages/NotFound";
 import TeamProfile from "./pages/TeamProfile";
 import UserProfile from "./pages/UserProfile";
 import BetDetail from "./pages/BetDetail";
+import TeamInvite from "./pages/TeamInvite";
 
 const queryClient = new QueryClient();
 
@@ -65,6 +66,7 @@ const App = () => {
             <Route path="/wallet" element={<ProtectedRoute><WalletPage /></ProtectedRoute>} />
             <Route path="/bets/:betId" element={<ProtectedRoute><BetDetail /></ProtectedRoute>} />
             <Route path="/broadcast" element={<BroadcastStream />} />
+            <Route path="/invite/:inviteId" element={<TeamInvite />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
             </Routes>

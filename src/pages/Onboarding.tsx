@@ -11,6 +11,7 @@ import { toast } from 'sonner';
 import { Users, Trophy, Briefcase, Award, Coins } from 'lucide-react';
 import { TeamSetup } from '@/components/onboarding/TeamSetup';
 import { InviteCodeDisplay } from '@/components/onboarding/InviteCodeDisplay';
+import { ProfileImport } from '@/components/onboarding/ProfileImport';
 
 const roleOptions = [
   { value: 'spectator', label: 'Spectator', icon: Users, description: 'Watch and predict outcomes' },
@@ -22,11 +23,17 @@ const roleOptions = [
 export default function Onboarding() {
   const [step, setStep] = useState(1);
   const [role, setRole] = useState('spectator');
-  const [profileData, setProfileData] = useState({
+  const [profileData, setProfileData] = useState<any>({
     username: '',
     bio: '',
-    githubUsername: ''
+    skills: [],
+    experience: [],
+    education: [],
+    linkedin_url: '',
+    github_url: '',
+    portfolio_url: '',
   });
+  const [profileSource, setProfileSource] = useState('manual');
   const [teamId, setTeamId] = useState<string>('');
   const [inviteCode, setInviteCode] = useState<string>('');
   const { user, profile } = useAuth();
@@ -40,15 +47,17 @@ export default function Onboarding() {
         .from('user_roles')
         .insert({ user_id: user.id, role: role as any });
       
-      // If hacker, go to team setup, otherwise go to profile
-      if (role === 'hacker') {
-        setStep(2.5);
-      } else {
-        setStep(3);
-      }
+      // Go to profile import step
+      setStep(2.5);
     } catch (error) {
       toast.error('Failed to save role');
     }
+  };
+
+  const handleProfileImport = (data: any, source: string) => {
+    setProfileData({ ...profileData, ...data });
+    setProfileSource(source);
+    setStep(3); // Go to profile completion
   };
 
   const handleProfileSubmit = async () => {
@@ -58,11 +67,25 @@ export default function Onboarding() {
       await supabase
         .from('users')
         .update({
-          username: profileData.username || profile?.username
+          username: profileData.username || profile?.username,
+          bio: profileData.bio,
+          skills: profileData.skills,
+          experience: profileData.experience,
+          education: profileData.education,
+          linkedin_url: profileData.linkedin_url,
+          github_url: profileData.github_url,
+          portfolio_url: profileData.portfolio_url,
+          profile_generated_by: profileSource,
+          onboarding_completed: true,
         })
         .eq('id', user.id);
       
-      setStep(4);
+      // If hacker role, go to team setup, otherwise complete
+      if (role === 'hacker') {
+        setStep(3.5);
+      } else {
+        setStep(4);
+      }
     } catch (error) {
       toast.error('Failed to save profile');
     }
@@ -165,7 +188,20 @@ export default function Onboarding() {
     );
   }
 
-  if (step === 2.5 && role === 'hacker' && user) {
+  if (step === 2.5) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background p-4">
+        <div className="w-full max-w-2xl">
+          <ProfileImport
+            onComplete={handleProfileImport}
+            onSkip={() => setStep(3)}
+          />
+        </div>
+      </div>
+    );
+  }
+
+  if (step === 3.5 && role === 'hacker' && user) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background p-4">
         <div className="w-full max-w-4xl">
