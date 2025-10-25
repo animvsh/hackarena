@@ -33,38 +33,38 @@ export function TickerTape({ items = [] }: TickerTapeProps) {
   };
 
   return (
-    <div className="absolute bottom-0 left-0 right-0 h-8 bg-card/95 backdrop-blur-sm border-t-2 border-primary/40 overflow-hidden shadow-lg">
+    <div className="absolute bottom-0 left-0 right-0 h-8 bg-gradient-to-r from-card/98 via-card/95 to-card/98 backdrop-blur-md border-t-2 border-primary/40 overflow-hidden shadow-lg z-40">
       <div className="flex items-center h-full">
-        {/* Ticker label */}
-        <div className="px-3 bg-primary/20 h-full flex items-center border-r-2 border-primary/40">
+        {/* Ticker label with enhanced styling */}
+        <div className="px-4 bg-primary/20 h-full flex items-center border-r-2 border-primary/40 shadow-sm">
           <div className="flex items-center gap-1.5">
-            <Trophy className="w-3 h-3 text-primary" />
+            <Trophy className="w-3.5 h-3.5 text-primary animate-pulse" />
             <span className="text-xs font-black text-primary uppercase tracking-wider">
               Live Feed
             </span>
           </div>
         </div>
         
-        {/* Scrolling ticker content */}
+        {/* Scrolling ticker content with smoother animation */}
         <div className="flex-1 overflow-hidden relative">
-          <div className="animate-scroll flex gap-6">
+          <div className="animate-scroll flex gap-8 items-center">
             {[...displayItems, ...displayItems, ...displayItems].map((item, index) => (
-              <div key={`${item.id}-${index}`} className="flex items-center gap-2 whitespace-nowrap">
+              <div key={`${item.id}-${index}`} className="flex items-center gap-3 whitespace-nowrap">
                 {/* Icon and priority indicator */}
-                <div className={`flex items-center gap-1.5 px-2 py-0.5 rounded ${getBackgroundColor(item.priority)}`}>
+                <div className={`flex items-center gap-1.5 px-2.5 py-1 rounded-md ${getBackgroundColor(item.priority)} transition-colors`}>
                   {getIcon(item.priority)}
                   <span className="text-xs font-bold text-foreground uppercase">
                     {item.team_name}
                   </span>
                 </div>
                 
-                {/* Text content */}
-                <span className="text-xs font-medium text-foreground">
+                {/* Text content with better spacing */}
+                <span className="text-xs font-medium text-foreground/90">
                   {item.text}
                 </span>
                 
                 {/* Separator */}
-                <div className="w-1 h-4 bg-primary/30 rounded-full" />
+                <div className="w-1 h-4 bg-primary/40 rounded-full" />
               </div>
             ))}
           </div>
