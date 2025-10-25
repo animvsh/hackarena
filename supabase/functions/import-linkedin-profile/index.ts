@@ -100,8 +100,9 @@ serve(async (req) => {
 
   } catch (error) {
     console.error('Error in import-linkedin-profile:', error);
+    const errorMessage = error instanceof Error ? error.message : 'Failed to import LinkedIn profile';
     return new Response(
-      JSON.stringify({ error: error.message || 'Failed to import LinkedIn profile' }),
+      JSON.stringify({ error: errorMessage }),
       { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
   }
