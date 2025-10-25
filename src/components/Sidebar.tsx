@@ -5,11 +5,11 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 
 const navItems = [
-  { icon: Tv, label: "Live Broadcast", route: "/", badge: "LIVE" },
+  { icon: Tv, label: "Dashboard", route: "/" },
+  { icon: Radio, label: "Live Broadcast", route: "/broadcast", badge: "LIVE" },
   { icon: TrendingUp, label: "Markets", route: "/markets" },
   { icon: Users, label: "Teams", route: "/teams" },
   { icon: BarChart3, label: "Leaderboard", route: "/leaderboard" },
-  { icon: Radio, label: "Commentary", route: "/radio" },
   { icon: Trophy, label: "Sponsors", route: "/sponsors" },
   { icon: Wallet, label: "My Wallet", route: "/wallet" },
 ];
