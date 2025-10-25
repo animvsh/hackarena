@@ -7,7 +7,7 @@ import { TrendingTeams } from "@/components/TrendingTeams";
 import { RevenueDrivers } from "@/components/RevenueDrivers";
 import { LiveMarketChart } from "@/components/LiveMarketChart";
 import { LiveCommentaryTicker } from "@/components/LiveCommentaryTicker";
-import { BroadcastVideoPlayer } from "@/components/broadcast/BroadcastVideoPlayer";
+import { EnhancedBroadcastVideoPlayer } from "@/components/broadcast/EnhancedBroadcastVideoPlayer";
 import { Users, TrendingUp, Zap, Trophy, Radio, BarChart3 } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
@@ -130,7 +130,7 @@ const Index = () => {
               Full Screen View
             </Button>
           </div>
-          <BroadcastVideoPlayer />
+          <EnhancedBroadcastVideoPlayer />
         </div>
 
         {/* Live Statistics */}
