@@ -22,7 +22,7 @@ export function BroadcastCharacter({ narrative, isLive, isSpeaking = false, acti
   const [headTilt, setHeadTilt] = useState(0);
   const [shoulderMove, setShoulderMove] = useState(0);
 
-  // Smooth text reveal effect
+  // Smooth text reveal effect - updates when narrative changes
   useEffect(() => {
     if (!narrative) return;
 
@@ -31,13 +31,13 @@ export function BroadcastCharacter({ narrative, isLive, isSpeaking = false, acti
     setCharacterState('speaking');
     
     let currentIndex = 0;
-    const typingSpeed = 20; // Faster for better readability
+    const typingSpeed = 15; // Faster typing for more dynamic feel
 
     const typeInterval = setInterval(() => {
       if (currentIndex < narrative.length) {
-        setDisplayedText(narrative.slice(0, currentIndex + 1));
+        setDisplayedText(narrative.slice(0, currentIndex + 2)); // Show 2 chars at a time
         setMouthOpen(prev => !prev);
-        currentIndex++;
+        currentIndex += 2;
       } else {
         setIsTyping(false);
         setMouthOpen(false);
@@ -45,13 +45,13 @@ export function BroadcastCharacter({ narrative, isLive, isSpeaking = false, acti
           if (!isSpeaking) {
             setCharacterState('idle');
           }
-        }, 1500);
+        }, 1000);
         clearInterval(typeInterval);
       }
     }, typingSpeed);
 
     return () => clearInterval(typeInterval);
-  }, [narrative, isSpeaking]);
+  }, [narrative, isSpeaking]); // Re-run when narrative changes
 
   // Random blinking for realism
   useEffect(() => {
