@@ -3,6 +3,7 @@ import { BroadcastCharacter } from './BroadcastCharacter';
 import { BroadcastHeader } from './BroadcastHeader';
 import { LowerThirdBanner } from './LowerThirdBanner';
 import { TickerTape } from './TickerTape';
+import { NewsStudioBackground } from './NewsStudioBackground';
 import { useSceneRotation } from '@/hooks/useSceneRotation';
 import { useAIBroadcastContent } from '@/hooks/useAIBroadcastContent';
 import { useVAPIVoice } from '@/hooks/useVAPIVoice';
@@ -21,17 +22,18 @@ export function BroadcastVideoPlayer() {
   return (
     <div className="w-full">
       <div className="relative aspect-video bg-gradient-to-br from-card via-card to-secondary/30 border border-border rounded-2xl overflow-hidden shadow-2xl">
+        {/* News Studio Background */}
+        <NewsStudioBackground scene={currentScene} />
+        
         {/* Compact Header */}
         <BroadcastHeader currentScene={currentScene} isLive={isLive} />
 
-        {/* Main content area with character - always visible */}
-        <div className="absolute inset-0 flex items-end justify-start p-4 pt-16 pb-20">
-          <BroadcastCharacter 
-            narrative={commentary?.text || "Standing by for live updates from the hackathon floor..."} 
-            isLive={isLive}
-            isSpeaking={isSpeaking}
-          />
-        </div>
+        {/* Host Character positioned behind desk */}
+        <BroadcastCharacter 
+          narrative={commentary?.text || "Standing by for live updates from the hackathon floor..."} 
+          isLive={isLive}
+          isSpeaking={isSpeaking}
+        />
 
         {/* Lower third banner */}
         {bannerText && (
