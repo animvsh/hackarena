@@ -1,4 +1,3 @@
-import { useEffect } from 'react';
 import { BroadcastCharacter } from './BroadcastCharacter';
 import { BroadcastHeader } from './BroadcastHeader';
 import { LowerThirdBanner } from './LowerThirdBanner';
@@ -8,18 +7,21 @@ import { NewsStudioBackground } from './NewsStudioBackground';
 import { NewsDeskOverlay } from './NewsDeskOverlay';
 import { useSceneRotation } from '@/hooks/useSceneRotation';
 import { useAIBroadcastContent } from '@/hooks/useAIBroadcastContent';
-import { useVAPIVoice } from '@/hooks/useVAPIVoice';
+import { useBroadcastDialogue } from '@/hooks/useBroadcastDialogue';
 
 export function BroadcastVideoPlayer() {
   const { currentScene } = useSceneRotation(30000);
   const { commentary, tickerItems, bannerText, isLive } = useAIBroadcastContent();
-  const { speak, isSpeaking } = useVAPIVoice();
-
-  useEffect(() => {
-    if (commentary?.text) {
-      speak(commentary.text);
-    }
-  }, [commentary?.id, commentary?.text, speak]);
+  
+  // Convert commentary to dialogue with turn-taking
+  const narratives = commentary 
+    ? [{ id: commentary.id || '1', text: commentary.text || '', timestamp: commentary.created_at || new Date().toISOString() }]
+    : [];
+  
+  const { currentDialogue } = useBroadcastDialogue(narratives);
+  
+  const currentNarrative = currentDialogue?.text || "Good evening, and welcome to HackCast Live. We're bringing you real-time coverage from the hackathon floor where teams are competing in real-time.";
+  const activeAnchor = currentDialogue?.anchor || 'left';
 
   return (
     <div className="w-full">
@@ -32,9 +34,10 @@ export function BroadcastVideoPlayer() {
         {/* Layer 1: News Anchors positioned at desk level */}
         <div className="absolute inset-0 z-10">
           <BroadcastCharacter 
-            narrative={commentary?.text || "Good evening, and welcome to HackCast Live. We're bringing you real-time coverage from the hackathon floor where teams are competing in real-time."} 
+            narrative={currentNarrative}
             isLive={isLive}
-            isSpeaking={isSpeaking}
+            isSpeaking={false}
+            activeAnchor={activeAnchor}
           />
         </div>
 
