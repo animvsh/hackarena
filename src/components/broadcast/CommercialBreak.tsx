@@ -43,7 +43,7 @@ export function CommercialBreak({ duration = 30, onComplete }: CommercialBreakPr
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
-      className="absolute inset-0 z-50 bg-gradient-to-br from-card via-background to-card flex items-center justify-center"
+      className="absolute inset-0 bg-gradient-to-br from-card via-background to-card flex items-center justify-center"
     >
       {/* Animated background */}
       <div className="absolute inset-0 opacity-10">

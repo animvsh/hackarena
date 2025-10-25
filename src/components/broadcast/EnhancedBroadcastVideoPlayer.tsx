@@ -15,7 +15,6 @@ import { BroadcastSplashScreen } from './BroadcastSplashScreen';
 import { SegmentTransition } from './SegmentTransition';
 import { CommercialBreak } from './CommercialBreak';
 import { ChyronLower } from './graphics/ChyronLower';
-import { InfoBar } from './graphics/InfoBar';
 import { SegmentBumper } from './graphics/SegmentBumper';
 import { Watermark } from './graphics/Watermark';
 import { CameraEffects } from './effects/CameraEffects';
@@ -23,7 +22,8 @@ import { EventAnimations } from './effects/EventAnimations';
 import { ProductionEffects } from './effects/ProductionEffects';
 import { VideoPlayerControls } from './VideoPlayerControls';
 import { useSegmentManager } from '@/hooks/useSegmentManager';
-import { useBroadcastState } from '@/hooks/useBroadcastState';
+import { useGlobalBroadcastState } from '@/hooks/useGlobalBroadcastState';
+import { useViewerPresence } from '@/hooks/useViewerPresence';
 import { useRealtimeBroadcastEvents } from '@/hooks/useRealtimeBroadcastEvents';
 import { selectPersonalityForScene } from '@/types/broadcastPersonality';
 import type { BroadcastScene } from '@/types/broadcast';
@@ -48,12 +48,15 @@ export function EnhancedBroadcastVideoPlayer() {
     injectBreakingNews
   } = useSegmentManager();
   
+  // Global broadcast state (synchronized across all users)
   const {
-    broadcastState,
-    goLive,
-    startCommercialBreak,
-    endCommercialBreak,
-  } = useBroadcastState();
+    state: broadcastState,
+    currentScene: globalScene,
+    isLoading: stateLoading,
+  } = useGlobalBroadcastState();
+  
+  // Track viewer presence
+  useViewerPresence();
   
   // Event animation states
   const [showEventAnimation, setShowEventAnimation] = useState(false);
@@ -101,19 +104,8 @@ export function EnhancedBroadcastVideoPlayer() {
     }
   }, [currentCommentary, currentPriority, phase]);
 
-  // Commercial breaks every 5 complete segments (after highlight)
-  useEffect(() => {
-    if (broadcastState !== 'live') return;
-    if (phase !== 'BUMPER_OUT') return;
-    
-    // Trigger commercial after highlight segment
-    if (currentScene === 'highlight') {
-      const commercialTimer = setTimeout(() => {
-        startCommercialBreak();
-      }, 1000);
-      return () => clearTimeout(commercialTimer);
-    }
-  }, [broadcastState, phase, currentScene, startCommercialBreak]);
+  // Commercial breaks are now controlled globally
+  // This effect is disabled in global mode
 
   // Get personality for current segment
   const personalities = selectPersonalityForScene(currentScene);
@@ -123,12 +115,10 @@ export function EnhancedBroadcastVideoPlayer() {
 
   const isLive = broadcastState === 'live';
 
+  // Note: Play/pause is controlled globally now
   const togglePlayPause = () => {
-    if (broadcastState === 'live') {
-      startCommercialBreak();
-    } else {
-      goLive();
-    }
+    // In global mode, users cannot control play/pause
+    console.log('Broadcast state is controlled globally');
   };
 
   const handleFullscreen = () => {
@@ -178,14 +168,12 @@ export function EnhancedBroadcastVideoPlayer() {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [broadcastState]);
 
-  // Show splash screen - early returns AFTER all hooks
-  if (broadcastState === 'splash') {
-    return <BroadcastSplashScreen onComplete={goLive} />;
-  }
-
-  // Show commercial break
-  if (broadcastState === 'commercial') {
-    return <CommercialBreak duration={30} onComplete={endCommercialBreak} />;
+  if (stateLoading) {
+    return (
+      <div className="w-full aspect-video bg-card rounded-2xl flex items-center justify-center">
+        <p className="text-muted-foreground">Loading broadcast...</p>
+      </div>
+    );
   }
 
   return (
@@ -195,6 +183,17 @@ export function EnhancedBroadcastVideoPlayer() {
         onMouseMove={handleMouseMove}
         onMouseLeave={handleMouseLeave}
       >
+        {/* Splash screen and commercial break are now INSIDE the video container */}
+        {broadcastState === 'splash' && (
+          <BroadcastSplashScreen onComplete={() => console.log('Splash complete - controlled globally')} />
+        )}
+        
+        {broadcastState === 'commercial' && (
+          <CommercialBreak duration={30} onComplete={() => console.log('Commercial complete - controlled globally')} />
+        )}
+
+        {/* Main broadcast content - only show when live */}
+        {broadcastState === 'live' && (
         <ProductionEffects filmGrain vignette colorGrade="warm">
           <CameraEffects movement="static" intensity={0}>
             {/* Layer 0: Professional News Studio Background */}
@@ -219,10 +218,7 @@ export function EnhancedBroadcastVideoPlayer() {
               <NewsDeskOverlay />
             </div>
 
-            {/* Layer 3: Info Bar at top */}
-            <InfoBar />
-
-            {/* Layer 4: Breaking News Banner (if priority is breaking) */}
+            {/* Layer 3: Breaking News Banner (if priority is breaking) */}
             {currentPriority === 'breaking' && phase === 'CONTENT_DELIVERY' && (
               <div className="absolute inset-0 z-50">
                 <BreakingNewsBanner
@@ -232,9 +228,9 @@ export function EnhancedBroadcastVideoPlayer() {
               </div>
             )}
 
-            {/* Layer 5: Lower third banner with segment-specific text */}
+            {/* Layer 4: Lower third banner - only show when no breaking news */}
             {segmentContent?.bannerText && phase === 'CONTENT_DELIVERY' && !showBumper && currentPriority !== 'breaking' && (
-              <div className="absolute inset-0 z-30">
+              <div className="absolute bottom-16 left-0 right-0 z-30">
                 <LowerThirdBanner
                   teamName={segmentContent.title}
                   metric={segmentContent.bannerText}
@@ -244,18 +240,8 @@ export function EnhancedBroadcastVideoPlayer() {
               </div>
             )}
 
-            {/* Layer 6: Chyron for personality intro - shown at segment start */}
-            {showChyron && activePersonalityData && (
-              <ChyronLower
-                name={activePersonalityData.name}
-                title={activePersonalityData.title}
-                position={activePersonality}
-                accentColor={activePersonalityData.primaryColor}
-              />
-            )}
-
-            {/* Layer 7: Bottom ticker tape with segment-specific content */}
-            <div className="absolute inset-0 z-30">
+            {/* Layer 5: Bottom ticker tape - simplified, less prominent */}
+            <div className="absolute bottom-0 left-0 right-0 z-25">
               <TickerTape items={segmentContent?.tickerItems.map((item, idx) => ({
                 id: `ticker-${idx}`,
                 text: item.text,
@@ -267,24 +253,12 @@ export function EnhancedBroadcastVideoPlayer() {
               })) || []} />
             </div>
 
-            {/* Layer 8: Header & UI Elements */}
-            <div className="absolute top-0 left-0 right-0 z-40">
-              <BroadcastHeader currentScene={currentScene} isLive={isLive} />
-            </div>
-            
-            {/* Clock and Date */}
-            <div className="absolute top-0 left-0 z-40">
+            {/* Top UI Bar - simplified */}
+            <div className="absolute top-4 left-4 right-4 z-40 flex items-center justify-between">
               <ClockAndDate />
-            </div>
-            
-            {/* Live Scoreboard */}
-            <div className="absolute top-0 right-0 z-40">
-              <LiveScoreBoard />
-            </div>
-            
-            {/* Live Viewers Counter */}
-            <div className="absolute bottom-10 right-4 z-40">
-              <LiveViewersCounter />
+              <div className="flex items-center gap-4">
+                <LiveViewersCounter />
+              </div>
             </div>
 
             {/* Watermark */}
@@ -339,6 +313,7 @@ export function EnhancedBroadcastVideoPlayer() {
             )}
           </CameraEffects>
         </ProductionEffects>
+        )}
 
         {/* Click overlay for play/pause */}
         <div 

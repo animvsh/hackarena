@@ -151,6 +151,42 @@ export type Database = {
           },
         ]
       }
+      broadcast_state: {
+        Row: {
+          commentary_index: number | null
+          current_scene: string
+          current_segment_id: string | null
+          id: string
+          live_viewer_count: number | null
+          phase: string | null
+          singleton: boolean | null
+          state: string
+          updated_at: string | null
+        }
+        Insert: {
+          commentary_index?: number | null
+          current_scene: string
+          current_segment_id?: string | null
+          id?: string
+          live_viewer_count?: number | null
+          phase?: string | null
+          singleton?: boolean | null
+          state: string
+          updated_at?: string | null
+        }
+        Update: {
+          commentary_index?: number | null
+          current_scene?: string
+          current_segment_id?: string | null
+          id?: string
+          live_viewer_count?: number | null
+          phase?: string | null
+          singleton?: boolean | null
+          state?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       commentary_feed: {
         Row: {
           audio_url: string | null

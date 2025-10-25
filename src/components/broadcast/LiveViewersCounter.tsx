@@ -1,23 +1,23 @@
-import { useEffect, useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Eye } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useGlobalBroadcastState } from '@/hooks/useGlobalBroadcastState';
 
 export function LiveViewersCounter() {
-  const [viewers, setViewers] = useState(Math.floor(Math.random() * 200) + 100);
-  const [previousViewers, setPreviousViewers] = useState(viewers);
+  const { liveViewerCount } = useGlobalBroadcastState();
+  const [previousViewers, setPreviousViewers] = useState(liveViewerCount);
 
   useEffect(() => {
-    const interval = setInterval(() => {
-      setPreviousViewers(viewers);
-      // Simulate viewer fluctuation
-      const change = Math.floor(Math.random() * 20) - 8;
-      setViewers((prev) => Math.max(50, Math.min(500, prev + change)));
-    }, 10000);
+    setPreviousViewers((prev) => {
+      // Only update previous if viewer count actually changed
+      if (prev !== liveViewerCount) {
+        return prev;
+      }
+      return liveViewerCount;
+    });
+  }, [liveViewerCount]);
 
-    return () => clearInterval(interval);
-  }, [viewers]);
-
-  const isIncreasing = viewers > previousViewers;
+  const isIncreasing = liveViewerCount > previousViewers;
 
   return (
     <div className="flex items-center gap-2 bg-card/50 backdrop-blur-sm px-3 py-1.5 rounded-full border border-neon-blue/20">
@@ -25,13 +25,13 @@ export function LiveViewersCounter() {
       <div className="flex items-center gap-1">
         <AnimatePresence mode="popLayout">
           <motion.span
-            key={viewers}
+            key={liveViewerCount}
             initial={{ y: isIncreasing ? 10 : -10, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
             exit={{ y: isIncreasing ? -10 : 10, opacity: 0 }}
             className="text-sm font-bold text-neon-blue tabular-nums"
           >
-            {viewers.toLocaleString()}
+            {liveViewerCount.toLocaleString()}
           </motion.span>
         </AnimatePresence>
         <span className="text-xs text-muted-foreground">watching</span>
