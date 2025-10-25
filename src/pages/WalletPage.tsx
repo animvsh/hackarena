@@ -8,6 +8,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Wallet, TrendingUp, Trophy, History } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { formatDistanceToNow } from "date-fns";
+import { useNavigate } from "react-router-dom";
 
 interface User {
   id: string;
@@ -35,6 +36,7 @@ interface Prediction {
 }
 
 const WalletPage = () => {
+  const navigate = useNavigate();
   const [user, setUser] = useState<User | null>(null);
   const [predictions, setPredictions] = useState<Prediction[]>([]);
   const [loading, setLoading] = useState(true);
@@ -185,7 +187,8 @@ const WalletPage = () => {
                   {predictions.map((prediction) => (
                     <div
                       key={prediction.id}
-                      className="flex items-center justify-between p-4 bg-background rounded-lg"
+                      className="flex items-center justify-between p-4 bg-background rounded-lg cursor-pointer hover:bg-accent transition-colors"
+                      onClick={() => navigate(`/bets/${prediction.id}`)}
                     >
                       <div className="flex items-center gap-4 flex-1">
                         <img
@@ -248,7 +251,8 @@ const WalletPage = () => {
                     .map((prediction) => (
                       <div
                         key={prediction.id}
-                        className="flex items-center justify-between p-4 bg-background rounded-lg"
+                        className="flex items-center justify-between p-4 bg-background rounded-lg cursor-pointer hover:bg-accent transition-colors"
+                        onClick={() => navigate(`/bets/${prediction.id}`)}
                       >
                         <div className="flex items-center gap-4">
                           <img
@@ -285,7 +289,8 @@ const WalletPage = () => {
                     .map((prediction) => (
                       <div
                         key={prediction.id}
-                        className="flex items-center justify-between p-4 bg-background rounded-lg"
+                        className="flex items-center justify-between p-4 bg-background rounded-lg cursor-pointer hover:bg-accent transition-colors"
+                        onClick={() => navigate(`/bets/${prediction.id}`)}
                       >
                         <div className="flex items-center gap-4">
                           <img
@@ -329,7 +334,8 @@ const WalletPage = () => {
                     .map((prediction) => (
                       <div
                         key={prediction.id}
-                        className="flex items-center justify-between p-4 bg-background rounded-lg"
+                        className="flex items-center justify-between p-4 bg-background rounded-lg cursor-pointer hover:bg-accent transition-colors"
+                        onClick={() => navigate(`/bets/${prediction.id}`)}
                       >
                         <div className="flex items-center gap-4">
                           <img

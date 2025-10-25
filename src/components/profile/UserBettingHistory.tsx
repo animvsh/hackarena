@@ -4,6 +4,7 @@ import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { supabase } from '@/integrations/supabase/client';
 import { formatDistanceToNow } from 'date-fns';
+import { useNavigate } from 'react-router-dom';
 
 interface Prediction {
   id: string;
@@ -27,6 +28,7 @@ interface UserBettingHistoryProps {
 }
 
 export function UserBettingHistory({ userId }: UserBettingHistoryProps) {
+  const navigate = useNavigate();
   const [predictions, setPredictions] = useState<Prediction[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -70,7 +72,11 @@ export function UserBettingHistory({ userId }: UserBettingHistoryProps) {
       <ScrollArea className="h-[500px]">
         <div className="space-y-3">
           {predictions.map((prediction) => (
-            <div key={prediction.id} className="p-4 border rounded-lg hover:bg-muted/50 transition-colors">
+            <div 
+              key={prediction.id} 
+              className="p-4 border rounded-lg hover:bg-muted/50 transition-colors cursor-pointer"
+              onClick={() => navigate(`/bets/${prediction.id}`)}
+            >
               <div className="flex items-start justify-between">
                 <div className="flex-1">
                   <div className="flex items-center gap-2 mb-1">
