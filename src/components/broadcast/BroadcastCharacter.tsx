@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Mic } from 'lucide-react';
+import broadcastHost from '@/assets/broadcast-host.jpg';
 
 interface BroadcastCharacterProps {
   narrative: string;
@@ -61,34 +61,41 @@ export function BroadcastCharacter({ narrative, isLive, isSpeaking = false }: Br
     }
   };
 
-  if (!narrative) return null;
-
   return (
-    <div className="flex items-end gap-2 animate-in slide-in-from-bottom-2 duration-500">
-      {/* Speech Bubble */}
-      <div className="relative bg-card/95 backdrop-blur-sm border border-primary/30 rounded-lg px-3 py-2 max-w-xs shadow-lg">
-        {/* Bubble tail */}
-        <div className="absolute -bottom-1.5 left-4 w-3 h-3 bg-card border-l border-b border-primary/30 transform rotate-45" />
-        
-        {/* Content */}
-        <div className="relative">
-          <p className="text-sm font-semibold text-foreground leading-snug">
-            {displayedText}
-            {isTyping && <span className="animate-pulse text-primary">|</span>}
-          </p>
-        </div>
-      </div>
-
-      {/* Character Avatar */}
-      <div className="relative mb-1 flex-shrink-0">
-        <div className={`w-12 h-12 rounded-full bg-gradient-to-br ${getCharacterColor()} flex items-center justify-center shadow-md ring-2 ring-background`}>
-          <Mic className={`w-6 h-6 text-background ${characterState === 'speaking' ? 'animate-pulse' : ''}`} />
+    <div className="flex items-end gap-3 animate-in slide-in-from-bottom-2 duration-500">
+      {/* Broadcast Host Image */}
+      <div className="relative flex-shrink-0">
+        <div className="w-24 h-24 rounded-full overflow-hidden ring-4 ring-primary/40 shadow-xl">
+          <img 
+            src={broadcastHost} 
+            alt="Broadcast Host" 
+            className="w-full h-full object-cover"
+          />
         </div>
         
         {/* Speaking animation ring */}
         {characterState === 'speaking' && (
-          <div className="absolute inset-0 rounded-full bg-primary/20 animate-ping" />
+          <div className="absolute inset-0 rounded-full bg-primary/30 animate-ping" />
         )}
+        
+        {/* Live indicator */}
+        {isLive && (
+          <div className="absolute -top-1 -right-1 w-4 h-4 bg-destructive rounded-full animate-pulse ring-2 ring-background" />
+        )}
+      </div>
+
+      {/* Speech Bubble */}
+      <div className="relative bg-card/95 backdrop-blur-sm border-2 border-primary/40 rounded-2xl px-4 py-3 max-w-md shadow-2xl">
+        {/* Bubble tail pointing to host */}
+        <div className="absolute -left-2 bottom-6 w-4 h-4 bg-card border-l-2 border-b-2 border-primary/40 transform rotate-45" />
+        
+        {/* Content */}
+        <div className="relative">
+          <p className="text-sm font-medium text-foreground leading-relaxed">
+            {displayedText || narrative}
+            {isTyping && <span className="animate-pulse text-primary ml-0.5">|</span>}
+          </p>
+        </div>
       </div>
     </div>
   );
