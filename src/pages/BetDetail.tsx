@@ -16,6 +16,7 @@ import { CompetitorTable } from '@/components/bet-detail/CompetitorTable';
 import { ActivityFeedItem } from '@/components/bet-detail/ActivityFeedItem';
 import { ROICalculator } from '@/components/bet-detail/ROICalculator';
 import { BetShareCard } from '@/components/bet-detail/BetShareCard';
+import { MarketActivityHeatmap } from '@/components/bet-detail/MarketActivityHeatmap';
 import { formatDistanceToNow, format } from 'date-fns';
 
 interface Prediction {
@@ -346,17 +347,24 @@ export default function BetDetail() {
             </TabsContent>
 
             <TabsContent value="activity" className="space-y-4">
+              <MarketActivityHeatmap />
+              
               {activities.length > 0 ? (
-                activities.map((activity) => (
-                  <ActivityFeedItem
-                    key={activity.id}
-                    type={activity.type}
-                    title={activity.title || 'Update'}
-                    content={activity.content}
-                    timestamp={activity.created_at}
-                    metadata={activity.metadata}
-                  />
-                ))
+                <Card className="p-6">
+                  <h3 className="font-semibold mb-4">Activity Timeline</h3>
+                  <div className="space-y-3">
+                    {activities.map((activity) => (
+                      <ActivityFeedItem
+                        key={activity.id}
+                        type={activity.type}
+                        title={activity.title || 'Update'}
+                        content={activity.content}
+                        timestamp={activity.created_at}
+                        metadata={activity.metadata}
+                      />
+                    ))}
+                  </div>
+                </Card>
               ) : (
                 <Card className="p-8 text-center">
                   <p className="text-muted-foreground">No activity to display</p>
