@@ -59,6 +59,54 @@ export type Database = {
           },
         ]
       }
+      betting_odds: {
+        Row: {
+          created_at: string | null
+          id: string
+          implied_probability: number
+          odds_american: number
+          odds_decimal: number
+          prize_id: string | null
+          team_id: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          implied_probability: number
+          odds_american: number
+          odds_decimal: number
+          prize_id?: string | null
+          team_id?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          implied_probability?: number
+          odds_american?: number
+          odds_decimal?: number
+          prize_id?: string | null
+          team_id?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "betting_odds_prize_id_fkey"
+            columns: ["prize_id"]
+            isOneToOne: false
+            referencedRelation: "hackathon_prizes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "betting_odds_team_id_fkey"
+            columns: ["team_id"]
+            isOneToOne: false
+            referencedRelation: "hackathon_teams"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       broadcast_content: {
         Row: {
           content_type: string
@@ -151,6 +199,321 @@ export type Database = {
           },
         ]
       }
+      hackathon_prizes: {
+        Row: {
+          category: string
+          created_at: string | null
+          description: string | null
+          hackathon_id: string | null
+          id: string
+          position: number
+          prize_amount: number
+        }
+        Insert: {
+          category: string
+          created_at?: string | null
+          description?: string | null
+          hackathon_id?: string | null
+          id?: string
+          position: number
+          prize_amount: number
+        }
+        Update: {
+          category?: string
+          created_at?: string | null
+          description?: string | null
+          hackathon_id?: string | null
+          id?: string
+          position?: number
+          prize_amount?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "hackathon_prizes_hackathon_id_fkey"
+            columns: ["hackathon_id"]
+            isOneToOne: false
+            referencedRelation: "hackathons"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      hackathon_team_members: {
+        Row: {
+          hacker_id: string | null
+          id: string
+          joined_at: string | null
+          role: string | null
+          team_id: string | null
+        }
+        Insert: {
+          hacker_id?: string | null
+          id?: string
+          joined_at?: string | null
+          role?: string | null
+          team_id?: string | null
+        }
+        Update: {
+          hacker_id?: string | null
+          id?: string
+          joined_at?: string | null
+          role?: string | null
+          team_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "hackathon_team_members_hacker_id_fkey"
+            columns: ["hacker_id"]
+            isOneToOne: false
+            referencedRelation: "hackers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "hackathon_team_members_team_id_fkey"
+            columns: ["team_id"]
+            isOneToOne: false
+            referencedRelation: "hackathon_teams"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      hackathon_teams: {
+        Row: {
+          category: string | null
+          created_at: string | null
+          current_progress: number | null
+          devpost_url: string | null
+          github_url: string | null
+          hackathon_id: string | null
+          id: string
+          logo_url: string | null
+          momentum_score: number | null
+          name: string
+          tagline: string | null
+          team_size: number | null
+          tech_stack: string[] | null
+          updated_at: string | null
+        }
+        Insert: {
+          category?: string | null
+          created_at?: string | null
+          current_progress?: number | null
+          devpost_url?: string | null
+          github_url?: string | null
+          hackathon_id?: string | null
+          id?: string
+          logo_url?: string | null
+          momentum_score?: number | null
+          name: string
+          tagline?: string | null
+          team_size?: number | null
+          tech_stack?: string[] | null
+          updated_at?: string | null
+        }
+        Update: {
+          category?: string | null
+          created_at?: string | null
+          current_progress?: number | null
+          devpost_url?: string | null
+          github_url?: string | null
+          hackathon_id?: string | null
+          id?: string
+          logo_url?: string | null
+          momentum_score?: number | null
+          name?: string
+          tagline?: string | null
+          team_size?: number | null
+          tech_stack?: string[] | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "hackathon_teams_hackathon_id_fkey"
+            columns: ["hackathon_id"]
+            isOneToOne: false
+            referencedRelation: "hackathons"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      hackathons: {
+        Row: {
+          created_at: string | null
+          description: string | null
+          end_date: string | null
+          id: string
+          location: string | null
+          name: string
+          prize_pool: number | null
+          start_date: string | null
+          status: string | null
+          total_participants: number | null
+          updated_at: string | null
+          website: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          description?: string | null
+          end_date?: string | null
+          id?: string
+          location?: string | null
+          name: string
+          prize_pool?: number | null
+          start_date?: string | null
+          status?: string | null
+          total_participants?: number | null
+          updated_at?: string | null
+          website?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          description?: string | null
+          end_date?: string | null
+          id?: string
+          location?: string | null
+          name?: string
+          prize_pool?: number | null
+          start_date?: string | null
+          status?: string | null
+          total_participants?: number | null
+          updated_at?: string | null
+          website?: string | null
+        }
+        Relationships: []
+      }
+      hacker_stats: {
+        Row: {
+          ai_ml_skill: number | null
+          blockchain_skill: number | null
+          communication: number | null
+          company_prestige: number | null
+          consistency: number | null
+          created_at: string | null
+          fintech_skill: number | null
+          fullstack_skill: number | null
+          github_commits: number | null
+          github_followers: number | null
+          github_repos: number | null
+          github_stars: number | null
+          growth: number | null
+          hackathon_experience: number | null
+          hacker_id: string | null
+          id: string
+          innovation: number | null
+          leadership: number | null
+          market_value: number | null
+          mobile_skill: number | null
+          network: number | null
+          overall_rating: number | null
+          technical_skill: number | null
+          updated_at: string | null
+        }
+        Insert: {
+          ai_ml_skill?: number | null
+          blockchain_skill?: number | null
+          communication?: number | null
+          company_prestige?: number | null
+          consistency?: number | null
+          created_at?: string | null
+          fintech_skill?: number | null
+          fullstack_skill?: number | null
+          github_commits?: number | null
+          github_followers?: number | null
+          github_repos?: number | null
+          github_stars?: number | null
+          growth?: number | null
+          hackathon_experience?: number | null
+          hacker_id?: string | null
+          id?: string
+          innovation?: number | null
+          leadership?: number | null
+          market_value?: number | null
+          mobile_skill?: number | null
+          network?: number | null
+          overall_rating?: number | null
+          technical_skill?: number | null
+          updated_at?: string | null
+        }
+        Update: {
+          ai_ml_skill?: number | null
+          blockchain_skill?: number | null
+          communication?: number | null
+          company_prestige?: number | null
+          consistency?: number | null
+          created_at?: string | null
+          fintech_skill?: number | null
+          fullstack_skill?: number | null
+          github_commits?: number | null
+          github_followers?: number | null
+          github_repos?: number | null
+          github_stars?: number | null
+          growth?: number | null
+          hackathon_experience?: number | null
+          hacker_id?: string | null
+          id?: string
+          innovation?: number | null
+          leadership?: number | null
+          market_value?: number | null
+          mobile_skill?: number | null
+          network?: number | null
+          overall_rating?: number | null
+          technical_skill?: number | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "hacker_stats_hacker_id_fkey"
+            columns: ["hacker_id"]
+            isOneToOne: false
+            referencedRelation: "hackers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      hackers: {
+        Row: {
+          avatar_url: string | null
+          bio: string | null
+          company: string | null
+          created_at: string | null
+          github_username: string
+          id: string
+          linkedin_url: string | null
+          location: string | null
+          name: string
+          twitter_username: string | null
+          updated_at: string | null
+          website: string | null
+        }
+        Insert: {
+          avatar_url?: string | null
+          bio?: string | null
+          company?: string | null
+          created_at?: string | null
+          github_username: string
+          id?: string
+          linkedin_url?: string | null
+          location?: string | null
+          name: string
+          twitter_username?: string | null
+          updated_at?: string | null
+          website?: string | null
+        }
+        Update: {
+          avatar_url?: string | null
+          bio?: string | null
+          company?: string | null
+          created_at?: string | null
+          github_username?: string
+          id?: string
+          linkedin_url?: string | null
+          location?: string | null
+          name?: string
+          twitter_username?: string | null
+          updated_at?: string | null
+          website?: string | null
+        }
+        Relationships: []
+      }
       integration_metrics: {
         Row: {
           created_at: string | null
@@ -230,6 +593,39 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      notifications: {
+        Row: {
+          created_at: string | null
+          id: string
+          message: string
+          metadata: Json | null
+          read: boolean | null
+          title: string
+          type: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          message: string
+          metadata?: Json | null
+          read?: boolean | null
+          title: string
+          type: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          message?: string
+          metadata?: Json | null
+          read?: boolean | null
+          title?: string
+          type?: string
+          user_id?: string
+        }
+        Relationships: []
       }
       odds_history: {
         Row: {
@@ -635,6 +1031,53 @@ export type Database = {
           },
         ]
       }
+      team_invites: {
+        Row: {
+          created_at: string | null
+          expires_at: string | null
+          id: string
+          invite_email: string | null
+          invited_by: string
+          invited_user_id: string | null
+          message: string | null
+          responded_at: string | null
+          status: string | null
+          team_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          expires_at?: string | null
+          id?: string
+          invite_email?: string | null
+          invited_by: string
+          invited_user_id?: string | null
+          message?: string | null
+          responded_at?: string | null
+          status?: string | null
+          team_id: string
+        }
+        Update: {
+          created_at?: string | null
+          expires_at?: string | null
+          id?: string
+          invite_email?: string | null
+          invited_by?: string
+          invited_user_id?: string | null
+          message?: string | null
+          responded_at?: string | null
+          status?: string | null
+          team_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "team_invites_team_id_fkey"
+            columns: ["team_id"]
+            isOneToOne: false
+            referencedRelation: "teams"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       team_join_requests: {
         Row: {
           created_at: string | null
@@ -816,6 +1259,83 @@ export type Database = {
           },
         ]
       }
+      team_stats: {
+        Row: {
+          avg_ai_ml_skill: number | null
+          avg_blockchain_skill: number | null
+          avg_communication: number | null
+          avg_company_prestige: number | null
+          avg_consistency: number | null
+          avg_fintech_skill: number | null
+          avg_fullstack_skill: number | null
+          avg_growth: number | null
+          avg_hackathon_experience: number | null
+          avg_innovation: number | null
+          avg_leadership: number | null
+          avg_mobile_skill: number | null
+          avg_network: number | null
+          avg_overall_rating: number | null
+          avg_technical_skill: number | null
+          created_at: string | null
+          id: string
+          team_id: string | null
+          total_market_value: number | null
+          updated_at: string | null
+        }
+        Insert: {
+          avg_ai_ml_skill?: number | null
+          avg_blockchain_skill?: number | null
+          avg_communication?: number | null
+          avg_company_prestige?: number | null
+          avg_consistency?: number | null
+          avg_fintech_skill?: number | null
+          avg_fullstack_skill?: number | null
+          avg_growth?: number | null
+          avg_hackathon_experience?: number | null
+          avg_innovation?: number | null
+          avg_leadership?: number | null
+          avg_mobile_skill?: number | null
+          avg_network?: number | null
+          avg_overall_rating?: number | null
+          avg_technical_skill?: number | null
+          created_at?: string | null
+          id?: string
+          team_id?: string | null
+          total_market_value?: number | null
+          updated_at?: string | null
+        }
+        Update: {
+          avg_ai_ml_skill?: number | null
+          avg_blockchain_skill?: number | null
+          avg_communication?: number | null
+          avg_company_prestige?: number | null
+          avg_consistency?: number | null
+          avg_fintech_skill?: number | null
+          avg_fullstack_skill?: number | null
+          avg_growth?: number | null
+          avg_hackathon_experience?: number | null
+          avg_innovation?: number | null
+          avg_leadership?: number | null
+          avg_mobile_skill?: number | null
+          avg_network?: number | null
+          avg_overall_rating?: number | null
+          avg_technical_skill?: number | null
+          created_at?: string | null
+          id?: string
+          team_id?: string | null
+          total_market_value?: number | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "team_stats_team_id_fkey"
+            columns: ["team_id"]
+            isOneToOne: false
+            referencedRelation: "hackathon_teams"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       teams: {
         Row: {
           category: string[] | null
@@ -903,10 +1423,20 @@ export type Database = {
       users: {
         Row: {
           avatar_url: string | null
+          bio: string | null
           correct_predictions: number | null
           created_at: string | null
+          education: Json | null
           email: string | null
+          experience: Json | null
+          github_url: string | null
           id: string
+          linkedin_url: string | null
+          onboarding_completed: boolean | null
+          portfolio_url: string | null
+          profile_generated_by: string | null
+          resume_url: string | null
+          skills: Json | null
           total_predictions: number | null
           updated_at: string | null
           username: string
@@ -915,10 +1445,20 @@ export type Database = {
         }
         Insert: {
           avatar_url?: string | null
+          bio?: string | null
           correct_predictions?: number | null
           created_at?: string | null
+          education?: Json | null
           email?: string | null
+          experience?: Json | null
+          github_url?: string | null
           id?: string
+          linkedin_url?: string | null
+          onboarding_completed?: boolean | null
+          portfolio_url?: string | null
+          profile_generated_by?: string | null
+          resume_url?: string | null
+          skills?: Json | null
           total_predictions?: number | null
           updated_at?: string | null
           username: string
@@ -927,10 +1467,20 @@ export type Database = {
         }
         Update: {
           avatar_url?: string | null
+          bio?: string | null
           correct_predictions?: number | null
           created_at?: string | null
+          education?: Json | null
           email?: string | null
+          experience?: Json | null
+          github_url?: string | null
           id?: string
+          linkedin_url?: string | null
+          onboarding_completed?: boolean | null
+          portfolio_url?: string | null
+          profile_generated_by?: string | null
+          resume_url?: string | null
+          skills?: Json | null
           total_predictions?: number | null
           updated_at?: string | null
           username?: string

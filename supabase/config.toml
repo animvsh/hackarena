@@ -17,3 +17,12 @@ verify_jwt = false
 
 [functions.generate-broadcast-content]
 verify_jwt = false
+
+[functions.parse-resume]
+verify_jwt = false
+
+[functions.invite-team-member]
+verify_jwt = true
+
+[functions.respond-to-team-invite]
+verify_jwt = true
