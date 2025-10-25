@@ -24,15 +24,13 @@ export function BroadcastVideoPlayer() {
         {/* Compact Header */}
         <BroadcastHeader currentScene={currentScene} isLive={isLive} />
 
-        {/* Main content area with character */}
+        {/* Main content area with character - always visible */}
         <div className="absolute inset-0 flex items-end justify-start p-4 pt-16 pb-20">
-          {commentary && (
-            <BroadcastCharacter 
-              narrative={commentary.text} 
-              isLive={isLive}
-              isSpeaking={isSpeaking}
-            />
-          )}
+          <BroadcastCharacter 
+            narrative={commentary?.text || "Standing by for live updates from the hackathon floor..."} 
+            isLive={isLive}
+            isSpeaking={isSpeaking}
+          />
         </div>
 
         {/* Lower third banner */}

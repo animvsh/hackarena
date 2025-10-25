@@ -1,4 +1,4 @@
-import { Tv, TrendingUp, Users, BarChart3, Radio, Trophy, Wallet, Settings, LogOut } from "lucide-react";
+import { Tv, TrendingUp, Users, BarChart3, Trophy, Wallet, Settings, LogOut } from "lucide-react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
@@ -6,7 +6,6 @@ import { Badge } from "@/components/ui/badge";
 
 const navItems = [
   { icon: Tv, label: "Dashboard", route: "/" },
-  { icon: Radio, label: "Live Broadcast", route: "/broadcast", badge: "LIVE" },
   { icon: TrendingUp, label: "Markets", route: "/markets" },
   { icon: Users, label: "Teams", route: "/teams" },
   { icon: BarChart3, label: "Leaderboard", route: "/leaderboard" },
@@ -74,15 +73,6 @@ export const Sidebar = () => {
             >
               <Icon className="w-5 h-5" />
               <span className="font-medium">{item.label}</span>
-              {item.badge && (
-                <span className={`ml-auto text-xs px-2 py-0.5 rounded-full ${
-                  item.badge === "LIVE" 
-                    ? "bg-destructive text-destructive-foreground animate-pulse" 
-                    : "bg-primary/20 text-primary"
-                }`}>
-                  {item.badge}
-                </span>
-              )}
             </Link>
           );
         })}

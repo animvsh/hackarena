@@ -11,6 +11,9 @@ interface BroadcastContentItem {
   created_at: string;
 }
 
+const FAKE_TEAMS = ['CodeCrusaders', 'DevDynamos', 'TechTitans', 'BugBusters', 'GitGurus', 'DataDragons', 'CloudNinjas', 'APIAvengers'];
+const FAKE_METRICS = ['commits pushed', 'feature completed', 'bug fixed', 'milestone reached', 'deployment successful', 'PR merged', 'tests passed', 'refactor completed'];
+
 export function useAIBroadcastContent() {
   const [commentary, setCommentary] = useState<BroadcastContentItem | null>(null);
   const [tickerItems, setTickerItems] = useState<BroadcastContentItem[]>([]);
@@ -87,8 +90,45 @@ export function useAIBroadcastContent() {
       )
       .subscribe();
 
+    // Auto-generate fake content every 12 seconds
+    const contentTypes: Array<'commentary' | 'ticker' | 'banner' | 'breaking'> = ['commentary', 'ticker', 'banner', 'commentary', 'ticker', 'breaking'];
+    let contentIndex = 0;
+
+    const generateFakeContent = async () => {
+      const team = FAKE_TEAMS[Math.floor(Math.random() * FAKE_TEAMS.length)];
+      const metric = FAKE_METRICS[Math.floor(Math.random() * FAKE_METRICS.length)];
+      const value = Math.floor(Math.random() * 100) + 1;
+      const change = Math.floor(Math.random() * 40) - 10;
+      const contentType = contentTypes[contentIndex % contentTypes.length];
+      
+      contentIndex++;
+
+      console.log('Auto-generating broadcast content:', { team, metric, value, change, contentType });
+
+      try {
+        await supabase.functions.invoke('generate-broadcast-content', {
+          body: {
+            teamName: team,
+            metricType: metric,
+            currentValue: value,
+            change,
+            contentType
+          },
+        });
+      } catch (error) {
+        console.error('Failed to auto-generate content:', error);
+      }
+    };
+
+    // Generate initial content immediately
+    generateFakeContent();
+
+    // Then generate every 12 seconds
+    const interval = setInterval(generateFakeContent, 12000);
+
     return () => {
       supabase.removeChannel(channel);
+      clearInterval(interval);
     };
   }, []);
 
