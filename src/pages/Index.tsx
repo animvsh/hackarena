@@ -110,6 +110,15 @@ const Index = () => {
       <main className="flex-1 p-8">
         <Header />
 
+        {/* Live Broadcast - Main Feature */}
+        <div className="mb-8">
+          <h2 className="text-2xl font-bold mb-4 flex items-center gap-2">
+            <Radio className="w-6 h-6 text-destructive animate-pulse" />
+            Live Broadcast
+          </h2>
+          <BroadcastVideoPlayer />
+        </div>
+
         {/* Live Statistics */}
         <div className="mb-6">
           <div className="flex items-center justify-between mb-6">
@@ -199,12 +208,6 @@ const Index = () => {
               </div>
             </>
           )}
-        </div>
-
-        {/* Live Broadcast - Main Feature */}
-        <div className="mb-6">
-          <h2 className="text-xl font-bold mb-4">Live Broadcast</h2>
-          <BroadcastVideoPlayer />
         </div>
 
         {/* Charts and Stats Grid */}
