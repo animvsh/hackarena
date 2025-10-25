@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { ArrowLeft, Maximize2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { BroadcastVideoPlayer } from '@/components/broadcast/BroadcastVideoPlayer';
+import { EnhancedBroadcastVideoPlayer } from '@/components/broadcast/EnhancedBroadcastVideoPlayer';
 import { BettingSidebar } from '@/components/broadcast/BettingSidebar';
 import { MarketCarousel } from '@/components/broadcast/MarketCarousel';
 import { MarketDetailModal } from '@/components/MarketDetailModal';
@@ -109,7 +109,7 @@ export default function BroadcastStream() {
           <div className="p-4 lg:p-6 space-y-6 max-w-7xl mx-auto">
             {/* Video Player */}
             <div className="w-full">
-              <BroadcastVideoPlayer />
+              <EnhancedBroadcastVideoPlayer />
             </div>
 
             {/* Market Carousel */}
