@@ -40,7 +40,7 @@ export function BroadcastSplashScreen({ onComplete }: BroadcastSplashScreenProps
       <motion.div
         initial={{ opacity: 1 }}
         exit={{ opacity: 0 }}
-        className="fixed inset-0 z-[100] bg-gradient-to-br from-broadcast-blue via-broadcast-blue-dark to-black flex items-center justify-center overflow-hidden"
+        className="absolute inset-0 bg-gradient-to-br from-broadcast-blue via-broadcast-blue-dark to-black flex items-center justify-center overflow-hidden"
       >
         {/* Animated grid background */}
         <div className="absolute inset-0 opacity-20">
