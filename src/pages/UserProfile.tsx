@@ -11,7 +11,12 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Skeleton } from '@/components/ui/skeleton';
 import { StatsCard } from '@/components/profile/StatsCard';
 import { UserBettingHistory } from '@/components/profile/UserBettingHistory';
-import { ArrowLeft, Wallet, Trophy, TrendingUp, Target } from 'lucide-react';
+import { InviteToTeamModal } from '@/components/profile/InviteToTeamModal';
+import { UserTeamsSection } from '@/components/profile/UserTeamsSection';
+import { ArrowLeft, Wallet, Trophy, TrendingUp, Target, UserPlus, MapPin, Linkedin, Github, Globe, Mail } from 'lucide-react';
+import { useAuth } from '@/contexts/AuthContext';
+import { useTeamMemberships } from '@/hooks/useTeamMemberships';
+import { useProfileViews } from '@/hooks/useProfileViews';
 
 interface User {
   id: string;
@@ -22,6 +27,16 @@ interface User {
   xp: number;
   total_predictions: number;
   correct_predictions: number;
+  bio?: string;
+  headline?: string;
+  location?: string;
+  linkedin_url?: string;
+  github_url?: string;
+  portfolio_url?: string;
+  skills?: any[];
+  experience?: any[];
+  education?: any[];
+  projects?: any[];
 }
 
 interface TeamMembership {
@@ -37,9 +52,12 @@ interface TeamMembership {
 export default function UserProfile() {
   const { userId } = useParams();
   const navigate = useNavigate();
+  const { user: currentUser } = useAuth();
   const [user, setUser] = useState<User | null>(null);
-  const [teams, setTeams] = useState<TeamMembership[]>([]);
   const [loading, setLoading] = useState(true);
+  const [inviteModalOpen, setInviteModalOpen] = useState(false);
+  const { memberships: teamMemberships } = useTeamMemberships(userId);
+  const { trackView } = useProfileViews(userId);
 
   useEffect(() => {
     const fetchUserData = async () => {
@@ -53,24 +71,19 @@ export default function UserProfile() {
         .single();
 
       if (userData) {
-        setUser(userData);
+        setUser(userData as User);
       }
 
-      // Fetch team memberships
-      const { data: teamsData } = await supabase
-        .from('team_members')
-        .select('id, role, teams(id, name, logo_url)')
-        .eq('user_id', userId);
-
-      if (teamsData) {
-        setTeams(teamsData as any);
+      // Track profile view
+      if (currentUser?.id) {
+        trackView(currentUser.id);
       }
 
       setLoading(false);
     };
 
     fetchUserData();
-  }, [userId]);
+  }, [userId, currentUser, trackView]);
 
   const accuracyRate = user && user.total_predictions > 0
     ? ((user.correct_predictions / user.total_predictions) * 100).toFixed(1)
@@ -128,22 +141,72 @@ export default function UserProfile() {
           {/* Header Section */}
           <Card className="p-8 mb-8">
             <div className="flex items-start gap-6">
-              <Avatar className="w-24 h-24">
+              <Avatar className="w-32 h-32 border-4 border-background shadow-xl">
                 <AvatarImage src={user.avatar_url} alt={user.username} />
-                <AvatarFallback>{user.username[0].toUpperCase()}</AvatarFallback>
+                <AvatarFallback className="text-4xl">{user.username[0].toUpperCase()}</AvatarFallback>
               </Avatar>
               
               <div className="flex-1">
                 <div className="flex items-start justify-between">
-                  <div>
+                  <div className="flex-1">
                     <h1 className="text-4xl font-bold mb-2">{user.username}</h1>
-                    <p className="text-lg text-muted-foreground mb-4">{user.email}</p>
+                    {user.headline && (
+                      <p className="text-lg text-muted-foreground mb-2">{user.headline}</p>
+                    )}
+                    <div className="flex flex-wrap gap-4 text-sm text-muted-foreground mb-4">
+                      {user.location && (
+                        <span className="flex items-center gap-1">
+                          <MapPin className="h-4 w-4" />
+                          {user.location}
+                        </span>
+                      )}
+                    </div>
+
+                    {/* Social Links */}
+                    <div className="flex flex-wrap gap-2">
+                      {user.linkedin_url && (
+                        <Button variant="outline" size="sm" asChild>
+                          <a href={user.linkedin_url} target="_blank" rel="noopener noreferrer">
+                            <Linkedin className="h-4 w-4" />
+                          </a>
+                        </Button>
+                      )}
+                      {user.github_url && (
+                        <Button variant="outline" size="sm" asChild>
+                          <a href={user.github_url} target="_blank" rel="noopener noreferrer">
+                            <Github className="h-4 w-4" />
+                          </a>
+                        </Button>
+                      )}
+                      {user.portfolio_url && (
+                        <Button variant="outline" size="sm" asChild>
+                          <a href={user.portfolio_url} target="_blank" rel="noopener noreferrer">
+                            <Globe className="h-4 w-4" />
+                          </a>
+                        </Button>
+                      )}
+                      {user.email && (
+                        <Button variant="outline" size="sm" asChild>
+                          <a href={`mailto:${user.email}`}>
+                            <Mail className="h-4 w-4" />
+                          </a>
+                        </Button>
+                      )}
+                    </div>
                   </div>
 
-                  <Button variant="ghost" onClick={() => navigate(-1)}>
-                    <ArrowLeft className="w-4 h-4 mr-2" />
-                    Back
-                  </Button>
+                  <div className="flex gap-2">
+                    {currentUser && currentUser.id !== user.id && (
+                      <Button onClick={() => setInviteModalOpen(true)}>
+                        <UserPlus className="w-4 h-4 mr-2" />
+                        Invite to Team
+                      </Button>
+                    )}
+                    <Button variant="ghost" onClick={() => navigate(-1)}>
+                      <ArrowLeft className="w-4 h-4 mr-2" />
+                      Back
+                    </Button>
+                  </div>
                 </div>
               </div>
             </div>
@@ -212,31 +275,8 @@ export default function UserProfile() {
 
                 <TabsContent value="teams">
                   <Card className="p-6">
-                    <h3 className="font-semibold mb-4">Team Memberships ({teams.length})</h3>
-                    <div className="space-y-3">
-                      {teams.map((membership) => (
-                        <Card 
-                          key={membership.id}
-                          className="p-4 hover:border-primary/50 transition-colors cursor-pointer"
-                          onClick={() => navigate(`/teams/${membership.teams.id}`)}
-                        >
-                          <div className="flex items-center gap-4">
-                            <Avatar>
-                              <AvatarImage src={membership.teams.logo_url} />
-                              <AvatarFallback>{membership.teams.name[0]}</AvatarFallback>
-                            </Avatar>
-                            <div className="flex-1">
-                              <p className="font-medium">{membership.teams.name}</p>
-                              <p className="text-sm text-muted-foreground">{membership.role}</p>
-                            </div>
-                            <Badge variant="secondary">{membership.role}</Badge>
-                          </div>
-                        </Card>
-                      ))}
-                      {teams.length === 0 && (
-                        <p className="text-muted-foreground text-center py-8">No team memberships</p>
-                      )}
-                    </div>
+                    <h3 className="font-semibold mb-6">Team Memberships</h3>
+                    <UserTeamsSection memberships={teamMemberships} isOwnProfile={false} />
                   </Card>
                 </TabsContent>
               </Tabs>
@@ -257,7 +297,7 @@ export default function UserProfile() {
                   </div>
                   <div className="flex justify-between">
                     <span className="text-sm text-muted-foreground">Teams</span>
-                    <span className="font-medium">{teams.length}</span>
+                    <span className="font-medium">{teamMemberships.length}</span>
                   </div>
                 </div>
               </Card>
@@ -265,6 +305,17 @@ export default function UserProfile() {
           </div>
         </main>
       </div>
+
+      {/* Invite Modal */}
+      {user && (
+        <InviteToTeamModal
+          open={inviteModalOpen}
+          onOpenChange={setInviteModalOpen}
+          targetUserId={user.id}
+          targetUserEmail={user.email}
+          targetUsername={user.username}
+        />
+      )}
     </div>
   );
 }
