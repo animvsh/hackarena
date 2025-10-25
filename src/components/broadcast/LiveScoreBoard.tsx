@@ -14,7 +14,7 @@ export function LiveScoreBoard() {
   ];
 
   return (
-    <div className="absolute top-16 right-4 z-40 w-64">
+    <div className="absolute top-20 right-4 z-40 w-64">
       <div className="bg-card/90 backdrop-blur-md border border-primary/30 rounded-lg shadow-2xl overflow-hidden">
         {/* Header */}
         <div className="bg-primary/20 border-b border-primary/30 px-3 py-2">
