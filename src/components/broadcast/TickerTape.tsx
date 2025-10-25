@@ -1,11 +1,5 @@
 import { TrendingUp, Trophy, Zap, AlertCircle } from 'lucide-react';
-
-interface BroadcastContentItem {
-  id: string;
-  text: string;
-  team_name: string;
-  priority: string;
-}
+import type { BroadcastContentItem } from '@/types/broadcastEvent';
 
 interface TickerTapeProps {
   items?: BroadcastContentItem[];
