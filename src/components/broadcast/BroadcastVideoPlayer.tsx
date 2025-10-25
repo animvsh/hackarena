@@ -5,6 +5,7 @@ import { LowerThirdBanner } from './LowerThirdBanner';
 import { TickerTape } from './TickerTape';
 import { LiveViewersCounter } from './LiveViewersCounter';
 import { NewsStudioBackground } from './NewsStudioBackground';
+import { NewsDeskOverlay } from './NewsDeskOverlay';
 import { useSceneRotation } from '@/hooks/useSceneRotation';
 import { useAIBroadcastContent } from '@/hooks/useAIBroadcastContent';
 import { useVAPIVoice } from '@/hooks/useVAPIVoice';
@@ -23,7 +24,7 @@ export function BroadcastVideoPlayer() {
   return (
     <div className="w-full">
       <div className="relative aspect-video bg-gradient-to-br from-card via-card to-secondary/30 border border-border rounded-2xl overflow-hidden shadow-2xl hover-lift">
-        {/* News Studio Background */}
+        {/* Professional News Studio Background */}
         <NewsStudioBackground scene={currentScene} />
         
         {/* Compact Header */}
@@ -34,17 +35,20 @@ export function BroadcastVideoPlayer() {
           <LiveViewersCounter />
         </div>
 
-        {/* Host Character positioned behind desk */}
+        {/* News Anchors positioned at desk level */}
         <BroadcastCharacter 
-          narrative={commentary?.text || "Standing by for live updates from the hackathon floor..."} 
+          narrative={commentary?.text || "Good evening, and welcome to HackCast Live. We're bringing you real-time coverage from the hackathon floor..."} 
           isLive={isLive}
           isSpeaking={isSpeaking}
         />
 
+        {/* News Desk Overlay (foreground - in front of anchors) */}
+        <NewsDeskOverlay />
+
         {/* Lower third banner */}
         {bannerText && (
           <LowerThirdBanner
-            teamName={bannerText.team_name || 'Live'}
+            teamName={bannerText.team_name || 'Breaking'}
             metric={bannerText.text}
             value={0}
             change={0}
