@@ -190,7 +190,7 @@ export function BroadcastCharacter({ narrative, isLive, isSpeaking = false, acti
 
       {/* Professional Speech Bubble - higher z-index to appear above banners */}
       {displayedText && (
-        <div className="absolute bottom-2 left-1/2 transform -translate-x-1/2 max-w-4xl w-full px-4 z-50">
+        <div className="absolute bottom-24 md:bottom-28 lg:bottom-32 left-1/2 transform -translate-x-1/2 max-w-4xl w-full px-4 z-50">
           <div className="bg-gradient-to-r from-card/98 to-card/95 backdrop-blur-md border-2 border-primary/40 rounded-xl shadow-2xl overflow-hidden">
             <div className="h-1 bg-gradient-to-r from-primary via-primary/60 to-transparent" />
             
