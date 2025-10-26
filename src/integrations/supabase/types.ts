@@ -2180,3 +2180,5 @@ export const Constants = {
     },
   },
 } as const
+A new version of Supabase CLI is available: v2.53.6 (currently installed v2.48.3)
+We recommend updating regularly for new features and bug fixes: https://supabase.com/docs/guides/cli/getting-started#updating-the-supabase-cli
