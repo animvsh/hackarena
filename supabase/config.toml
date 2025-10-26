@@ -29,3 +29,6 @@ verify_jwt = true
 
 [functions.import-linkedin-profile]
 verify_jwt = false
+
+[functions.simulate-live-updates]
+verify_jwt = false

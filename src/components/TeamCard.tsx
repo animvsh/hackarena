@@ -1,3 +1,4 @@
+import { memo } from "react";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
@@ -22,7 +23,7 @@ interface TeamCardProps {
   onClick?: () => void;
 }
 
-export const TeamCard = ({ team, onClick }: TeamCardProps) => {
+export const TeamCard = memo(({ team, onClick }: TeamCardProps) => {
   const getMomentumColor = (score: number) => {
     if (score >= 75) return "text-green-500";
     if (score >= 50) return "text-yellow-500";
@@ -156,4 +157,4 @@ export const TeamCard = ({ team, onClick }: TeamCardProps) => {
       </div>
     </Card>
   );
-};
+});
