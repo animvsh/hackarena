@@ -1,12 +1,19 @@
 import { useState, useEffect } from 'react';
+import { useBroadcastPause } from '@/contexts/BroadcastPauseContext';
 
 export function ClockAndDate() {
+  const { isPaused } = useBroadcastPause();
   const [time, setTime] = useState(new Date());
 
   useEffect(() => {
+    if (isPaused) {
+      console.log('[ClockAndDate] Clock paused');
+      return;
+    }
+
     const timer = setInterval(() => setTime(new Date()), 1000);
     return () => clearInterval(timer);
-  }, []);
+  }, [isPaused]);
 
   const formatTime = (date: Date) => {
     return date.toLocaleTimeString('en-US', { 

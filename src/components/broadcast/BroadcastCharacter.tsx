@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import anchorLeftImg from '@/assets/news-anchor-left.png';
 import anchorRightImg from '@/assets/news-anchor-right.png';
 import { MouthAnimation } from './MouthAnimation';
@@ -25,6 +25,24 @@ export function BroadcastCharacter({ narrative, isLive, isSpeaking = false, acti
   const [mouthOpen, setMouthOpen] = useState(false);
   const [headTilt, setHeadTilt] = useState(0);
   const [shoulderMove, setShoulderMove] = useState(0);
+  
+  // Store all timer IDs for cleanup
+  const timersRef = useRef<{
+    typeInterval?: NodeJS.Timeout;
+    leftBlink?: NodeJS.Timeout;
+    rightBlink?: NodeJS.Timeout;
+    movement?: NodeJS.Timeout;
+    mouth?: NodeJS.Timeout;
+  }>({});
+
+  // Clear all timers helper
+  const clearAllTimers = useCallback(() => {
+    console.log('[BroadcastCharacter] Clearing all animation timers');
+    Object.values(timersRef.current).forEach(timer => {
+      if (timer) clearInterval(timer);
+    });
+    timersRef.current = {};
+  }, []);
 
   // Voice IDs for each anchor - use personality-specific voice if provided
   const voiceId = personalityId 
@@ -72,18 +90,23 @@ export function BroadcastCharacter({ narrative, isLive, isSpeaking = false, acti
 
   // Smooth text reveal effect - updates when narrative changes
   useEffect(() => {
-    if (!narrative) return;
+    if (!narrative || isPaused) {
+      if (isPaused) {
+        console.log('[BroadcastCharacter] Pausing typing animation');
+      }
+      return;
+    }
 
     setIsTyping(true);
     setDisplayedText('');
     setCharacterState('speaking');
     
     let currentIndex = 0;
-    const typingSpeed = 15; // Faster typing for more dynamic feel
+    const typingSpeed = 15;
 
     const typeInterval = setInterval(() => {
       if (currentIndex < narrative.length) {
-        setDisplayedText(narrative.slice(0, currentIndex + 2)); // Show 2 chars at a time
+        setDisplayedText(narrative.slice(0, currentIndex + 2));
         setMouthOpen(prev => !prev);
         currentIndex += 2;
       } else {
@@ -98,8 +121,9 @@ export function BroadcastCharacter({ narrative, isLive, isSpeaking = false, acti
       }
     }, typingSpeed);
 
+    timersRef.current.typeInterval = typeInterval;
     return () => clearInterval(typeInterval);
-  }, [narrative, isSpeaking]); // Re-run when narrative changes
+  }, [narrative, isSpeaking, isPaused]);
 
   // Random blinking for realism
   useEffect(() => {
@@ -122,30 +146,41 @@ export function BroadcastCharacter({ narrative, isLive, isSpeaking = false, acti
     };
   }, []);
 
-  // Subtle head movements and gestures
+  // Subtle head movements and gestures - pause when broadcast is paused
   useEffect(() => {
+    if (isPaused) {
+      console.log('[BroadcastCharacter] Pausing head movement');
+      if (timersRef.current.movement) clearInterval(timersRef.current.movement);
+      return;
+    }
+
     const movementInterval = setInterval(() => {
       setHeadTilt(Math.random() * 4 - 2);
       setShoulderMove(Math.random() * 2 - 1);
     }, 4000);
 
+    timersRef.current.movement = movementInterval;
     return () => clearInterval(movementInterval);
-  }, []);
+  }, [isPaused]);
 
-  // Continuous mouth animation during speaking
+  // Continuous mouth animation during speaking - pause when broadcast is paused
   useEffect(() => {
-    if (!isSpeaking || characterState !== 'speaking') {
+    if (!isSpeaking || characterState !== 'speaking' || isPaused) {
       setMouthOpen(false);
+      if (isPaused && timersRef.current.mouth) {
+        console.log('[BroadcastCharacter] Pausing mouth animation');
+        clearInterval(timersRef.current.mouth);
+      }
       return;
     }
 
-    // Mouth animation during active speaking - runs continuously
     const mouthInterval = setInterval(() => {
       setMouthOpen(prev => !prev);
-    }, 250); // Toggle every 250ms for natural speech rhythm
+    }, 250);
 
+    timersRef.current.mouth = mouthInterval;
     return () => clearInterval(mouthInterval);
-  }, [isSpeaking, characterState]);
+  }, [isSpeaking, characterState, isPaused]);
 
   useEffect(() => {
     if (isSpeaking) {

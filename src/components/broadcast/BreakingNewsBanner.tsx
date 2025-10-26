@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { AlertCircle } from 'lucide-react';
+import { useBroadcastPause } from '@/contexts/BroadcastPauseContext';
 
 interface BreakingNewsBannerProps {
   text: string;
@@ -7,9 +8,15 @@ interface BreakingNewsBannerProps {
 }
 
 export function BreakingNewsBanner({ text, teamName }: BreakingNewsBannerProps) {
+  const { isPaused } = useBroadcastPause();
   const [isVisible, setIsVisible] = useState(false);
 
   useEffect(() => {
+    if (isPaused) {
+      console.log('[BreakingNewsBanner] Banner animation paused');
+      return;
+    }
+
     setIsVisible(false);
     const showTimer = setTimeout(() => setIsVisible(true), 100);
     const hideTimer = setTimeout(() => setIsVisible(false), 15000);
@@ -18,7 +25,7 @@ export function BreakingNewsBanner({ text, teamName }: BreakingNewsBannerProps) 
       clearTimeout(showTimer);
       clearTimeout(hideTimer);
     };
-  }, [text, teamName]);
+  }, [text, teamName, isPaused]);
 
   return (
     <div

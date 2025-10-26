@@ -1,12 +1,14 @@
 import { motion } from 'framer-motion';
 import { TrendingUp, Trophy, DollarSign, Zap, AlertCircle } from 'lucide-react';
 import type { BroadcastContentItem } from '@/types/broadcastEvent';
+import { useBroadcastPause } from '@/contexts/BroadcastPauseContext';
 
 interface TickerTapeProps {
   items?: BroadcastContentItem[];
 }
 
 export function TickerTape({ items = [] }: TickerTapeProps) {
+  const { isPaused } = useBroadcastPause();
   const displayItems = items.length > 0 ? items : [
     { id: '1', text: 'Waiting for live updates...', team_name: 'System', priority: 'normal' as const, content_type: 'ticker' as const, duration: 0, created_at: new Date().toISOString() }
   ];
@@ -32,8 +34,8 @@ export function TickerTape({ items = [] }: TickerTapeProps) {
       <div className="flex-1 overflow-hidden relative">
         <motion.div
           className="flex gap-6 items-center absolute left-0"
-          animate={{ x: [0, -2000] }}
-          transition={{
+          animate={isPaused ? false : { x: [0, -2000] }}
+          transition={isPaused ? {} : {
             x: {
               repeat: Infinity,
               repeatType: "loop",
