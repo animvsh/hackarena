@@ -17,7 +17,7 @@ export function useTeamAnalysis() {
   useEffect(() => {
     const fetchTeams = async () => {
       const { data } = await supabase
-        .from('teams')
+        .from('hackathon_teams')
         .select('name, momentum_score, current_progress, team_size')
         .limit(20);
 

@@ -49,10 +49,9 @@ serve(async (req) => {
 
     // Get teams for this hackathon
     const { data: teams } = await supabase
-      .from('teams')
+      .from('hackathon_teams')
       .select('id, name, current_progress, momentum_score')
       .eq('hackathon_id', targetHackathonId)
-      .eq('status', 'active')
 
     if (!teams || teams.length === 0) {
       throw new Error('No active teams found')
@@ -96,7 +95,7 @@ serve(async (req) => {
         const newMomentum = Math.max(0, Math.min(100, team.momentum_score + momentumDelta))
 
         await supabase
-          .from('teams')
+          .from('hackathon_teams')
           .update({
             current_progress: newProgress,
             momentum_score: newMomentum,

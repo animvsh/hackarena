@@ -39,7 +39,7 @@ export const LiveMarketChart = ({ hackathonId }: LiveMarketChartProps) => {
 
   const fetchMarketData = async () => {
     let query = supabase
-      .from('teams')
+      .from('hackathon_teams')
       .select('id, name')
       .limit(6);
 

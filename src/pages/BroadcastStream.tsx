@@ -40,7 +40,7 @@ export default function BroadcastStream() {
         
         // Fetch team name for the bet
         const { data: teamData } = await supabase
-          .from('teams')
+          .from('hackathon_teams')
           .select('name')
           .eq('id', bet.team_id)
           .single();

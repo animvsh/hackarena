@@ -240,15 +240,14 @@ const Index = () => {
 
     // Active teams for this hackathon
     const { count: activeTeams } = await supabase
-      .from('teams')
+      .from('hackathon_teams')
       .select('*', { count: 'exact', head: true })
-      .eq('status', 'active')
       .eq('hackathon_id', hackathonId);
 
     // Calculate commits/hour from progress_updates for teams in this hackathon
     const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000).toISOString();
     const { data: hackathonTeams } = await supabase
-      .from('teams')
+      .from('hackathon_teams')
       .select('id')
       .eq('hackathon_id', hackathonId);
     

@@ -120,7 +120,7 @@ export function useMultiHackathonEvents() {
     // Check cache first
     if (teamCacheRef.current.has(teamId)) {
       const { data } = await supabase
-        .from('teams')
+        .from('hackathon_teams')
         .select('name')
         .eq('id', teamId)
         .single();
@@ -133,7 +133,7 @@ export function useMultiHackathonEvents() {
 
     // Fetch from database
     const { data } = await supabase
-      .from('teams')
+      .from('hackathon_teams')
       .select('hackathon_id, name')
       .eq('id', teamId)
       .single();

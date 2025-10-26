@@ -15,7 +15,7 @@ export function BroadcastTestPanel() {
 
       // Get a team ID (we'll use the first team from the database)
       const { data: teamData } = await supabase
-        .from('teams')
+        .from('hackathon_teams')
         .select('id')
         .limit(1)
         .single();
@@ -88,7 +88,7 @@ export function BroadcastTestPanel() {
   const triggerTeamUpdate = async () => {
     try {
       const { data: teamData } = await supabase
-        .from('teams')
+        .from('hackathon_teams')
         .select('*')
         .limit(1)
         .single();
@@ -102,7 +102,7 @@ export function BroadcastTestPanel() {
       const newProgress = teamData.current_progress + progressIncrease;
 
       const { error } = await supabase
-        .from('teams')
+        .from('hackathon_teams')
         .update({ current_progress: newProgress })
         .eq('id', teamData.id);
 

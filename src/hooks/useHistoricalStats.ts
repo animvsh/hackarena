@@ -33,7 +33,7 @@ export function useHistoricalStats() {
 
       // Get team with highest momentum
       const { data: topTeam } = await supabase
-        .from('teams')
+        .from('hackathon_teams')
         .select('name, momentum_score')
         .order('momentum_score', { ascending: false })
         .limit(1)
@@ -49,7 +49,7 @@ export function useHistoricalStats() {
 
       // Get team with most progress
       const { data: progressLeader } = await supabase
-        .from('teams')
+        .from('hackathon_teams')
         .select('name, current_progress')
         .order('current_progress', { ascending: false })
         .limit(1)

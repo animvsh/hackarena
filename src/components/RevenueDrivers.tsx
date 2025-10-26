@@ -85,9 +85,9 @@ export const RevenueDrivers = ({ hackathonId }: RevenueDriversProps) => {
 
     // Get active teams count (filter by hackathon)
     let teamsQuery = supabase
-      .from('teams')
+      .from('hackathon_teams')
       .select('*', { count: 'exact', head: true })
-      .eq('status', 'active');
+      .eq('hackathon_id', hackathonId);
 
     if (hackathonId) {
       teamsQuery = teamsQuery.eq('hackathon_id', hackathonId);

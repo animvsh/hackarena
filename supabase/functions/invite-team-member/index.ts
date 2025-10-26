@@ -59,7 +59,7 @@ Deno.serve(async (req) => {
 
     // Get team info
     const { data: team } = await supabase
-      .from('teams')
+      .from('hackathon_teams')
       .select('name, logo_url')
       .eq('id', team_id)
       .single();

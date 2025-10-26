@@ -23,7 +23,7 @@ export function useBroadcastEvents(onEvent: (event: BroadcastEvent) => void) {
           
           // Fetch team name
           const { data: teamData } = await supabase
-            .from('teams')
+            .from('hackathon_teams')
             .select('name')
             .eq('id', prediction.team_id)
             .single();
@@ -68,7 +68,7 @@ export function useBroadcastEvents(onEvent: (event: BroadcastEvent) => void) {
           if (Math.abs(change) < 5) return;
 
           const { data: teamData } = await supabase
-            .from('teams')
+            .from('hackathon_teams')
             .select('name')
             .eq('id', payload.new.team_id)
             .single();
