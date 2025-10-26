@@ -11,6 +11,8 @@ export interface BroadcastPersonality {
   specialties: string[];
   primaryColor: string;
   accentColor: string;
+  elevenLabsVoiceId: string;
+  voiceDescription: string;
 }
 
 export const BROADCAST_PERSONALITIES: BroadcastPersonality[] = [
@@ -24,6 +26,8 @@ export const BROADCAST_PERSONALITIES: BroadcastPersonality[] = [
     specialties: ['breaking-news', 'market-analysis', 'team-updates'],
     primaryColor: 'hsl(var(--primary))',
     accentColor: 'hsl(var(--primary) / 0.5)',
+    elevenLabsVoiceId: 'EXAVITQu4vr4xnSDxMaL',
+    voiceDescription: 'Professional, clear, authoritative female voice'
   },
   {
     id: 'marcus',
@@ -35,6 +39,8 @@ export const BROADCAST_PERSONALITIES: BroadcastPersonality[] = [
     specialties: ['field-reports', 'interviews', 'analysis'],
     primaryColor: 'hsl(var(--accent))',
     accentColor: 'hsl(var(--accent) / 0.5)',
+    elevenLabsVoiceId: '21m00Tcm4TlvDq8ikWAM',
+    voiceDescription: 'Warm, engaging, conversational tone'
   },
   {
     id: 'aisha',
@@ -46,6 +52,8 @@ export const BROADCAST_PERSONALITIES: BroadcastPersonality[] = [
     specialties: ['tech-deep-dive', 'stats-breakdown', 'predictions'],
     primaryColor: 'hsl(220, 80%, 60%)',
     accentColor: 'hsl(220, 80%, 70%)',
+    elevenLabsVoiceId: 'pNInz6obpgDQGcFmaJgB',
+    voiceDescription: 'Deep, analytical, expert tone'
   },
   {
     id: 'jake',
@@ -57,6 +65,8 @@ export const BROADCAST_PERSONALITIES: BroadcastPersonality[] = [
     specialties: ['highlights', 'play-by-play', 'excitement'],
     primaryColor: 'hsl(30, 95%, 55%)',
     accentColor: 'hsl(30, 95%, 65%)',
+    elevenLabsVoiceId: 'TX3LPaxmHKxFdv7VOQHJ',
+    voiceDescription: 'High energy, enthusiastic, fast-paced'
   },
   {
     id: 'lisa',
@@ -68,6 +78,8 @@ export const BROADCAST_PERSONALITIES: BroadcastPersonality[] = [
     specialties: ['on-location', 'team-interviews', 'live-action'],
     primaryColor: 'hsl(350, 85%, 60%)',
     accentColor: 'hsl(350, 85%, 70%)',
+    elevenLabsVoiceId: 'pFZP5JQG7iQjIQuC4Bku',
+    voiceDescription: 'Bright, energetic, on-the-scene reporter'
   },
   {
     id: 'chen-wei',
@@ -79,6 +91,8 @@ export const BROADCAST_PERSONALITIES: BroadcastPersonality[] = [
     specialties: ['expert-commentary', 'historical-context', 'strategy'],
     primaryColor: 'hsl(280, 70%, 60%)',
     accentColor: 'hsl(280, 70%, 70%)',
+    elevenLabsVoiceId: 'onwK4e9ZLuTAKqWW03F9',
+    voiceDescription: 'Mature, wise, authoritative professor tone'
   },
 ];
 

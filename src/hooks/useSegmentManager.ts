@@ -21,7 +21,7 @@ const BUMPER_IN_DURATION = 2500; // 2.5s
 const BUMPER_OUT_DURATION = 1500; // 1.5s
 const TRANSITION_DURATION = 1000; // 1s
 
-export function useSegmentManager() {
+export function useSegmentManager(isPaused: boolean = false) {
   const { generateSegment, injectBreakingNews } = useSegmentContent();
   const [currentSceneIndex, setCurrentSceneIndex] = useState(0);
   const [phase, setPhase] = useState<SegmentPhase>('BUMPER_IN');
@@ -53,8 +53,8 @@ export function useSegmentManager() {
 
   // Segment flow state machine
   useEffect(() => {
-    // Don't run while initializing new scene
-    if (isInitializing) return;
+    // Don't run while initializing new scene or when paused
+    if (isInitializing || isPaused) return;
     let timer: NodeJS.Timeout;
 
     switch (phase) {
@@ -114,7 +114,7 @@ export function useSegmentManager() {
     }
 
     return () => clearTimeout(timer);
-  }, [phase, currentCommentaryIndex, isInitializing]);
+  }, [phase, currentCommentaryIndex, isInitializing, isPaused]);
 
   const getCurrentCommentary = useCallback(() => {
     if (!segmentContent || phase !== 'CONTENT_DELIVERY') return '';

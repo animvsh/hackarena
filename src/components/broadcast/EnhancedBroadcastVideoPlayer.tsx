@@ -21,6 +21,7 @@ import { CameraEffects } from './effects/CameraEffects';
 import { EventAnimations } from './effects/EventAnimations';
 import { ProductionEffects } from './effects/ProductionEffects';
 import { VideoPlayerControls } from './VideoPlayerControls';
+import { BroadcastPausedOverlay } from './BroadcastPausedOverlay';
 import { useSegmentManager } from '@/hooks/useSegmentManager';
 import { useGlobalBroadcastState } from '@/hooks/useGlobalBroadcastState';
 import { useViewerPresence } from '@/hooks/useViewerPresence';
@@ -37,6 +38,17 @@ export function EnhancedBroadcastVideoPlayer({ hackathonId }: EnhancedBroadcastV
   const { toast } = useToast();
   
   // Segment-driven content management
+  // Global broadcast state (synchronized across all users)
+  const {
+    state: broadcastState,
+    currentScene: globalScene,
+    isLoading: stateLoading,
+    isPaused,
+    pausedAt,
+    isMasterUser,
+    togglePause,
+  } = useGlobalBroadcastState();
+  
   const {
     currentScene,
     phase,
@@ -50,14 +62,7 @@ export function EnhancedBroadcastVideoPlayer({ hackathonId }: EnhancedBroadcastV
     commentaryIndex,
     totalCommentary,
     injectBreakingNews
-  } = useSegmentManager();
-  
-  // Global broadcast state (synchronized across all users)
-  const {
-    state: broadcastState,
-    currentScene: globalScene,
-    isLoading: stateLoading,
-  } = useGlobalBroadcastState();
+  } = useSegmentManager(isPaused);
   
   // Track viewer presence
   useViewerPresence();
@@ -234,6 +239,8 @@ export function EnhancedBroadcastVideoPlayer({ hackathonId }: EnhancedBroadcastV
                   isSpeaking={phase === 'CONTENT_DELIVERY'}
                   activeAnchor={activePersonality}
                   isMuted={isMuted}
+                  isPaused={isPaused}
+                  personalityId={activePersonalityData.id}
                 />
               )}
             </div>
@@ -340,6 +347,13 @@ export function EnhancedBroadcastVideoPlayer({ hackathonId }: EnhancedBroadcastV
         </ProductionEffects>
         )}
 
+        {/* Pause Overlay - Shows for ALL users when master pauses */}
+        <AnimatePresence>
+          {isPaused && (
+            <BroadcastPausedOverlay pausedAt={pausedAt} />
+          )}
+        </AnimatePresence>
+
         {/* Click overlay for play/pause - but don't block controls */}
         <div 
           className="absolute inset-0 z-[105]"
@@ -367,9 +381,12 @@ export function EnhancedBroadcastVideoPlayer({ hackathonId }: EnhancedBroadcastV
             isLive={isLive}
             progress={progressPercent}
             isMuted={isMuted}
+            isPaused={isPaused}
+            isMasterUser={isMasterUser}
             onPlayPause={togglePlayPause}
             onFullscreen={handleFullscreen}
             onToggleMute={toggleMute}
+            onTogglePause={togglePause}
           />
         </div>
 

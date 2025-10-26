@@ -151,14 +151,28 @@ function generateAnchorSegment(): SegmentContent {
       },
       {
         id: 'anchor-2',
-        text: "The competition is heating up as we enter the final hours. Market volatility is at an all-time high with massive shifts in team valuations.",
+        text: "Thanks Sarah! The competition is absolutely heating up. Marcus, what are you seeing in the markets?",
+        duration: 6,
+        personality: 'left',
+        priority: 'normal'
+      },
+      {
+        id: 'anchor-3',
+        text: "Great question! Market volatility is at an all-time high. We're seeing massive shifts in team valuations minute by minute.",
         duration: 8,
         personality: 'right',
         priority: 'normal'
       },
       {
-        id: 'anchor-3',
-        text: "We've got exclusive coverage coming up on the top performing teams, market trends, and statistical breakdowns. Stay tuned!",
+        id: 'anchor-4',
+        text: "Fascinating stuff. Sarah, over to you for what's coming up next.",
+        duration: 4,
+        personality: 'right',
+        priority: 'normal'
+      },
+      {
+        id: 'anchor-5',
+        text: "Thanks Marcus! We've got exclusive coverage on the top performing teams, market trends, and statistical breakdowns. Stay tuned!",
         duration: 7,
         personality: 'left',
         priority: 'normal'

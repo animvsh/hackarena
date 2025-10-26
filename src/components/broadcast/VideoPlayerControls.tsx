@@ -6,9 +6,12 @@ interface VideoPlayerControlsProps {
   isLive: boolean;
   progress: number;
   isMuted: boolean;
+  isPaused: boolean;
+  isMasterUser: boolean;
   onPlayPause: () => void;
   onFullscreen: () => void;
   onToggleMute: () => void;
+  onTogglePause: () => void;
 }
 
 export function VideoPlayerControls({
@@ -16,9 +19,12 @@ export function VideoPlayerControls({
   isLive,
   progress,
   isMuted,
+  isPaused,
+  isMasterUser,
   onPlayPause,
   onFullscreen,
   onToggleMute,
+  onTogglePause,
 }: VideoPlayerControlsProps) {
   return (
     <div className="relative px-4 pb-4 pt-2">
@@ -62,8 +68,36 @@ export function VideoPlayerControls({
           )}
         </div>
 
-        {/* Right side - Volume & Fullscreen */}
+        {/* Right side - Pause (Master), Volume & Fullscreen */}
         <div className="flex items-center gap-3">
+          {/* Master User Pause Button */}
+          {isMasterUser && (
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                onTogglePause();
+              }}
+              className={`px-4 py-2 flex items-center gap-2 rounded-lg backdrop-blur-sm transition-all duration-200 font-bold text-sm ${
+                isPaused 
+                  ? 'bg-green-500/90 hover:bg-green-500 hover:scale-105 text-white' 
+                  : 'bg-amber-500/90 hover:bg-amber-500 hover:scale-105 text-white'
+              }`}
+              title={isPaused ? "Resume Broadcast (Master Only)" : "Pause Broadcast (Master Only)"}
+            >
+              {isPaused ? (
+                <>
+                  <Play className="w-4 h-4 fill-current" />
+                  <span>RESUME</span>
+                </>
+              ) : (
+                <>
+                  <Pause className="w-4 h-4" />
+                  <span>PAUSE</span>
+                </>
+              )}
+            </button>
+          )}
+
           {/* Mute/Unmute TTS control */}
           <button
             onClick={(e) => {

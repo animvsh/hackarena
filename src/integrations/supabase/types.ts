@@ -187,7 +187,10 @@ export type Database = {
           current_segment_id: string | null
           hackathon_id: string | null
           id: string
+          is_paused: boolean | null
           live_viewer_count: number | null
+          paused_at: string | null
+          paused_by_user_id: string | null
           phase: string | null
           singleton: boolean | null
           state: string
@@ -199,7 +202,10 @@ export type Database = {
           current_segment_id?: string | null
           hackathon_id?: string | null
           id?: string
+          is_paused?: boolean | null
           live_viewer_count?: number | null
+          paused_at?: string | null
+          paused_by_user_id?: string | null
           phase?: string | null
           singleton?: boolean | null
           state: string
@@ -211,7 +217,10 @@ export type Database = {
           current_segment_id?: string | null
           hackathon_id?: string | null
           id?: string
+          is_paused?: boolean | null
           live_viewer_count?: number | null
+          paused_at?: string | null
+          paused_by_user_id?: string | null
           phase?: string | null
           singleton?: boolean | null
           state?: string
@@ -495,6 +504,7 @@ export type Database = {
           github_url: string | null
           hackathon_id: string | null
           id: string
+          invite_code: string | null
           logo_url: string | null
           momentum_score: number | null
           name: string
@@ -511,6 +521,7 @@ export type Database = {
           github_url?: string | null
           hackathon_id?: string | null
           id?: string
+          invite_code?: string | null
           logo_url?: string | null
           momentum_score?: number | null
           name: string
@@ -527,6 +538,7 @@ export type Database = {
           github_url?: string | null
           hackathon_id?: string | null
           id?: string
+          invite_code?: string | null
           logo_url?: string | null
           momentum_score?: number | null
           name?: string

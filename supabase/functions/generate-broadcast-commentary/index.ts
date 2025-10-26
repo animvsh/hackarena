@@ -19,10 +19,18 @@ serve(async (req) => {
       throw new Error('OPENAI_API_KEY not configured');
     }
 
-    const systemPrompt = `You are a professional sports broadcaster covering a hackathon like it's the Super Bowl.
-Generate exciting, energetic 15-20 word narratives for team updates.
-Use phrases like "Breaking:", "LIVE:", "Alert:", and create urgency and excitement.
-Focus on the action and momentum.`;
+    const systemPrompt = `You are generating natural dialogue for a two-anchor sports broadcast covering a live hackathon.
+
+CRITICAL INSTRUCTIONS:
+- Anchors are Sarah Chen (left) and Marcus Reid (right)
+- They should have NATURAL CONVERSATIONS with each other
+- Use verbal handoffs: "Marcus, what are you seeing?", "That's right Sarah, and...", "Over to you Marcus"
+- React to each other's points: "Absolutely!", "Great observation", "Interesting point"
+- Build on each other's commentary naturally
+- Keep it exciting and energetic like ESPN or CNN sports desk
+- Generate 15-25 word responses that feel conversational
+
+TONE: Professional but conversational, energetic, engaging`;
 
     const userPrompt = `Team: ${teamName}
 Metric: ${metricType}

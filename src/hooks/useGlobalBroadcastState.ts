@@ -62,9 +62,9 @@ export function useGlobalBroadcastState(hackathonId?: string) {
           commentaryIndex: data.commentary_index || 0,
           phase: data.phase,
           liveViewerCount: data.live_viewer_count || 0,
-          isPaused: false,
-          pausedByUserId: null,
-          pausedAt: null,
+          isPaused: data.is_paused || false,
+          pausedByUserId: data.paused_by_user_id || null,
+          pausedAt: data.paused_at || null,
         });
       }
       setIsLoading(false);
@@ -93,9 +93,9 @@ export function useGlobalBroadcastState(hackathonId?: string) {
               commentaryIndex: newData.commentary_index || 0,
               phase: newData.phase,
               liveViewerCount: newData.live_viewer_count || 0,
-              isPaused: false,
-              pausedByUserId: null,
-              pausedAt: null,
+              isPaused: newData.is_paused || false,
+              pausedByUserId: newData.paused_by_user_id || null,
+              pausedAt: newData.paused_at || null,
             });
           }
         }
@@ -117,7 +117,9 @@ export function useGlobalBroadcastState(hackathonId?: string) {
     if (!user) return;
 
     let query = supabase.from('broadcast_state').update({
-      state: 'paused' as BroadcastState,
+      is_paused: true,
+      paused_by_user_id: user.id,
+      paused_at: new Date().toISOString(),
     });
 
     if (hackathonId) {
@@ -141,7 +143,9 @@ export function useGlobalBroadcastState(hackathonId?: string) {
     }
 
     let query = supabase.from('broadcast_state').update({
-      state: 'live' as BroadcastState,
+      is_paused: false,
+      paused_by_user_id: null,
+      paused_at: null,
     });
 
     if (hackathonId) {

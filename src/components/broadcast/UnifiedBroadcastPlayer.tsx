@@ -272,6 +272,9 @@ export function UnifiedBroadcastPlayer() {
                   isLive={isLive}
                   isSpeaking={phase === 'CONTENT_DELIVERY'}
                   activeAnchor={activePersonality}
+                  isMuted={isMuted}
+                  isPaused={isPaused}
+                  personalityId={activePersonalityData.id}
                 />
               )}
             </div>
@@ -429,9 +432,12 @@ export function UnifiedBroadcastPlayer() {
             isLive={isLive}
             progress={progressPercent}
             isMuted={isMuted}
+            isPaused={isPaused}
+            isMasterUser={isMasterUser}
             onPlayPause={togglePlayPause}
             onFullscreen={handleFullscreen}
             onToggleMute={handleToggleMute}
+            onTogglePause={togglePause}
           />
         </div>
 

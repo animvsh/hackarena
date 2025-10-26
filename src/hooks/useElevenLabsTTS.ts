@@ -6,9 +6,10 @@ interface UseElevenLabsTTSProps {
   voiceId?: string;
   isMuted: boolean;
   enabled?: boolean;
+  isPaused?: boolean;
 }
 
-export function useElevenLabsTTS({ text, voiceId = 'EXAVITQu4vr4xnSDxMaL', isMuted, enabled = true }: UseElevenLabsTTSProps) {
+export function useElevenLabsTTS({ text, voiceId = 'EXAVITQu4vr4xnSDxMaL', isMuted, enabled = true, isPaused = false }: UseElevenLabsTTSProps) {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const audioRef = useRef<HTMLAudioElement | null>(null);
@@ -99,18 +100,30 @@ export function useElevenLabsTTS({ text, voiceId = 'EXAVITQu4vr4xnSDxMaL', isMut
     }
   }, [voiceId, stopAudio]);
 
+  // Effect to handle pause state
+  useEffect(() => {
+    if (isPaused && audioRef.current && !audioRef.current.paused) {
+      audioRef.current.pause();
+    } else if (!isPaused && audioRef.current && audioRef.current.paused && !isMuted) {
+      audioRef.current.play().catch(err => {
+        console.error('Error resuming audio:', err);
+      });
+    }
+  }, [isPaused, isMuted]);
+
   // Effect to handle text changes
   useEffect(() => {
     // Only generate speech if:
     // 1. Not muted
-    // 2. Enabled
-    // 3. Text has changed
-    // 4. Text is not empty
-    if (!isMuted && enabled && text && text !== currentTextRef.current) {
+    // 2. Not paused
+    // 3. Enabled
+    // 4. Text has changed
+    // 5. Text is not empty
+    if (!isMuted && !isPaused && enabled && text && text !== currentTextRef.current) {
       currentTextRef.current = text;
       generateSpeech(text);
-    } else if (isMuted) {
-      // Stop audio if muted
+    } else if (isMuted || isPaused) {
+      // Stop audio if muted or paused
       stopAudio();
     }
 
@@ -120,7 +133,7 @@ export function useElevenLabsTTS({ text, voiceId = 'EXAVITQu4vr4xnSDxMaL', isMut
         stopAudio();
       }
     };
-  }, [text, isMuted, enabled, generateSpeech, stopAudio]);
+  }, [text, isMuted, isPaused, enabled, generateSpeech, stopAudio]);
 
   // Cleanup on unmount
   useEffect(() => {

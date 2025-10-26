@@ -10,11 +10,13 @@ interface BroadcastCharacterProps {
   isSpeaking?: boolean;
   activeAnchor?: 'left' | 'right';
   isMuted?: boolean;
+  isPaused?: boolean;
+  personalityId?: string;
 }
 
 type CharacterState = 'idle' | 'speaking' | 'excited';
 
-export function BroadcastCharacter({ narrative, isLive, isSpeaking = false, activeAnchor = 'left', isMuted = false }: BroadcastCharacterProps) {
+export function BroadcastCharacter({ narrative, isLive, isSpeaking = false, activeAnchor = 'left', isMuted = false, isPaused = false, personalityId }: BroadcastCharacterProps) {
   const [displayedText, setDisplayedText] = useState('');
   const [isTyping, setIsTyping] = useState(false);
   const [characterState, setCharacterState] = useState<CharacterState>('idle');
@@ -24,16 +26,25 @@ export function BroadcastCharacter({ narrative, isLive, isSpeaking = false, acti
   const [headTilt, setHeadTilt] = useState(0);
   const [shoulderMove, setShoulderMove] = useState(0);
 
-  // Voice IDs for each anchor
-  const voiceId = activeAnchor === 'left' 
-    ? 'EXAVITQu4vr4xnSDxMaL' // Sarah - Professional Female Voice
-    : '21m00Tcm4TlvDq8ikWAM'; // Marcus - Professional Male Voice
+  // Voice IDs for each anchor - use personality-specific voice if provided
+  const voiceId = personalityId 
+    ? (personalityId === 'sarah' ? 'EXAVITQu4vr4xnSDxMaL' 
+       : personalityId === 'marcus' ? '21m00Tcm4TlvDq8ikWAM'
+       : personalityId === 'aisha' ? 'pNInz6obpgDQGcFmaJgB'
+       : personalityId === 'jake' ? 'TX3LPaxmHKxFdv7VOQHJ'
+       : personalityId === 'lisa' ? 'pFZP5JQG7iQjIQuC4Bku'
+       : personalityId === 'chen-wei' ? 'onwK4e9ZLuTAKqWW03F9'
+       : activeAnchor === 'left' ? 'EXAVITQu4vr4xnSDxMaL' : '21m00Tcm4TlvDq8ikWAM')
+    : (activeAnchor === 'left' 
+        ? 'EXAVITQu4vr4xnSDxMaL' // Sarah - Professional Female Voice
+        : '21m00Tcm4TlvDq8ikWAM'); // Marcus - Professional Male Voice
 
   // ElevenLabs TTS integration
   const { isLoading: ttsLoading, error: ttsError } = useElevenLabsTTS({
     text: narrative,
     voiceId,
     isMuted,
+    isPaused,
     enabled: isLive && isSpeaking,
   });
 
