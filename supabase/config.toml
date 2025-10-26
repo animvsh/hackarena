@@ -32,3 +32,6 @@ verify_jwt = false
 
 [functions.simulate-live-updates]
 verify_jwt = false
+
+[functions.text-to-speech]
+verify_jwt = false

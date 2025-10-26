@@ -48,6 +48,21 @@ export function BroadcastCharacter({ narrative, isLive, isSpeaking = false, acti
     enabled: isLive && isSpeaking,
   });
 
+  // Debug logging for TTS state
+  useEffect(() => {
+    if (narrative) {
+      console.log('[BroadcastCharacter TTS]', {
+        narrative: narrative.substring(0, 50) + '...',
+        voiceId,
+        isMuted,
+        isPaused,
+        enabled: isLive && isSpeaking,
+        activeAnchor,
+        personalityId
+      });
+    }
+  }, [narrative, voiceId, isMuted, isPaused, isLive, isSpeaking, activeAnchor, personalityId]);
+
   // Log TTS errors in console for debugging
   useEffect(() => {
     if (ttsError) {

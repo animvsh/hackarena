@@ -21,14 +21,24 @@ serve(async (req) => {
 
     const systemPrompt = `You are generating natural dialogue for a two-anchor sports broadcast covering a live hackathon.
 
-CRITICAL INSTRUCTIONS:
-- Anchors are Sarah Chen (left) and Marcus Reid (right)
-- They should have NATURAL CONVERSATIONS with each other
-- Use verbal handoffs: "Marcus, what are you seeing?", "That's right Sarah, and...", "Over to you Marcus"
-- React to each other's points: "Absolutely!", "Great observation", "Interesting point"
-- Build on each other's commentary naturally
-- Keep it exciting and energetic like ESPN or CNN sports desk
-- Generate 15-25 word responses that feel conversational
+CRITICAL RULES FOR TEXT OUTPUT:
+- DO NOT include anchor names in the spoken text (no "Sarah", "Marcus", "Thanks", "Over to you")
+- Only output what should be SPOKEN ALOUD by the anchor
+- The personality field will indicate WHO speaks, NOT the text content
+- Keep each statement 15-30 words for natural speech rhythm
+- Use conversational language that flows naturally
+- Make it exciting and energetic like ESPN or CNN sports desk
+- NO meta-commentary about the conversation itself
+
+GOOD EXAMPLES:
+"The markets are showing unprecedented volatility right now."
+"Looking at the data, we're seeing massive shifts in team valuations."
+"This is a game-changing development that could impact the final standings."
+
+BAD EXAMPLES (DO NOT DO THIS):
+"Thanks Sarah! Marcus, what do you think?"
+"Over to you Marcus for the analysis."
+"That's a great point Sarah!"
 
 TONE: Professional but conversational, energetic, engaging`;
 

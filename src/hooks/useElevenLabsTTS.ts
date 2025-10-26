@@ -14,6 +14,8 @@ export function useElevenLabsTTS({ text, voiceId = 'EXAVITQu4vr4xnSDxMaL', isMut
   const [error, setError] = useState<string | null>(null);
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const currentTextRef = useRef<string>('');
+  const textToSpeakRef = useRef<string>('');
+  const isGeneratingRef = useRef(false);
   const abortControllerRef = useRef<AbortController | null>(null);
 
   const stopAudio = useCallback(() => {
@@ -32,9 +34,19 @@ export function useElevenLabsTTS({ text, voiceId = 'EXAVITQu4vr4xnSDxMaL', isMut
       return;
     }
 
-    // Stop any existing audio
-    stopAudio();
+    // Only stop existing audio if we're starting new speech
+    // Don't interrupt if same text
+    if (audioRef.current && currentTextRef.current !== textToSpeak) {
+      stopAudio();
+    }
 
+    // Skip if already playing this exact text
+    if (currentTextRef.current === textToSpeak && audioRef.current && !audioRef.current.paused) {
+      console.log('[TTS] Already playing this text, skipping');
+      return;
+    }
+
+    currentTextRef.current = textToSpeak;
     setIsLoading(true);
     setError(null);
 
@@ -71,6 +83,7 @@ export function useElevenLabsTTS({ text, voiceId = 'EXAVITQu4vr4xnSDxMaL', isMut
       // Create and play audio
       if (audioRef.current) {
         audioRef.current.pause();
+        audioRef.current.src = '';
       }
       
       audioRef.current = new Audio(audioUrl);
@@ -79,24 +92,27 @@ export function useElevenLabsTTS({ text, voiceId = 'EXAVITQu4vr4xnSDxMaL', isMut
       audioRef.current.onended = () => {
         URL.revokeObjectURL(audioUrl);
         setIsLoading(false);
+        currentTextRef.current = '';  // Reset after completion
       };
 
-      audioRef.current.onerror = () => {
+      audioRef.current.onerror = (e) => {
+        console.error('[TTS] Audio playback error:', e);
         URL.revokeObjectURL(audioUrl);
         setError('Failed to play audio');
         setIsLoading(false);
+        currentTextRef.current = '';
       };
 
       await audioRef.current.play();
     } catch (err: any) {
       if (err.name === 'AbortError') {
-        // Request was aborted, this is expected
-        console.log('TTS request aborted');
+        console.log('[TTS] Request aborted');
       } else {
-        console.error('TTS error:', err);
+        console.error('[TTS] Error:', err);
         setError(err.message || 'Failed to generate speech');
       }
       setIsLoading(false);
+      currentTextRef.current = '';
     }
   }, [voiceId, stopAudio]);
 
@@ -111,7 +127,7 @@ export function useElevenLabsTTS({ text, voiceId = 'EXAVITQu4vr4xnSDxMaL', isMut
     }
   }, [isPaused, isMuted]);
 
-  // Effect to handle text changes
+  // Effect to handle text changes with debouncing
   useEffect(() => {
     // Only generate speech if:
     // 1. Not muted
@@ -119,20 +135,29 @@ export function useElevenLabsTTS({ text, voiceId = 'EXAVITQu4vr4xnSDxMaL', isMut
     // 3. Enabled
     // 4. Text has changed
     // 5. Text is not empty
-    if (!isMuted && !isPaused && enabled && text && text !== currentTextRef.current) {
-      currentTextRef.current = text;
-      generateSpeech(text);
+    // 6. Not currently generating (prevent race conditions)
+    
+    if (!isMuted && !isPaused && enabled && text && text !== textToSpeakRef.current && !isGeneratingRef.current) {
+      textToSpeakRef.current = text;
+      isGeneratingRef.current = true;
+      
+      // Small debounce to prevent rapid-fire changes
+      const debounceTimer = setTimeout(() => {
+        generateSpeech(text).finally(() => {
+          isGeneratingRef.current = false;
+        });
+      }, 100);  // 100ms debounce
+      
+      return () => {
+        clearTimeout(debounceTimer);
+        isGeneratingRef.current = false;
+      };
     } else if (isMuted || isPaused) {
       // Stop audio if muted or paused
       stopAudio();
+      isGeneratingRef.current = false;
+      textToSpeakRef.current = '';
     }
-
-    return () => {
-      // Cleanup on unmount or when text changes
-      if (text !== currentTextRef.current) {
-        stopAudio();
-      }
-    };
   }, [text, isMuted, isPaused, enabled, generateSpeech, stopAudio]);
 
   // Cleanup on unmount
