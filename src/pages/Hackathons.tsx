@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { AppLayout } from "@/components/AppLayout";
+import { Sidebar } from "@/components/Sidebar";
+import { Header } from "@/components/Header";
 import { HackathonCard } from "@/components/HackathonCard";
 import { supabase } from "@/integrations/supabase/client";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -58,12 +59,16 @@ const Hackathons = () => {
   };
 
   return (
-    <AppLayout>
-      <div className="p-6 space-y-6">
-        <div>
+    <div className="flex min-h-screen bg-background">
+      <Sidebar />
+      
+      <main className="flex-1 p-8">
+        <Header />
+        
+        <div className="mb-8">
           <div className="flex items-center justify-between mb-2">
             <div className="flex items-center gap-2">
-              <Trophy className="w-8 h-8 text-neon-green" />
+              <Trophy className="w-8 h-8 text-primary" />
               <h1 className="text-3xl font-bold">Hackathons</h1>
             </div>
             <Button onClick={() => setShowImportModal(true)} className="gap-2">
@@ -177,8 +182,8 @@ const Hackathons = () => {
           onOpenChange={setShowImportModal}
           onSuccess={fetchHackathons}
         />
-      </div>
-    </AppLayout>
+      </main>
+    </div>
   );
 };
 

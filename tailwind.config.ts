@@ -59,19 +59,10 @@ export default {
           DEFAULT: "hsl(var(--warning))",
         },
         neon: {
-          purple: "hsl(var(--neon-purple))",
-          cyan: "hsl(var(--neon-cyan))",
-          orange: "hsl(var(--neon-orange))",
-          pink: "hsl(var(--neon-pink))",
-          green: "hsl(var(--neon-green))",
-          red: "hsl(var(--neon-red))",
           yellow: "hsl(var(--neon-yellow))",
-        },
-        slate: {
-          darker: "hsl(var(--slate-darker))",
-          dark: "hsl(var(--slate-dark))",
-          medium: "hsl(var(--slate-medium))",
-          light: "hsl(var(--slate-light))",
+          blue: "hsl(var(--neon-blue))",
+          purple: "hsl(var(--neon-purple))",
+          pink: "hsl(var(--neon-pink))",
         },
         chart: {
           "1": "hsl(var(--chart-1))",
@@ -80,12 +71,6 @@ export default {
           "4": "hsl(var(--chart-4))",
           "5": "hsl(var(--chart-5))",
         },
-      },
-      backgroundImage: {
-        'gradient-purple-pink': 'linear-gradient(135deg, hsl(var(--neon-purple)) 0%, hsl(var(--neon-pink)) 100%)',
-        'gradient-cyan-green': 'linear-gradient(135deg, hsl(var(--neon-cyan)) 0%, hsl(var(--neon-green)) 100%)',
-        'gradient-orange-pink': 'linear-gradient(135deg, hsl(var(--neon-orange)) 0%, hsl(var(--neon-pink)) 100%)',
-        'gradient-blue-purple': 'linear-gradient(135deg, hsl(var(--info)) 0%, hsl(var(--neon-purple)) 100%)',
       },
       borderRadius: {
         lg: "var(--radius)",

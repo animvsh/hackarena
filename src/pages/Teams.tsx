@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { AppLayout } from "@/components/AppLayout";
+import { Sidebar } from "@/components/Sidebar";
+import { Header } from "@/components/Header";
 import { TeamCard } from "@/components/TeamCard";
 import { supabase } from "@/integrations/supabase/client";
 import { Input } from "@/components/ui/input";
@@ -105,12 +106,16 @@ const Teams = () => {
   };
 
   return (
-    <AppLayout>
-      <div className="p-6 space-y-6">
+    <div className="flex min-h-screen bg-background">
+      <Sidebar />
+
+      <main className="flex-1 p-8">
+        <Header />
+
         {/* Page Header */}
-        <div>
+        <div className="mb-8">
           <div className="flex items-center gap-2 mb-2">
-            <Users2 className="w-8 h-8 text-neon-green" />
+            <Users2 className="w-8 h-8 text-primary" />
             <h1 className="text-3xl font-bold">Teams</h1>
           </div>
           <p className="text-muted-foreground">
@@ -168,8 +173,8 @@ const Teams = () => {
             ))}
           </div>
         )}
-      </div>
-    </AppLayout>
+      </main>
+    </div>
   );
 };
 

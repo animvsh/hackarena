@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
-import { AppLayout } from "@/components/AppLayout";
+import { Sidebar } from "@/components/Sidebar";
+import { Header } from "@/components/Header";
 import { supabase } from "@/integrations/supabase/client";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -140,17 +141,22 @@ const WalletPage = () => {
 
   if (loading) {
     return (
-      <AppLayout>
-        <div className="p-6">
+      <div className="flex min-h-screen bg-background">
+        <Sidebar />
+        <main className="flex-1 p-8">
+          <Header />
           <Skeleton className="h-96 w-full" />
-        </div>
-      </AppLayout>
+        </main>
+      </div>
     );
   }
 
   return (
-    <AppLayout>
-      <div className="p-6 space-y-6">
+    <div className="flex min-h-screen bg-background">
+      <Sidebar />
+
+      <main className="flex-1 p-8">
+        <Header />
 
         {/* Page Header */}
         <div className="mb-8">
@@ -457,14 +463,14 @@ const WalletPage = () => {
                           -{prediction.amount} HC
                         </p>
                       </div>
-                ))
-            )}
-          </div>
-        </Card>
-      </TabsContent>
-    </Tabs>
-      </div>
-    </AppLayout>
+                    ))
+                )}
+              </div>
+            </Card>
+          </TabsContent>
+        </Tabs>
+      </main>
+    </div>
   );
 };
 
