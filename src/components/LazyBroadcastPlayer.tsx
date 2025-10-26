@@ -2,11 +2,10 @@ import { lazy, Suspense } from 'react';
 import { useInView } from 'react-intersection-observer';
 import { Skeleton } from '@/components/ui/skeleton';
 
-const UnifiedBroadcastPlayer = lazy(() => 
-  import('./broadcast/UnifiedBroadcastPlayer').then(module => ({
-    default: module.UnifiedBroadcastPlayer
-  }))
-);
+const UnifiedBroadcastPlayer = lazy(async () => {
+  const module = await import('./broadcast/UnifiedBroadcastPlayer');
+  return { default: module.UnifiedBroadcastPlayer };
+});
 
 const BroadcastPlayerSkeleton = () => (
   <div className="w-full aspect-video bg-gradient-to-br from-broadcast-blue/20 to-broadcast-blue-dark/20 border border-border rounded-2xl overflow-hidden">
