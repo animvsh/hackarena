@@ -156,6 +156,12 @@ export function EnhancedBroadcastVideoPlayer() {
   // Keyboard shortcuts - MUST be before early returns
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
+      // Don't prevent spacebar if user is typing in an input/textarea
+      const target = e.target as HTMLElement;
+      if (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA') {
+        return;
+      }
+      
       if (e.code === 'Space') {
         e.preventDefault();
         togglePlayPause();
