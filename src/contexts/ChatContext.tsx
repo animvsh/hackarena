@@ -146,8 +146,6 @@ export const ChatProvider: React.FC<{ children: React.ReactNode }> = ({ children
       return;
     }
 
-    console.log('Loaded existing messages:', existingMessages);
-
     // Transform messages and fetch user details separately
     const transformedMessages = await Promise.all(
       (existingMessages || []).map(async (msg) => {
@@ -170,7 +168,6 @@ export const ChatProvider: React.FC<{ children: React.ReactNode }> = ({ children
       })
     );
 
-    console.log('Transformed messages:', transformedMessages);
     setMessages(transformedMessages);
 
     // Set up real-time subscription for new messages
@@ -185,8 +182,6 @@ export const ChatProvider: React.FC<{ children: React.ReactNode }> = ({ children
           filter: `room_id=eq.${currentRoom.id}`
         },
         async (payload) => {
-          console.log('New message received:', payload.new);
-          
           // Fetch user details for the new message
           const { data: userData } = await supabase
             .from('users')
@@ -204,7 +199,6 @@ export const ChatProvider: React.FC<{ children: React.ReactNode }> = ({ children
             room_id: payload.new.room_id
           };
 
-          console.log('Adding new message:', transformedMessage);
           setMessages(prev => [...prev, transformedMessage]);
         }
       )
@@ -219,7 +213,6 @@ export const ChatProvider: React.FC<{ children: React.ReactNode }> = ({ children
     if (!user || !currentRoom || !content.trim()) return;
 
     try {
-      console.log('Sending message:', { content, userId: user.id, roomId: currentRoom.id });
       const { data, error } = await supabase
         .from('chat_messages')
         .insert({
@@ -233,7 +226,6 @@ export const ChatProvider: React.FC<{ children: React.ReactNode }> = ({ children
         console.error('Error sending message:', error);
         throw error;
       }
-      console.log('Message sent successfully:', data);
     } catch (error) {
       console.error('Error sending message:', error);
     }

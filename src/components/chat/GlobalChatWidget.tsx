@@ -133,16 +133,8 @@ export const GlobalChatWidget: React.FC = () => {
     e.preventDefault();
     if (!messageInput.trim()) return;
 
-    console.log('Attempting to send message. Auth state:', { 
-      hasUser: !!user, 
-      userId: user?.id,
-      authLoading,
-      message: messageInput 
-    });
-
     // Check if user is authenticated - STRICT CHECK
     if (!user) {
-      console.log('No user, redirecting to sign in');
       toast.info('Please sign in to send messages');
       const currentPath = window.location.pathname;
       localStorage.setItem('returnAfterSignIn', currentPath);
@@ -151,23 +143,15 @@ export const GlobalChatWidget: React.FC = () => {
     }
 
     if (authLoading) {
-      console.log('Auth still loading, waiting...');
       toast.info('Please wait while we verify your account...');
       return;
     }
 
     try {
-      console.log('Sending message to database:', {
-        content: messageInput.trim(),
-        user_id: user.id,
-        room_id: '7bd8428d-e464-4f5d-9bb7-73f1efb6a051'
-      });
-
       // Get current session
       const { data: sessionData } = await supabase.auth.getSession();
-      console.log('Current session:', sessionData?.session?.user?.id);
 
-      const { data, error } = await supabase
+      const { data, error} = await supabase
         .from('chat_messages')
         .insert({
           content: messageInput.trim(),
@@ -180,7 +164,6 @@ export const GlobalChatWidget: React.FC = () => {
         console.error('Database error:', error);
         toast.error('Failed to send message: ' + error.message);
       } else {
-        console.log('Message sent successfully:', data);
         setMessageInput('');
         toast.success('Message sent!');
       }
