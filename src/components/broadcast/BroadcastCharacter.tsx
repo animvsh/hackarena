@@ -287,17 +287,17 @@ export function BroadcastCharacter({ narrative, isLive, isSpeaking = false, acti
 
       {/* Enhanced Speech Bubble with fade transitions */}
       {displayedText && (
-        <div className="absolute bottom-24 md:bottom-28 lg:bottom-32 left-1/2 transform -translate-x-1/2 max-w-4xl w-full px-4 z-50 animate-in fade-in slide-in-from-bottom-4 duration-500">
-          <div className="bg-gradient-to-r from-card/98 to-card/95 backdrop-blur-md border-2 border-primary/40 rounded-xl shadow-2xl overflow-hidden">
+        <div className="absolute bottom-24 md:bottom-28 lg:bottom-32 left-1/2 transform -translate-x-1/2 max-w-[90vw] md:max-w-3xl lg:max-w-4xl w-full px-4 sm:px-6 z-50 animate-in fade-in slide-in-from-bottom-4 duration-500">
+          <div className="relative bg-gradient-to-r from-card/98 to-card/95 backdrop-blur-md border-2 border-primary/40 rounded-xl shadow-2xl overflow-hidden max-h-[40vh]">
             <div className={`h-1 ${
               !isMuted && ttsLoading 
                 ? 'bg-gradient-to-r from-primary via-primary/60 to-primary animate-pulse' 
                 : 'bg-gradient-to-r from-primary via-primary/60 to-transparent'
             }`} />
             
-            <div className="p-4 md:p-5">
-              <div className="flex items-center justify-between mb-3 pb-2 border-b border-primary/20">
-                <div className="flex items-center gap-2">
+            <div className="p-4 md:p-5 overflow-y-auto scroll-smooth max-h-[35vh]">
+              <div className="flex items-center justify-between mb-3 pb-2 border-b border-primary/20 flex-wrap gap-2">
+                <div className="flex items-center gap-2 flex-wrap">
                   <div className="w-2 h-2 bg-primary rounded-full animate-pulse" />
                   <span className="text-xs font-black text-primary uppercase tracking-wider">
                     {anchorName}
@@ -321,13 +321,16 @@ export function BroadcastCharacter({ narrative, isLive, isSpeaking = false, acti
                 </div>
               </div>
               
-              <p className="text-base md:text-lg text-foreground leading-relaxed font-medium">
+              <p className="text-base md:text-lg text-foreground leading-relaxed font-medium break-words">
                 {displayedText}
                 {isTyping && (
                   <span className="inline-block w-1.5 h-5 ml-1 bg-primary animate-pulse" />
                 )}
               </p>
             </div>
+            
+            {/* Gradient fade indicator for long text */}
+            <div className="absolute bottom-0 left-0 right-0 h-8 bg-gradient-to-t from-card/95 to-transparent pointer-events-none" />
           </div>
         </div>
       )}
