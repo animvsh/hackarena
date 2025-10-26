@@ -29,6 +29,9 @@ interface User {
   xp: number;
   total_predictions: number;
   correct_predictions: number;
+  total_bets?: number;
+  won_bets?: number;
+  accuracy_rate?: number;
   xrp_destination_tag?: string;
 }
 
@@ -68,27 +71,46 @@ const WalletPage = () => {
   const fetchWalletData = async () => {
     setLoading(true);
 
-    // Get first user for demo
+    // Get current authenticated user
+    const { data: { user: authUser } } = await supabase.auth.getUser();
+    
+    if (!authUser) {
+      setLoading(false);
+      return;
+    }
+
     const { data: userData } = await supabase
       .from('users')
       .select('*')
-      .limit(1)
+      .eq('id', authUser.id)
       .single();
 
     if (userData) {
       setUser(userData);
 
-      // Fetch user's predictions
-      const { data: predictionsData } = await supabase
-        .from('predictions')
+      // Fetch user's bets from hackathon_bets
+      const { data: betsData } = await supabase
+        .from('hackathon_bets')
         .select(`
           *,
-          teams (name, logo_url),
-          prediction_markets (category)
+          hackathon_teams!hackathon_bets_team_id_fkey (name, logo_url),
+          hackathon_prizes!hackathon_bets_prize_id_fkey (category, prize_amount)
         `)
         .eq('user_id', userData.id)
         .order('created_at', { ascending: false })
         .limit(20);
+
+      // Transform bets to match Prediction interface
+      const predictionsData = betsData?.map(bet => ({
+        id: bet.id,
+        amount: bet.bet_amount,
+        odds_at_bet: parseFloat(bet.odds_decimal.toString()) * 100, // Convert to percentage
+        status: bet.status,
+        payout: bet.final_payout || 0,
+        created_at: bet.created_at,
+        teams: bet.hackathon_teams,
+        prediction_markets: bet.hackathon_prizes
+      }));
 
       if (predictionsData) {
         setPredictions(predictionsData as Prediction[]);
@@ -99,7 +121,15 @@ const WalletPage = () => {
   };
 
   const getAccuracyRate = () => {
-    if (!user || user.total_predictions === 0) return 0;
+    if (!user) return 0;
+    // Use the stored accuracy_rate if available, otherwise calculate it
+    if (user.accuracy_rate !== undefined && user.accuracy_rate !== null) {
+      return user.accuracy_rate.toFixed(1);
+    }
+    if (user.total_bets && user.total_bets > 0 && user.won_bets !== undefined) {
+      return ((user.won_bets / user.total_bets) * 100).toFixed(1);
+    }
+    if (user.total_predictions === 0) return 0;
     return ((user.correct_predictions / user.total_predictions) * 100).toFixed(1);
   };
 
@@ -264,7 +294,7 @@ const WalletPage = () => {
             </div>
             <p className="text-4xl font-bold mb-2">{getAccuracyRate()}%</p>
             <p className="text-xs text-muted-foreground">
-              {user?.correct_predictions || 0} / {user?.total_predictions || 0} correct
+              {user?.won_bets || 0} / {user?.total_bets || 0} bets won
             </p>
           </Card>
         </div>

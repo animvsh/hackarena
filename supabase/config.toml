@@ -51,3 +51,9 @@ verify_jwt = false
 
 [functions.calculate-betting-odds]
 verify_jwt = false
+
+[functions.place-bet]
+verify_jwt = true
+
+[functions.resolve-bets]
+verify_jwt = false

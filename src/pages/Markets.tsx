@@ -54,12 +54,30 @@ const Markets = () => {
   const [betAmount, setBetAmount] = useState("");
   const [selectedTeam, setSelectedTeam] = useState<Team | null>(null);
   const [isCalculatingOdds, setIsCalculatingOdds] = useState(false);
+  const [isPlacingBet, setIsPlacingBet] = useState(false);
+  const [user, setUser] = useState<any>(null);
+  const [showBettingModal, setShowBettingModal] = useState(false);
 
   useEffect(() => {
     if (hackathonId) {
       autoCalculateAndFetch();
     }
   }, [hackathonId]);
+
+  useEffect(() => {
+    const fetchUser = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        const { data: userData } = await supabase
+          .from('users')
+          .select('wallet_balance')
+          .eq('id', user.id)
+          .single();
+        setUser(userData);
+      }
+    };
+    fetchUser();
+  }, []);
 
   const autoCalculateAndFetch = async () => {
     if (!hackathonId) return;
@@ -266,6 +284,51 @@ const Markets = () => {
       console.error('Error fetching hackathon teams:', error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handlePlaceBet = async () => {
+    if (!selectedTeam || !selectedPrize || !betAmount) return;
+    
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
+      alert('Please sign in to place a bet');
+      return;
+    }
+
+    setIsPlacingBet(true);
+    
+    try {
+      const response = await supabase.functions.invoke('place-bet', {
+        body: {
+          userId: user.id,
+          hackathonId,
+          teamId: selectedTeam.id,
+          prizeId: selectedPrize.id,
+          betAmount: parseFloat(betAmount),
+          oddsAmerican: selectedTeam.betting_odds.american_odds,
+          oddsDecimal: selectedTeam.betting_odds.decimal_odds
+        }
+      });
+
+      if (response.error) throw response.error;
+
+      console.log('Bet placed successfully:', response.data);
+      
+      // Update user balance
+      setUser({ ...user, wallet_balance: response.data.newBalance });
+      
+      // Reset form
+      setBetAmount('');
+      setSelectedTeam(null);
+      setShowBettingModal(false);
+      
+      alert(`Bet placed successfully! Your new balance: ${response.data.newBalance} HackCoins`);
+    } catch (error) {
+      console.error('Error placing bet:', error);
+      alert(error.message || 'Failed to place bet');
+    } finally {
+      setIsPlacingBet(false);
     }
   };
 
@@ -577,13 +640,19 @@ const Markets = () => {
                             </div>
 
                             <div>
-                              <label className="text-sm font-medium">Bet Amount (HackCoins)</label>
+                              <div className="flex justify-between mb-2">
+                                <label className="text-sm font-medium">Bet Amount (HackCoins)</label>
+                                <span className="text-sm text-muted-foreground">
+                                  Balance: {user?.wallet_balance || 0} HackCoins
+                                </span>
+                              </div>
                               <Input
                                 type="number"
                                 placeholder="Enter amount"
                                 value={betAmount}
                                 onChange={(e) => setBetAmount(e.target.value)}
                                 className="mt-1"
+                                max={user?.wallet_balance || 0}
                               />
                             </div>
 
@@ -596,8 +665,12 @@ const Markets = () => {
                               </div>
                             )}
 
-                            <Button className="w-full">
-                              Place Bet
+                            <Button 
+                              className="w-full"
+                              onClick={handlePlaceBet}
+                              disabled={!betAmount || parseFloat(betAmount) <= 0 || parseFloat(betAmount) > (user?.wallet_balance || 0)}
+                            >
+                              {isPlacingBet ? 'Placing Bet...' : 'Place Bet'}
                             </Button>
                           </div>
                         </DialogContent>
