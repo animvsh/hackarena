@@ -251,34 +251,39 @@ export default function MyProfile() {
 
       {/* Bio Section */}
       {fullProfile.bio && (
-        <Card className="p-6">
-          <h3 className="text-xl font-bold mb-4">About</h3>
+        <Card className="p-6 border-primary/20 bg-gradient-to-br from-background to-primary/5">
+          <h3 className="text-2xl font-bold mb-4 flex items-center gap-3">
+            <div className="h-8 w-1.5 bg-primary rounded-full" />
+            <span className="bg-primary text-background px-4 py-1 rounded">About</span>
+          </h3>
           <p className="text-muted-foreground leading-relaxed whitespace-pre-wrap">{fullProfile.bio}</p>
         </Card>
       )}
 
       {/* Experience Section */}
       {fullProfile.experience && (
-        <Card className="p-6">
-          <h3 className="text-xl font-bold mb-6 flex items-center gap-2">
-            <div className="h-1 w-8 bg-primary rounded" />
-            Experience
+        <Card className="p-6 border-primary/20 bg-gradient-to-br from-background to-primary/5">
+          <h3 className="text-2xl font-bold mb-6 flex items-center gap-3">
+            <div className="h-8 w-1.5 bg-primary rounded-full" />
+            <span className="bg-primary text-background px-4 py-1 rounded">Experience & Education</span>
           </h3>
           <div className="space-y-6">
             {/* Work Experience */}
             {Array.isArray(fullProfile.experience) && fullProfile.experience.length > 0 && (
               <div className="space-y-4">
-                <h4 className="font-semibold text-primary mb-4 flex items-center gap-2">
-                  <Award className="h-4 w-4" />
-                  Work Experience
+                <h4 className="text-lg font-bold text-primary mb-4 flex items-center gap-2 uppercase tracking-wide">
+                  <Award className="h-5 w-5" />
+                  <span className="border-b-2 border-primary/50 pb-1">Professional History</span>
                 </h4>
                 <div className="space-y-4">
                   {fullProfile.experience.map((exp: any, expIndex: number) => (
-                    <div key={expIndex} className="p-4 border-l-4 border-primary/50 hover:border-primary bg-muted/30 hover:bg-muted/50 rounded-r-lg transition-all">
-                      <h5 className="font-bold text-lg group-hover:text-primary transition-colors">{exp.title || 'Position'}</h5>
-                      <p className="text-sm font-medium text-muted-foreground mt-1">{exp.company || 'Company'}</p>
+                    <div key={expIndex} className="group relative p-5 border-l-4 border-primary/50 hover:border-primary bg-gradient-to-r from-muted/40 to-transparent hover:from-primary/10 rounded-r-lg transition-all duration-300 hover:shadow-lg">
+                      <div className="absolute top-0 left-0 w-1 h-full bg-primary opacity-0 group-hover:opacity-100 transition-opacity" />
+                      <h5 className="font-bold text-lg text-foreground group-hover:text-primary transition-colors">{exp.title || 'Position'}</h5>
+                      <p className="text-sm font-semibold text-foreground mt-1">{exp.company || 'Company'}</p>
                       {(exp.startDate || exp.endDate) && (
-                        <p className="text-xs text-muted-foreground mt-1">
+                        <p className="text-xs text-muted-foreground mt-1 flex items-center gap-1">
+                          <span className="inline-block w-2 h-2 rounded-full bg-primary/60" />
                           {exp.startDate} - {exp.endDate || 'Present'}
                         </p>
                       )}
@@ -296,17 +301,19 @@ export default function MyProfile() {
             {/* Education */}
             {Array.isArray(fullProfile.education) && fullProfile.education.length > 0 && (
               <div className="space-y-4">
-                <h4 className="font-semibold text-primary mb-4 flex items-center gap-2">
-                  <Trophy className="h-4 w-4" />
-                  Education
+                <h4 className="text-lg font-bold text-primary mb-4 flex items-center gap-2 uppercase tracking-wide">
+                  <Trophy className="h-5 w-5" />
+                  <span className="border-b-2 border-primary/50 pb-1">Education</span>
                 </h4>
                 <div className="space-y-4">
                   {fullProfile.education.map((edu: any, eduIndex: number) => (
-                    <div key={eduIndex} className="p-4 border-l-4 border-primary/50 hover:border-primary bg-muted/30 hover:bg-muted/50 rounded-r-lg transition-all">
-                      <h5 className="font-bold text-lg group-hover:text-primary transition-colors">{edu.degree || 'Degree'}</h5>
-                      <p className="text-sm font-medium text-muted-foreground mt-1">{edu.institution || 'Institution'}</p>
+                    <div key={eduIndex} className="group relative p-5 border-l-4 border-primary/50 hover:border-primary bg-gradient-to-r from-muted/40 to-transparent hover:from-primary/10 rounded-r-lg transition-all duration-300 hover:shadow-lg">
+                      <div className="absolute top-0 left-0 w-1 h-full bg-primary opacity-0 group-hover:opacity-100 transition-opacity" />
+                      <h5 className="font-bold text-lg text-foreground group-hover:text-primary transition-colors">{edu.degree || 'Degree'}</h5>
+                      <p className="text-sm font-semibold text-foreground mt-1">{edu.institution || 'Institution'}</p>
                       {edu.year && (
-                        <p className="text-xs text-muted-foreground mt-1">
+                        <p className="text-xs text-muted-foreground mt-1 flex items-center gap-1">
+                          <span className="inline-block w-2 h-2 rounded-full bg-primary/60" />
                           {edu.year}
                         </p>
                       )}
@@ -318,14 +325,18 @@ export default function MyProfile() {
             
             {/* Skills */}
             {Array.isArray(fullProfile.skills) && fullProfile.skills.length > 0 && (
-              <div className="p-4 bg-muted/30 rounded-lg">
-                <h4 className="font-semibold text-primary mb-3 flex items-center gap-2">
-                  <Target className="h-4 w-4" />
-                  Skills
+              <div className="p-5 bg-gradient-to-r from-muted/40 to-transparent border border-primary/20 rounded-lg">
+                <h4 className="text-lg font-bold text-primary mb-4 flex items-center gap-2 uppercase tracking-wide">
+                  <Target className="h-5 w-5" />
+                  <span className="border-b-2 border-primary/50 pb-1">Skills</span>
                 </h4>
                 <div className="flex flex-wrap gap-2">
                   {fullProfile.skills.map((skill: any, skillIndex: number) => (
-                    <Badge key={skillIndex} variant="secondary" className="px-3 py-1 text-sm">
+                    <Badge
+                      key={skillIndex}
+                      variant="secondary"
+                      className="px-4 py-1.5 text-sm font-medium bg-primary/20 hover:bg-primary/30 border border-primary/30 hover:border-primary/50 transition-all duration-300 hover:scale-105"
+                    >
                       {typeof skill === 'string' ? skill : skill.name || skill.skill || skill}
                     </Badge>
                   ))}
