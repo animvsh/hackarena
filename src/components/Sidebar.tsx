@@ -3,6 +3,7 @@ import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
+import hackcastLogo from "@/assets/hackcast-logo.png";
 
 const navItems = [
   { icon: Tv, label: "Dashboard", route: "/" },
@@ -27,10 +28,7 @@ export const Sidebar = () => {
     <aside className="w-64 bg-card border-r border-border p-6 flex flex-col">
       {/* Logo */}
       <div className="mb-8">
-        <h1 className="text-2xl font-bold">
-          <span className="text-primary">HackCast</span>
-          <span className="text-muted-foreground text-sm ml-2">LIVE</span>
-        </h1>
+        <img src={hackcastLogo} alt="HackCast LIVE" className="h-10" />
         {!user && (
           <p className="text-xs text-muted-foreground mt-2">Guest Mode</p>
         )}

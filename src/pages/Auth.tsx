@@ -8,6 +8,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { toast } from 'sonner';
 import { signupSchema, loginSchema } from '@/lib/validations/auth';
 import { Loader2 } from 'lucide-react';
+import hackcastLogo from "@/assets/hackcast-logo.png";
 
 export default function Auth() {
   const [isLogin, setIsLogin] = useState(true);
@@ -82,11 +83,11 @@ export default function Auth() {
     <div className="min-h-screen flex items-center justify-center bg-background p-4">
       <Card className="w-full max-w-md">
         <CardHeader className="space-y-1">
-          <div className="flex items-center gap-2 mb-2">
-            <h1 className="text-2xl font-bold text-primary">HackCast LIVE</h1>
+          <div className="flex items-center gap-3 mb-2">
+            <img src={hackcastLogo} alt="HackCast LIVE" className="h-10" />
             <div className="flex items-center gap-2 px-2 py-1 bg-destructive/10 rounded-full">
-              <div className="w-2 h-2 bg-destructive rounded-full animate-pulse"></div>
-              <span className="text-xs font-bold text-destructive">BROADCASTING</span>
+              <div className="w-1.5 h-1.5 bg-destructive rounded-full animate-pulse"></div>
+              <span className="text-xs font-bold text-destructive">LIVE</span>
             </div>
           </div>
           <CardTitle className="text-2xl">{isLogin ? 'Welcome back' : 'Create account'}</CardTitle>
