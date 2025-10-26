@@ -16,6 +16,36 @@ interface BroadcastCharacterProps {
 
 type CharacterState = 'idle' | 'speaking' | 'excited';
 
+// Helper function to split narrative into small chunks (1-2 sentences)
+const createChunks = (text: string): string[] => {
+  if (!text) return [];
+  
+  // Split by sentence-ending punctuation
+  const sentences = text.match(/[^.!?]+[.!?]+/g) || [text];
+  const chunks: string[] = [];
+  let currentChunk = '';
+  
+  for (const sentence of sentences) {
+    const potentialChunk = currentChunk + sentence;
+    const wordCount = potentialChunk.split(' ').length;
+    
+    // If adding this sentence would exceed ~25 words and we have content, push current chunk
+    if (wordCount > 25 && currentChunk) {
+      chunks.push(currentChunk.trim());
+      currentChunk = sentence;
+    } else {
+      currentChunk = potentialChunk;
+    }
+  }
+  
+  // Push remaining content
+  if (currentChunk.trim()) {
+    chunks.push(currentChunk.trim());
+  }
+  
+  return chunks.length > 0 ? chunks : [text];
+};
+
 export function BroadcastCharacter({ narrative, isLive, isSpeaking = false, activeAnchor = 'left', isMuted = false, isPaused = false, personalityId }: BroadcastCharacterProps) {
   const [displayedText, setDisplayedText] = useState('');
   const [isTyping, setIsTyping] = useState(false);
@@ -26,9 +56,15 @@ export function BroadcastCharacter({ narrative, isLive, isSpeaking = false, acti
   const [headTilt, setHeadTilt] = useState(0);
   const [shoulderMove, setShoulderMove] = useState(0);
   
+  // Chunked dialogue state
+  const [chunks, setChunks] = useState<string[]>([]);
+  const [currentChunkIndex, setCurrentChunkIndex] = useState(0);
+  const [currentChunk, setCurrentChunk] = useState('');
+  
   // Store all timer IDs for cleanup
   const timersRef = useRef<{
     typeInterval?: NodeJS.Timeout;
+    chunkRotation?: NodeJS.Timeout;
     leftBlink?: NodeJS.Timeout;
     rightBlink?: NodeJS.Timeout;
     movement?: NodeJS.Timeout;
@@ -88,9 +124,25 @@ export function BroadcastCharacter({ narrative, isLive, isSpeaking = false, acti
     }
   }, [ttsError]);
 
-  // Smooth text reveal effect - updates when narrative changes
+  // Split narrative into chunks when it changes
   useEffect(() => {
-    if (!narrative || isPaused) {
+    if (!narrative) {
+      setChunks([]);
+      setCurrentChunkIndex(0);
+      setCurrentChunk('');
+      setDisplayedText('');
+      return;
+    }
+    
+    const newChunks = createChunks(narrative);
+    console.log('[BroadcastCharacter] Created chunks:', newChunks.length);
+    setChunks(newChunks);
+    setCurrentChunkIndex(0);
+  }, [narrative]);
+
+  // Smooth text reveal effect for current chunk
+  useEffect(() => {
+    if (!currentChunk || isPaused) {
       if (isPaused) {
         console.log('[BroadcastCharacter] Pausing typing animation');
       }
@@ -105,8 +157,8 @@ export function BroadcastCharacter({ narrative, isLive, isSpeaking = false, acti
     const typingSpeed = 15;
 
     const typeInterval = setInterval(() => {
-      if (currentIndex < narrative.length) {
-        setDisplayedText(narrative.slice(0, currentIndex + 2));
+      if (currentIndex < currentChunk.length) {
+        setDisplayedText(currentChunk.slice(0, currentIndex + 2));
         setMouthOpen(prev => !prev);
         currentIndex += 2;
       } else {
@@ -123,7 +175,35 @@ export function BroadcastCharacter({ narrative, isLive, isSpeaking = false, acti
 
     timersRef.current.typeInterval = typeInterval;
     return () => clearInterval(typeInterval);
-  }, [narrative, isSpeaking, isPaused]);
+  }, [currentChunk, isSpeaking, isPaused]);
+
+  // Display chunks sequentially with timed rotation
+  useEffect(() => {
+    if (chunks.length === 0 || isPaused) return;
+    
+    const chunk = chunks[currentChunkIndex];
+    if (!chunk) return;
+    
+    setCurrentChunk(chunk);
+    
+    // Calculate duration based on word count: 300ms per word + 2s buffer (min 4s)
+    const wordCount = chunk.split(' ').length;
+    const duration = Math.max(wordCount * 300 + 2000, 4000);
+    
+    console.log(`[BroadcastCharacter] Showing chunk ${currentChunkIndex + 1}/${chunks.length}, duration: ${duration}ms`);
+    
+    const timer = setTimeout(() => {
+      if (currentChunkIndex < chunks.length - 1) {
+        setCurrentChunkIndex(prev => prev + 1);
+      } else {
+        // Finished all chunks - loop back or clear
+        setCurrentChunkIndex(0);
+      }
+    }, duration);
+    
+    timersRef.current.chunkRotation = timer;
+    return () => clearTimeout(timer);
+  }, [chunks, currentChunkIndex, isPaused]);
 
   // Random blinking for realism
   useEffect(() => {
@@ -288,14 +368,14 @@ export function BroadcastCharacter({ narrative, isLive, isSpeaking = false, acti
       {/* Enhanced Speech Bubble with fade transitions */}
       {displayedText && (
         <div className="absolute bottom-24 md:bottom-28 lg:bottom-32 left-1/2 transform -translate-x-1/2 max-w-[90vw] md:max-w-3xl lg:max-w-4xl w-full px-4 sm:px-6 z-50 animate-in fade-in slide-in-from-bottom-4 duration-500">
-          <div className="relative bg-gradient-to-r from-card/98 to-card/95 backdrop-blur-md border-2 border-primary/40 rounded-xl shadow-2xl overflow-hidden max-h-[40vh]">
+          <div className="relative bg-gradient-to-r from-card/98 to-card/95 backdrop-blur-md border-2 border-primary/40 rounded-xl shadow-2xl overflow-hidden">
             <div className={`h-1 ${
               !isMuted && ttsLoading 
                 ? 'bg-gradient-to-r from-primary via-primary/60 to-primary animate-pulse' 
                 : 'bg-gradient-to-r from-primary via-primary/60 to-transparent'
             }`} />
             
-            <div className="p-4 md:p-5 overflow-y-auto scroll-smooth max-h-[35vh]">
+            <div className="p-4 md:p-5 max-h-[150px] overflow-hidden">
               <div className="flex items-center justify-between mb-3 pb-2 border-b border-primary/20 flex-wrap gap-2">
                 <div className="flex items-center gap-2 flex-wrap">
                   <div className="w-2 h-2 bg-primary rounded-full animate-pulse" />
