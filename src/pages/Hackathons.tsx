@@ -6,7 +6,9 @@ import { HackathonCard } from "@/components/HackathonCard";
 import { supabase } from "@/integrations/supabase/client";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Trophy, Calendar, History } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Trophy, Calendar, History, Download } from "lucide-react";
+import { DevpostImportModal } from "@/components/DevpostImportModal";
 
 interface Hackathon {
   id: string;
@@ -25,6 +27,7 @@ const Hackathons = () => {
   const navigate = useNavigate();
   const [hackathons, setHackathons] = useState<Hackathon[]>([]);
   const [loading, setLoading] = useState(true);
+  const [showImportModal, setShowImportModal] = useState(false);
 
   useEffect(() => {
     fetchHackathons();
@@ -63,9 +66,15 @@ const Hackathons = () => {
         <Header />
         
         <div className="mb-8">
-          <div className="flex items-center gap-2 mb-2">
-            <Trophy className="w-8 h-8 text-primary" />
-            <h1 className="text-3xl font-bold">Hackathons</h1>
+          <div className="flex items-center justify-between mb-2">
+            <div className="flex items-center gap-2">
+              <Trophy className="w-8 h-8 text-primary" />
+              <h1 className="text-3xl font-bold">Hackathons</h1>
+            </div>
+            <Button onClick={() => setShowImportModal(true)} className="gap-2">
+              <Download className="w-4 h-4" />
+              Import from Devpost
+            </Button>
           </div>
           <p className="text-muted-foreground">
             Watch live broadcasts, place bets, and follow your favorite hackathon teams
@@ -167,6 +176,12 @@ const Hackathons = () => {
             )}
           </TabsContent>
         </Tabs>
+
+        <DevpostImportModal
+          open={showImportModal}
+          onOpenChange={setShowImportModal}
+          onSuccess={fetchHackathons}
+        />
       </main>
     </div>
   );

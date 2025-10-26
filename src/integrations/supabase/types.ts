@@ -556,6 +556,7 @@ export type Database = {
         Row: {
           created_at: string | null
           description: string | null
+          devpost_url: string | null
           end_date: string | null
           id: string
           location: string | null
@@ -570,6 +571,7 @@ export type Database = {
         Insert: {
           created_at?: string | null
           description?: string | null
+          devpost_url?: string | null
           end_date?: string | null
           id?: string
           location?: string | null
@@ -584,6 +586,7 @@ export type Database = {
         Update: {
           created_at?: string | null
           description?: string | null
+          devpost_url?: string | null
           end_date?: string | null
           id?: string
           location?: string | null
@@ -2180,5 +2183,3 @@ export const Constants = {
     },
   },
 } as const
-A new version of Supabase CLI is available: v2.53.6 (currently installed v2.48.3)
-We recommend updating regularly for new features and bug fixes: https://supabase.com/docs/guides/cli/getting-started#updating-the-supabase-cli
