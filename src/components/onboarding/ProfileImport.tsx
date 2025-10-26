@@ -3,17 +3,18 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Linkedin } from "lucide-react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Separator } from "@/components/ui/separator";
+import { Upload, Linkedin, Github, FileText, ShieldCheck } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { ResumeUploader } from "./ResumeUploader";
 import { ProfilePreview } from "./ProfilePreview";
 
 interface ProfileData {
   name?: string;
   email?: string;
   bio?: string;
-  headline?: string;
-  location?: string;
   skills?: Array<{ name: string; level: string }>;
   experience?: Array<{
     title: string;
@@ -21,28 +22,15 @@ interface ProfileData {
     startDate: string;
     endDate?: string;
     description: string;
-    location?: string;
-    employment_type?: string;
   }>;
   education?: Array<{
     degree: string;
     institution: string;
     year: string;
-    start_year?: string;
-    gpa?: string;
-    field?: string;
   }>;
   linkedin_url?: string;
   github_url?: string;
   portfolio_url?: string;
-  years_of_experience?: number;
-  certifications?: string[];
-  languages?: string[];
-  interests?: string[];
-  volunteer_experience?: any[];
-  publications?: any[];
-  projects?: any[];
-  awards?: any[];
 }
 
 interface ProfileImportProps {
@@ -53,257 +41,154 @@ export const ProfileImport = ({ onComplete }: ProfileImportProps) => {
   const [loading, setLoading] = useState(false);
   const [profileData, setProfileData] = useState<ProfileData | null>(null);
   const [linkedinUrl, setLinkedinUrl] = useState("");
+  const [githubUsername, setGithubUsername] = useState("");
 
-  // Handle OAuth callback
+  // Check if returning from OAuth
   useEffect(() => {
-    const handleOAuthCallback = async () => {
-      const urlParams = new URLSearchParams(window.location.search);
-      const code = urlParams.get('code');
-      const provider = urlParams.get('provider');
-      
-      if (code && provider === 'linkedin_oidc') {
-        console.log('Processing LinkedIn OAuth callback...');
-        setLoading(true);
-        try {
-          // Exchange code for session
-          const { data, error } = await supabase.auth.exchangeCodeForSession(code);
+    const checkOAuthSuccess = async () => {
+      const oauthProvider = localStorage.getItem('oauth_import_success');
+      if (oauthProvider) {
+        localStorage.removeItem('oauth_import_success');
+        
+        // Fetch the updated user profile
+        const { data: { user } } = await supabase.auth.getUser();
+        if (user) {
+          const { data: userData } = await supabase
+            .from('users')
+            .select('*')
+            .eq('id', user.id)
+            .single();
           
-          if (error) throw error;
-          
-          if (data.session?.user) {
-            console.log('LinkedIn OAuth successful, getting user data...');
+          if (userData) {
+            // Auto-complete with OAuth data
+            const importedData: ProfileData = {
+              name: userData.username,
+              email: userData.email,
+              bio: userData.bio || "",
+              skills: Array.isArray(userData.skills) ? userData.skills as Array<{ name: string; level: string }> : [],
+              experience: Array.isArray(userData.experience) ? userData.experience as Array<{
+                title: string;
+                company: string;
+                startDate: string;
+                endDate?: string;
+                description: string;
+              }> : [],
+              education: Array.isArray(userData.education) ? userData.education as Array<{
+                degree: string;
+                institution: string;
+                year: string;
+              }> : [],
+              linkedin_url: userData.linkedin_url || "",
+              github_url: userData.github_url || "",
+              portfolio_url: userData.portfolio_url || "",
+            };
             
-            // Get the stored LinkedIn URL
-            const storedLinkedinUrl = localStorage.getItem('linkedin_url_for_import');
-            const isOnboarding = localStorage.getItem('onboarding_linkedin');
-            
-            if (storedLinkedinUrl && isOnboarding) {
-              console.log('=== OAUTH CALLBACK: FOUND STORED LINKEDIN URL ===');
-              console.log('Stored LinkedIn URL:', storedLinkedinUrl);
-              console.log('Is onboarding:', isOnboarding);
-              
-              // Import LinkedIn profile using Clado
-              const profileData = await importLinkedinWithClado(storedLinkedinUrl);
-              
-              if (profileData) {
-                console.log('=== OAUTH CALLBACK: PROFILE IMPORT SUCCESS ===');
-                console.log('Profile data received:', profileData);
-                toast.success("LinkedIn profile imported successfully!");
-                
-                // Clean up localStorage
-                localStorage.removeItem('linkedin_url_for_import');
-                localStorage.removeItem('onboarding_linkedin');
-                
-                // Complete the onboarding
-                onComplete(profileData, 'linkedin');
-              } else {
-                console.error('=== OAUTH CALLBACK: PROFILE IMPORT FAILED ===');
-                console.error('Profile data was null or undefined');
-                toast.error("Failed to import LinkedIn profile");
-              }
-            } else {
-              console.log('=== OAUTH CALLBACK: NO STORED URL ===');
-              console.log('Stored LinkedIn URL:', storedLinkedinUrl);
-              console.log('Is onboarding:', isOnboarding);
-              console.log('Redirecting to home...');
-              toast.success("LinkedIn connected successfully!");
-              
-              // Clean up URL parameters and redirect to home
-              window.location.href = '/';
-            }
+            onComplete(importedData, oauthProvider);
           }
-        } catch (error) {
-          console.error('Error handling OAuth callback:', error);
-          toast.error("Failed to connect with LinkedIn");
-          setLoading(false);
         }
       }
     };
+    
+    checkOAuthSuccess();
+  }, [onComplete]);
 
-    handleOAuthCallback();
-  }, []);
-
-  const saveProfileToDatabase = async (profileData: ProfileData) => {
+  const handleResumeUpload = async (file: File) => {
+    setLoading(true);
     try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error('No authenticated user');
+      const formData = new FormData();
+      formData.append('file', file);
 
-      console.log('Saving profile data to database for user:', user.id);
-      console.log('Profile data to save:', profileData);
-
-      // Update user profile with scraped data - only update fields that have data
-      const updateData: any = {};
-      
-      if (profileData.bio) updateData.bio = profileData.bio;
-      if (profileData.headline) updateData.headline = profileData.headline;
-      if (profileData.location) updateData.location = profileData.location;
-      if (profileData.linkedin_url) updateData.linkedin_url = profileData.linkedin_url;
-      if (profileData.portfolio_url) updateData.portfolio_url = profileData.portfolio_url;
-      if (profileData.skills && profileData.skills.length > 0) updateData.skills = profileData.skills;
-      if (profileData.experience && profileData.experience.length > 0) updateData.experience = profileData.experience;
-      if (profileData.education && profileData.education.length > 0) updateData.education = profileData.education;
-      if (profileData.years_of_experience) updateData.years_of_experience = profileData.years_of_experience;
-      if (profileData.certifications && profileData.certifications.length > 0) updateData.certifications = profileData.certifications;
-
-      console.log('Update data:', updateData);
-
-      const { error } = await supabase
-        .from('users')
-        .update(updateData)
-        .eq('id', user.id);
-
-      if (error) {
-        console.error('Database update error:', error);
-        throw error;
-      }
-      
-      console.log('Profile data saved to database successfully');
-    } catch (error) {
-      console.error('Error saving profile to database:', error);
-      throw error;
-    }
-  };
-
-  const importLinkedinWithClado = async (linkedinUrl: string): Promise<ProfileData | null> => {
-    try {
-      console.log('=== LINKEDIN IMPORT WITH CLADO STARTED ===');
-      console.log('LinkedIn URL:', linkedinUrl);
-      console.log('Timestamp:', new Date().toISOString());
-      
-      const { data, error } = await supabase.functions.invoke('import-linkedin-profile', {
-        body: { 
-          linkedinUrl
-        },
+      const { data, error } = await supabase.functions.invoke('parse-resume', {
+        body: formData,
       });
 
-      console.log('=== CLADO API RESPONSE ===');
-      console.log('Response data:', data);
-      console.log('Response error:', error);
-      console.log('Response analysis:', {
-        hasData: !!data,
-        hasError: !!error,
-        dataKeys: data ? Object.keys(data) : [],
-        errorMessage: error?.message || 'none'
-      });
+      if (error) throw error;
 
-      if (error) {
-        console.error('Clado API error:', error);
-        throw error;
-      }
-
-      if (data?.profile) {
-        console.log('=== PROFILE DATA RECEIVED FROM CLADO ===');
-        console.log('Raw profile data:', JSON.stringify(data.profile, null, 2));
-        console.log('Profile data analysis:', {
-          hasName: !!data.profile.name,
-          hasEmail: !!data.profile.email,
-          hasBio: !!data.profile.bio,
-          hasHeadline: !!data.profile.headline,
-          hasLocation: !!data.profile.location,
-          hasLinkedinUrl: !!data.profile.linkedin_url,
-          hasPortfolioUrl: !!data.profile.portfolio_url,
-          skillsCount: data.profile.skills?.length || 0,
-          experienceCount: data.profile.experience?.length || 0,
-          educationCount: data.profile.education?.length || 0,
-          yearsOfExperience: data.profile.years_of_experience,
-          certificationsCount: data.profile.certifications?.length || 0
-        });
-        
-        // Save profile data to database
-        try {
-          console.log('=== SAVING PROFILE TO DATABASE ===');
-          await saveProfileToDatabase(data.profile);
-          console.log('Profile data saved to database successfully');
-        } catch (dbError) {
-          console.error('Error saving to database:', dbError);
-          // Don't throw here, just log the error and continue
-        }
-        
-        setProfileData(data.profile);
-        toast.success("LinkedIn profile imported successfully!");
-        return data.profile;
-      } else {
-        console.error('=== NO PROFILE DATA IN RESPONSE ===');
-        console.error('Response data:', data);
-        console.error('Expected profile key:', 'profile');
-        console.error('Available keys:', data ? Object.keys(data) : 'no data');
-        throw new Error('No profile data returned from Clado API');
-      }
+      setProfileData(data.profile);
+      toast.success("Resume parsed successfully!");
     } catch (error) {
-      console.error('Error importing LinkedIn profile:', error);
-      toast.error("Failed to import LinkedIn profile. Please check your LinkedIn URL and try again.");
-      return null;
+      console.error('Error parsing resume:', error);
+      toast.error("Failed to parse resume. Please try manual entry.");
     } finally {
       setLoading(false);
     }
   };
 
-  const handleLinkedinContinue = async () => {
-    console.log('=== LINKEDIN CONTINUE CLICKED ===');
-    console.log('LinkedIn URL entered:', linkedinUrl);
-    
+  const handleLinkedinImport = async () => {
     if (!linkedinUrl) {
-      console.log('No LinkedIn URL provided');
-      toast.error("Please enter your LinkedIn profile URL");
+      toast.error("Please enter a LinkedIn URL");
       return;
     }
 
-    // Validate LinkedIn URL format
-    const linkedinUrlPattern = /^https:\/\/(www\.)?linkedin\.com\/in\/[a-zA-Z0-9-]+\/?$/;
-    const isValidUrl = linkedinUrlPattern.test(linkedinUrl);
-    console.log('URL validation:', {
-      url: linkedinUrl,
-      isValid: isValidUrl,
-      pattern: linkedinUrlPattern.toString()
-    });
-    
-    if (!isValidUrl) {
-      console.log('Invalid LinkedIn URL format');
-      toast.error("Please enter a valid LinkedIn profile URL (e.g., https://www.linkedin.com/in/your-username)");
-      return;
-    }
-
-    // Store the LinkedIn URL for later use
-    console.log('Storing LinkedIn URL in localStorage:', linkedinUrl);
-    localStorage.setItem('linkedin_url_for_import', linkedinUrl);
-    
-    // Start LinkedIn OAuth flow
+    setLoading(true);
     try {
-      console.log('=== STARTING LINKEDIN OAUTH FLOW ===');
-      setLoading(true);
-      
-      // Store that we're in the onboarding flow
-      localStorage.setItem('onboarding_linkedin', 'true');
-      console.log('Set onboarding flag in localStorage');
-      
-      // Start OAuth flow
-      console.log('Initiating Supabase OAuth...');
-      const { data, error } = await supabase.auth.signInWithOAuth({
-        provider: 'linkedin_oidc',
-        options: {
-          redirectTo: `${window.location.origin}/`,
-          scopes: 'openid profile email',
-          queryParams: {
-            access_type: 'offline',
-            prompt: 'consent',
-          },
-        }
+      const { data, error } = await supabase.functions.invoke('import-linkedin-profile', {
+        body: { linkedinUrl },
       });
 
-      console.log('OAuth response:', { data, error });
-      
       if (error) throw error;
-      
-      console.log('OAuth initiated successfully, user will be redirected to LinkedIn');
-      // The user will be redirected to LinkedIn and then back
+
+      setProfileData(data.profile);
+      toast.success("LinkedIn profile imported successfully!");
     } catch (error) {
-      console.error('=== OAUTH INITIATION ERROR ===');
-      console.error('Error details:', error);
-      toast.error("Failed to connect with LinkedIn");
+      console.error('Error importing LinkedIn profile:', error);
+      toast.error("Failed to import LinkedIn profile. Please try resume upload instead.");
+    } finally {
       setLoading(false);
     }
   };
 
+  const handleGithubImport = async () => {
+    if (!githubUsername) {
+      toast.error("Please enter a GitHub username");
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const response = await fetch(`https://api.github.com/users/${githubUsername}`);
+      const data = await response.json();
+
+      setProfileData({
+        name: data.name || githubUsername,
+        bio: data.bio || "",
+        github_url: data.html_url,
+        portfolio_url: data.blog || "",
+      });
+
+      toast.success("GitHub profile imported!");
+    } catch (error) {
+      console.error('Error fetching GitHub profile:', error);
+      toast.error("Failed to import GitHub profile");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleLinkedInOAuth = async () => {
+    setLoading(true);
+    try {
+      // Mark that we're doing OAuth during onboarding
+      localStorage.setItem('onboarding_oauth_pending', 'true');
+      
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: 'linkedin_oidc',
+        options: {
+          redirectTo: `${window.location.origin}/auth/callback/linkedin`,
+          scopes: 'openid profile email',
+        },
+      });
+
+      if (error) throw error;
+
+      toast.info('Redirecting to LinkedIn for verification...');
+    } catch (error) {
+      localStorage.removeItem('onboarding_oauth_pending');
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      toast.error(`Failed to connect to LinkedIn: ${errorMessage}`);
+      setLoading(false);
+    }
+  };
 
   const handleConfirm = (source: string) => {
     if (profileData) {
@@ -325,53 +210,140 @@ export const ProfileImport = ({ onComplete }: ProfileImportProps) => {
   return (
     <div className="space-y-6">
       <div className="text-center space-y-2">
-        <h2 className="text-2xl font-bold">Connect with LinkedIn</h2>
+        <h2 className="text-2xl font-bold">Import Your Profile</h2>
         <p className="text-muted-foreground">
-          Please connect your LinkedIn account to continue
+          Please import your profile to continue
         </p>
         <p className="text-sm text-primary font-medium">
-          LinkedIn connection is required to create your account
+          This step is required to create your account
         </p>
       </div>
 
-      <Card className="p-6 space-y-4 border-primary/20 bg-primary/5">
-        <div className="flex items-center gap-3 mb-4">
-          <div className="p-3 rounded-lg bg-primary/10">
-            <Linkedin className="w-6 h-6 text-primary" />
-          </div>
-          <div>
-            <h3 className="font-semibold text-primary">Connect with LinkedIn</h3>
-            <p className="text-sm text-muted-foreground">
-              Enter your LinkedIn profile URL and connect your account
-            </p>
-          </div>
-        </div>
+      <Tabs defaultValue="resume" className="w-full">
+        <TabsList className="grid w-full grid-cols-3">
+          <TabsTrigger value="resume">Resume</TabsTrigger>
+          <TabsTrigger value="linkedin">LinkedIn</TabsTrigger>
+          <TabsTrigger value="github">GitHub</TabsTrigger>
+        </TabsList>
 
-        <div className="space-y-2">
-          <Label htmlFor="linkedin-url">LinkedIn Profile URL *</Label>
-          <Input
-            id="linkedin-url"
-            placeholder="https://www.linkedin.com/in/your-username"
-            value={linkedinUrl}
-            onChange={(e) => setLinkedinUrl(e.target.value)}
-            disabled={loading}
-            className="border-primary/30 focus:border-primary"
-          />
-          <p className="text-xs text-muted-foreground">
-            Make sure your LinkedIn profile is public so we can access your information
-          </p>
-        </div>
+        <TabsContent value="resume" className="space-y-4">
+          <Card className="p-6">
+            <ResumeUploader onUpload={handleResumeUpload} loading={loading} />
+          </Card>
+        </TabsContent>
 
-        <Button
-          onClick={handleLinkedinContinue}
-          disabled={loading || !linkedinUrl}
-          className="w-full bg-[#0A66C2] hover:bg-[#0A66C2]/90 text-white"
-          size="lg"
-        >
-          <Linkedin className="w-5 h-5 mr-2" />
-          {loading ? "Connecting..." : "Continue with LinkedIn"}
-        </Button>
-      </Card>
+        <TabsContent value="linkedin" className="space-y-4">
+          <Card className="p-6 space-y-6">
+            <div className="flex items-center gap-3">
+              <div className="p-3 rounded-lg bg-primary/10">
+                <Linkedin className="w-6 h-6 text-primary" />
+              </div>
+              <div>
+                <h3 className="font-semibold">Import from LinkedIn</h3>
+                <p className="text-sm text-muted-foreground">
+                  Choose how to import your profile
+                </p>
+              </div>
+            </div>
+
+            {/* Recommended: OAuth Verification */}
+            <div className="space-y-3 p-4 border-2 border-primary/20 rounded-lg bg-primary/5">
+              <div className="flex items-start gap-3">
+                <ShieldCheck className="w-5 h-5 text-primary mt-0.5" />
+                <div className="flex-1">
+                  <div className="flex items-center gap-2">
+                    <h4 className="font-semibold text-sm">Verify with LinkedIn</h4>
+                    <span className="text-xs bg-primary text-primary-foreground px-2 py-0.5 rounded-full">
+                      Recommended
+                    </span>
+                  </div>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Securely connect and auto-import your profile data
+                  </p>
+                </div>
+              </div>
+              <Button
+                onClick={handleLinkedInOAuth}
+                disabled={loading}
+                className="w-full"
+                size="lg"
+              >
+                <ShieldCheck className="w-4 h-4 mr-2" />
+                {loading ? "Connecting..." : "Connect & Verify LinkedIn"}
+              </Button>
+            </div>
+
+            <div className="relative">
+              <div className="absolute inset-0 flex items-center">
+                <Separator />
+              </div>
+              <div className="relative flex justify-center text-xs uppercase">
+                <span className="bg-background px-2 text-muted-foreground">
+                  Or import manually
+                </span>
+              </div>
+            </div>
+
+            {/* Alternative: Manual URL Import */}
+            <div className="space-y-3">
+              <div className="space-y-2">
+                <Label htmlFor="linkedin">LinkedIn Profile URL</Label>
+                <Input
+                  id="linkedin"
+                  type="url"
+                  placeholder="https://linkedin.com/in/yourprofile"
+                  value={linkedinUrl}
+                  onChange={(e) => setLinkedinUrl(e.target.value)}
+                />
+              </div>
+
+              <Button
+                onClick={handleLinkedinImport}
+                disabled={loading || !linkedinUrl}
+                variant="outline"
+                className="w-full"
+              >
+                {loading ? "Importing..." : "Import from URL"}
+              </Button>
+            </div>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="github" className="space-y-4">
+          <Card className="p-6 space-y-4">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="p-3 rounded-lg bg-primary/10">
+                <Github className="w-6 h-6 text-primary" />
+              </div>
+              <div>
+                <h3 className="font-semibold">Import from GitHub</h3>
+                <p className="text-sm text-muted-foreground">
+                  Enter your GitHub username
+                </p>
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="github">GitHub Username</Label>
+              <Input
+                id="github"
+                placeholder="yourusername"
+                value={githubUsername}
+                onChange={(e) => setGithubUsername(e.target.value)}
+              />
+            </div>
+
+            <Button
+              onClick={handleGithubImport}
+              disabled={loading || !githubUsername}
+              className="w-full"
+            >
+              {loading ? "Importing..." : "Import from GitHub"}
+            </Button>
+          </Card>
+        </TabsContent>
+
+      </Tabs>
     </div>
   );
 };

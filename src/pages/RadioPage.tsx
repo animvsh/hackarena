@@ -9,6 +9,7 @@ import { Radio, Play, Pause, Volume2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
 import { formatDistanceToNow } from "date-fns";
+import hackcastLogo from "@/assets/hackcast-logo.png";
 
 interface Commentary {
   id: string;
@@ -88,9 +89,9 @@ const RadioPage = () => {
 
         {/* Page Header */}
         <div className="mb-8">
-          <div className="flex items-center gap-2 mb-2">
-            <Radio className="w-8 h-8 text-primary" />
-            <h1 className="text-3xl font-bold">HackCast Radio</h1>
+          <div className="flex items-center gap-4 mb-2">
+            <img src={hackcastLogo} alt="HackCast Radio" className="h-12" />
+            <h1 className="text-3xl font-bold">Radio</h1>
           </div>
           <p className="text-muted-foreground">
             AI-powered live commentary and real-time broadcast
@@ -115,7 +116,9 @@ const RadioPage = () => {
               </div>
 
               <div className="text-center mb-6">
-                <h3 className="text-xl font-bold mb-1">HackCast LIVE</h3>
+                <div className="flex justify-center mb-2">
+                  <img src={hackcastLogo} alt="HackCast LIVE" className="h-16" />
+                </div>
                 <p className="text-sm text-muted-foreground">24/7 Hackathon Coverage</p>
               </div>
 

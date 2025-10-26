@@ -151,15 +151,29 @@ function generateAnchorSegment(): SegmentContent {
       },
       {
         id: 'anchor-2',
-        text: "The competition is heating up as we enter the final hours. Market volatility is at an all-time high with massive shifts in team valuations.",
-        duration: 8,
-        personality: 'right',
+        text: "The competition is absolutely heating up! What are you seeing in the markets?",
+        duration: 5,
+        personality: 'left',
         priority: 'normal'
       },
       {
         id: 'anchor-3',
-        text: "We've got exclusive coverage coming up on the top performing teams, market trends, and statistical breakdowns. Stay tuned!",
+        text: "Market volatility is at an all-time high. We're seeing massive shifts in team valuations minute by minute.",
         duration: 7,
+        personality: 'right',
+        priority: 'normal'
+      },
+      {
+        id: 'anchor-4',
+        text: "Fascinating insights! Let's see what's coming up next.",
+        duration: 4,
+        personality: 'right',
+        priority: 'normal'
+      },
+      {
+        id: 'anchor-5',
+        text: "We've got exclusive coverage on the top performing teams, market trends, and statistical breakdowns. Stay tuned!",
+        duration: 6,
         personality: 'left',
         priority: 'normal'
       }
@@ -193,22 +207,22 @@ function generateTeamSegment(): SegmentContent {
       },
       {
         id: 'team-2',
-        text: `${team} has been making waves with their impressive progress. They've pushed ${commits} commits in the last 6 hours alone - that's serious momentum.`,
-        duration: 9,
+        text: `${team} has been making waves with impressive progress. They've pushed ${commits} commits in the last 6 hours alone. That's serious momentum.`,
+        duration: 8,
         personality: 'right',
         priority: 'normal'
       },
       {
         id: 'team-3',
         text: `Looking at their metrics, we're seeing a momentum score of ${momentum} and ${growth}% growth trajectory. Their technical execution is exceptional.`,
-        duration: 10,
+        duration: 9,
         personality: 'left',
         priority: 'normal'
       },
       {
         id: 'team-4',
-        text: `From a betting perspective, smart money is paying close attention. Their odds have improved significantly, and we're seeing heavy volume on their markets.`,
-        duration: 10,
+        text: `From a betting perspective, smart money is paying close attention. Their odds have improved significantly with heavy trading volume.`,
+        duration: 8,
         personality: 'right',
         priority: 'normal'
       },
@@ -243,35 +257,35 @@ function generateMarketSegment(): SegmentContent {
     commentary: [
       {
         id: 'market-1',
-        text: "Now let's dive into the betting markets and see where the action is.",
-        duration: 5,
+        text: "Let's dive into the betting markets and see where the action is.",
+        duration: 4,
         personality: 'right',
         priority: 'normal'
       },
       {
         id: 'market-2',
-        text: `The biggest movers right now - ${topTeam} seeing a ${shift}% odds shift in the last hour. That's significant movement that tells us something is happening.`,
-        duration: 10,
+        text: `The biggest movers right now: ${topTeam} seeing a ${shift}% odds shift in the last hour. That's significant movement that tells us something is happening.`,
+        duration: 9,
         personality: 'left',
         priority: 'normal'
       },
       {
         id: 'market-3',
-        text: `Volume analysis shows ${volume}K tokens traded across all markets today. We're seeing particularly heavy action on the top 3 teams, with smart money positioning for the final hours.`,
-        duration: 12,
+        text: `Volume analysis shows ${volume}K tokens traded across all markets today. We're seeing particularly heavy action on the top 3 teams with smart money positioning for the final hours.`,
+        duration: 11,
         personality: 'right',
         priority: 'normal'
       },
       {
         id: 'market-4',
-        text: "What's interesting is the insider perspective - teams with strong GitHub activity are getting attention from experienced bettors who know what metrics matter.",
-        duration: 10,
+        text: "What's interesting is teams with strong GitHub activity are getting attention from experienced bettors who know what metrics matter.",
+        duration: 8,
         personality: 'left',
         priority: 'normal'
       },
       {
         id: 'market-5',
-        text: "Keep watching these markets closely. We'll have more updates as the odds continue to shift.",
+        text: "Keep watching these markets closely. More updates coming as the odds continue to shift.",
         duration: 5,
         personality: 'right',
         priority: 'normal'
@@ -306,29 +320,29 @@ function generateStatsSegment(): SegmentContent {
       },
       {
         id: 'stats-2',
-        text: `Current standings show ${leader} at the top with an impressive ${score} overall rating. But the competition is incredibly tight - just 5 points separate the top five teams.`,
-        duration: 11,
+        text: `Current standings show ${leader} at the top with an impressive ${score} overall rating. The competition is incredibly tight with just 5 points separating the top five teams.`,
+        duration: 10,
         personality: 'right',
         priority: 'normal'
       },
       {
         id: 'stats-3',
-        text: "We're analyzing momentum trends, and there's a clear pattern emerging. Teams with consistent commit velocity over the past 12 hours are outperforming those with sporadic activity.",
-        duration: 12,
+        text: "We're analyzing momentum trends and there's a clear pattern emerging. Teams with consistent commit velocity over the past 12 hours are outperforming those with sporadic activity.",
+        duration: 11,
         personality: 'left',
         priority: 'normal'
       },
       {
         id: 'stats-4',
-        text: "Looking at projections - if current trends continue, we could see a major shakeup in the final rankings. The data suggests at least two teams are positioned for dramatic climbs.",
+        text: "Looking at projections, if current trends continue we could see a major shakeup in the final rankings. The data suggests at least two teams are positioned for dramatic climbs.",
         duration: 10,
         personality: 'right',
         priority: 'normal'
       },
       {
         id: 'stats-5',
-        text: "More statistical analysis coming your way throughout the broadcast. These numbers tell the story.",
-        duration: 5,
+        text: "More statistical analysis coming throughout the broadcast. These numbers tell the story.",
+        duration: 4,
         personality: 'left',
         priority: 'normal'
       }
@@ -362,29 +376,29 @@ function generateHighlightSegment(): SegmentContent {
       },
       {
         id: 'highlight-2',
-        text: `Breaking: ${team} just ${achievement}! This is a game-changing moment that could significantly impact their final score.`,
-        duration: 8,
+        text: `${team} just ${achievement}! This is a game-changing moment that could significantly impact their final score.`,
+        duration: 7,
         personality: 'left',
         priority: 'breaking'
       },
       {
         id: 'highlight-3',
-        text: "We've witnessed some remarkable technical achievements today - teams are pushing the boundaries of what's possible in a 48-hour sprint.",
-        duration: 9,
+        text: "We've witnessed some remarkable technical achievements today. Teams are pushing the boundaries of what's possible in a 48-hour sprint.",
+        duration: 8,
         personality: 'right',
         priority: 'normal'
       },
       {
         id: 'highlight-4',
         text: "The level of innovation we're seeing is extraordinary. From AI integrations to real-time collaboration tools, these teams are building the future.",
-        duration: 10,
+        duration: 9,
         personality: 'left',
         priority: 'normal'
       },
       {
         id: 'highlight-5',
-        text: "Stay tuned for more highlights as they happen. This is HackCast Live, bringing you every major moment.",
-        duration: 6,
+        text: "More highlights coming as they happen. This is HackCast Live, bringing you every major moment.",
+        duration: 5,
         personality: 'right',
         priority: 'normal'
       }

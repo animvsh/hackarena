@@ -1,18 +1,52 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import anchorLeftImg from '@/assets/news-anchor-left.png';
 import anchorRightImg from '@/assets/news-anchor-right.png';
 import { MouthAnimation } from './MouthAnimation';
+import { useElevenLabsTTS } from '@/hooks/useElevenLabsTTS';
 
 interface BroadcastCharacterProps {
   narrative: string;
   isLive: boolean;
   isSpeaking?: boolean;
   activeAnchor?: 'left' | 'right';
+  isMuted?: boolean;
+  isPaused?: boolean;
+  personalityId?: string;
 }
 
 type CharacterState = 'idle' | 'speaking' | 'excited';
 
-export function BroadcastCharacter({ narrative, isLive, isSpeaking = false, activeAnchor = 'left' }: BroadcastCharacterProps) {
+// Helper function to split narrative into small chunks (1-2 sentences)
+const createChunks = (text: string): string[] => {
+  if (!text) return [];
+  
+  // Split by sentence-ending punctuation
+  const sentences = text.match(/[^.!?]+[.!?]+/g) || [text];
+  const chunks: string[] = [];
+  let currentChunk = '';
+  
+  for (const sentence of sentences) {
+    const potentialChunk = currentChunk + sentence;
+    const wordCount = potentialChunk.split(' ').length;
+    
+    // If adding this sentence would exceed ~25 words and we have content, push current chunk
+    if (wordCount > 25 && currentChunk) {
+      chunks.push(currentChunk.trim());
+      currentChunk = sentence;
+    } else {
+      currentChunk = potentialChunk;
+    }
+  }
+  
+  // Push remaining content
+  if (currentChunk.trim()) {
+    chunks.push(currentChunk.trim());
+  }
+  
+  return chunks.length > 0 ? chunks : [text];
+};
+
+export function BroadcastCharacter({ narrative, isLive, isSpeaking = false, activeAnchor = 'left', isMuted = false, isPaused = false, personalityId }: BroadcastCharacterProps) {
   const [displayedText, setDisplayedText] = useState('');
   const [isTyping, setIsTyping] = useState(false);
   const [characterState, setCharacterState] = useState<CharacterState>('idle');
@@ -21,21 +55,110 @@ export function BroadcastCharacter({ narrative, isLive, isSpeaking = false, acti
   const [mouthOpen, setMouthOpen] = useState(false);
   const [headTilt, setHeadTilt] = useState(0);
   const [shoulderMove, setShoulderMove] = useState(0);
+  
+  // Chunked dialogue state
+  const [chunks, setChunks] = useState<string[]>([]);
+  const [currentChunkIndex, setCurrentChunkIndex] = useState(0);
+  const [currentChunk, setCurrentChunk] = useState('');
+  
+  // Store all timer IDs for cleanup
+  const timersRef = useRef<{
+    typeInterval?: NodeJS.Timeout;
+    chunkRotation?: NodeJS.Timeout;
+    leftBlink?: NodeJS.Timeout;
+    rightBlink?: NodeJS.Timeout;
+    movement?: NodeJS.Timeout;
+    mouth?: NodeJS.Timeout;
+  }>({});
 
-  // Smooth text reveal effect - updates when narrative changes
+  // Clear all timers helper
+  const clearAllTimers = useCallback(() => {
+    console.log('[BroadcastCharacter] Clearing all animation timers');
+    Object.values(timersRef.current).forEach(timer => {
+      if (timer) clearInterval(timer);
+    });
+    timersRef.current = {};
+  }, []);
+
+  // Voice IDs for each anchor - use personality-specific voice if provided
+  const voiceId = personalityId 
+    ? (personalityId === 'sarah' ? 'EXAVITQu4vr4xnSDxMaL' 
+       : personalityId === 'marcus' ? '21m00Tcm4TlvDq8ikWAM'
+       : personalityId === 'aisha' ? 'pNInz6obpgDQGcFmaJgB'
+       : personalityId === 'jake' ? 'TX3LPaxmHKxFdv7VOQHJ'
+       : personalityId === 'lisa' ? 'pFZP5JQG7iQjIQuC4Bku'
+       : personalityId === 'chen-wei' ? 'onwK4e9ZLuTAKqWW03F9'
+       : activeAnchor === 'left' ? 'EXAVITQu4vr4xnSDxMaL' : '21m00Tcm4TlvDq8ikWAM')
+    : (activeAnchor === 'left' 
+        ? 'EXAVITQu4vr4xnSDxMaL' // Sarah - Professional Female Voice
+        : '21m00Tcm4TlvDq8ikWAM'); // Marcus - Professional Male Voice
+
+  // ElevenLabs TTS integration
+  const { isLoading: ttsLoading, error: ttsError } = useElevenLabsTTS({
+    text: narrative,
+    voiceId,
+    isMuted,
+    isPaused,
+    enabled: isLive && isSpeaking,
+  });
+
+  // Debug logging for TTS state
   useEffect(() => {
-    if (!narrative) return;
+    if (narrative) {
+      console.log('[BroadcastCharacter TTS]', {
+        narrative: narrative.substring(0, 50) + '...',
+        voiceId,
+        isMuted,
+        isPaused,
+        enabled: isLive && isSpeaking,
+        activeAnchor,
+        personalityId
+      });
+    }
+  }, [narrative, voiceId, isMuted, isPaused, isLive, isSpeaking, activeAnchor, personalityId]);
+
+  // Log TTS errors in console for debugging
+  useEffect(() => {
+    if (ttsError) {
+      console.warn('TTS Error:', ttsError);
+    }
+  }, [ttsError]);
+
+  // Split narrative into chunks when it changes
+  useEffect(() => {
+    if (!narrative) {
+      setChunks([]);
+      setCurrentChunkIndex(0);
+      setCurrentChunk('');
+      setDisplayedText('');
+      return;
+    }
+    
+    const newChunks = createChunks(narrative);
+    console.log('[BroadcastCharacter] Created chunks:', newChunks.length);
+    setChunks(newChunks);
+    setCurrentChunkIndex(0);
+  }, [narrative]);
+
+  // Smooth text reveal effect for current chunk
+  useEffect(() => {
+    if (!currentChunk || isPaused) {
+      if (isPaused) {
+        console.log('[BroadcastCharacter] Pausing typing animation');
+      }
+      return;
+    }
 
     setIsTyping(true);
     setDisplayedText('');
     setCharacterState('speaking');
     
     let currentIndex = 0;
-    const typingSpeed = 15; // Faster typing for more dynamic feel
+    const typingSpeed = 15;
 
     const typeInterval = setInterval(() => {
-      if (currentIndex < narrative.length) {
-        setDisplayedText(narrative.slice(0, currentIndex + 2)); // Show 2 chars at a time
+      if (currentIndex < currentChunk.length) {
+        setDisplayedText(currentChunk.slice(0, currentIndex + 2));
         setMouthOpen(prev => !prev);
         currentIndex += 2;
       } else {
@@ -50,8 +173,37 @@ export function BroadcastCharacter({ narrative, isLive, isSpeaking = false, acti
       }
     }, typingSpeed);
 
+    timersRef.current.typeInterval = typeInterval;
     return () => clearInterval(typeInterval);
-  }, [narrative, isSpeaking]); // Re-run when narrative changes
+  }, [currentChunk, isSpeaking, isPaused]);
+
+  // Display chunks sequentially with timed rotation
+  useEffect(() => {
+    if (chunks.length === 0 || isPaused) return;
+    
+    const chunk = chunks[currentChunkIndex];
+    if (!chunk) return;
+    
+    setCurrentChunk(chunk);
+    
+    // Calculate duration based on word count: 300ms per word + 2s buffer (min 4s)
+    const wordCount = chunk.split(' ').length;
+    const duration = Math.max(wordCount * 300 + 2000, 4000);
+    
+    console.log(`[BroadcastCharacter] Showing chunk ${currentChunkIndex + 1}/${chunks.length}, duration: ${duration}ms`);
+    
+    const timer = setTimeout(() => {
+      if (currentChunkIndex < chunks.length - 1) {
+        setCurrentChunkIndex(prev => prev + 1);
+      } else {
+        // Finished all chunks - loop back or clear
+        setCurrentChunkIndex(0);
+      }
+    }, duration);
+    
+    timersRef.current.chunkRotation = timer;
+    return () => clearTimeout(timer);
+  }, [chunks, currentChunkIndex, isPaused]);
 
   // Random blinking for realism
   useEffect(() => {
@@ -74,30 +226,41 @@ export function BroadcastCharacter({ narrative, isLive, isSpeaking = false, acti
     };
   }, []);
 
-  // Subtle head movements and gestures
+  // Subtle head movements and gestures - pause when broadcast is paused
   useEffect(() => {
+    if (isPaused) {
+      console.log('[BroadcastCharacter] Pausing head movement');
+      if (timersRef.current.movement) clearInterval(timersRef.current.movement);
+      return;
+    }
+
     const movementInterval = setInterval(() => {
       setHeadTilt(Math.random() * 4 - 2);
       setShoulderMove(Math.random() * 2 - 1);
     }, 4000);
 
+    timersRef.current.movement = movementInterval;
     return () => clearInterval(movementInterval);
-  }, []);
+  }, [isPaused]);
 
-  // Continuous mouth animation during speaking
+  // Continuous mouth animation during speaking - pause when broadcast is paused
   useEffect(() => {
-    if (!isSpeaking || characterState !== 'speaking') {
+    if (!isSpeaking || characterState !== 'speaking' || isPaused) {
       setMouthOpen(false);
+      if (isPaused && timersRef.current.mouth) {
+        console.log('[BroadcastCharacter] Pausing mouth animation');
+        clearInterval(timersRef.current.mouth);
+      }
       return;
     }
 
-    // Mouth animation during active speaking - runs continuously
     const mouthInterval = setInterval(() => {
       setMouthOpen(prev => !prev);
-    }, 250); // Toggle every 250ms for natural speech rhythm
+    }, 250);
 
+    timersRef.current.mouth = mouthInterval;
     return () => clearInterval(mouthInterval);
-  }, [isSpeaking, characterState]);
+  }, [isSpeaking, characterState, isPaused]);
 
   useEffect(() => {
     if (isSpeaking) {
@@ -204,13 +367,17 @@ export function BroadcastCharacter({ narrative, isLive, isSpeaking = false, acti
 
       {/* Enhanced Speech Bubble with fade transitions */}
       {displayedText && (
-        <div className="absolute bottom-24 md:bottom-28 lg:bottom-32 left-1/2 transform -translate-x-1/2 max-w-4xl w-full px-4 z-50 animate-in fade-in slide-in-from-bottom-4 duration-500">
-          <div className="bg-gradient-to-r from-card/98 to-card/95 backdrop-blur-md border-2 border-primary/40 rounded-xl shadow-2xl overflow-hidden">
-            <div className="h-1 bg-gradient-to-r from-primary via-primary/60 to-transparent" />
+        <div className="absolute bottom-24 md:bottom-28 lg:bottom-32 left-1/2 transform -translate-x-1/2 max-w-[90vw] md:max-w-3xl lg:max-w-4xl w-full px-4 sm:px-6 z-50 animate-in fade-in slide-in-from-bottom-4 duration-500">
+          <div className="relative bg-gradient-to-r from-card/98 to-card/95 backdrop-blur-md border-2 border-primary/40 rounded-xl shadow-2xl overflow-hidden">
+            <div className={`h-1 ${
+              !isMuted && ttsLoading 
+                ? 'bg-gradient-to-r from-primary via-primary/60 to-primary animate-pulse' 
+                : 'bg-gradient-to-r from-primary via-primary/60 to-transparent'
+            }`} />
             
-            <div className="p-4 md:p-5">
-              <div className="flex items-center justify-between mb-3 pb-2 border-b border-primary/20">
-                <div className="flex items-center gap-2">
+            <div className="p-4 md:p-5 max-h-[150px] overflow-hidden">
+              <div className="flex items-center justify-between mb-3 pb-2 border-b border-primary/20 flex-wrap gap-2">
+                <div className="flex items-center gap-2 flex-wrap">
                   <div className="w-2 h-2 bg-primary rounded-full animate-pulse" />
                   <span className="text-xs font-black text-primary uppercase tracking-wider">
                     {anchorName}
@@ -219,19 +386,31 @@ export function BroadcastCharacter({ narrative, isLive, isSpeaking = false, acti
                   <span className="text-xs text-muted-foreground uppercase tracking-wide">
                     {anchorTitle}
                   </span>
+                  {!isMuted && (
+                    <>
+                      <span className="text-xs text-muted-foreground">•</span>
+                      <span className="text-xs text-primary font-bold flex items-center gap-1">
+                        <span className="w-1.5 h-1.5 bg-primary rounded-full animate-pulse" />
+                        AI VOICE
+                      </span>
+                    </>
+                  )}
                 </div>
                 <div className="text-xs text-muted-foreground font-bold">
                   HACKCAST LIVE
                 </div>
               </div>
               
-              <p className="text-base md:text-lg text-foreground leading-relaxed font-medium">
+              <p className="text-base md:text-lg text-foreground leading-relaxed font-medium break-words">
                 {displayedText}
                 {isTyping && (
                   <span className="inline-block w-1.5 h-5 ml-1 bg-primary animate-pulse" />
                 )}
               </p>
             </div>
+            
+            {/* Gradient fade indicator for long text */}
+            <div className="absolute bottom-0 left-0 right-0 h-8 bg-gradient-to-t from-card/95 to-transparent pointer-events-none" />
           </div>
         </div>
       )}

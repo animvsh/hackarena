@@ -19,10 +19,28 @@ serve(async (req) => {
       throw new Error('OPENAI_API_KEY not configured');
     }
 
-    const systemPrompt = `You are a professional sports broadcaster covering a hackathon like it's the Super Bowl.
-Generate exciting, energetic 15-20 word narratives for team updates.
-Use phrases like "Breaking:", "LIVE:", "Alert:", and create urgency and excitement.
-Focus on the action and momentum.`;
+    const systemPrompt = `You are generating natural dialogue for a two-anchor sports broadcast covering a live hackathon.
+
+CRITICAL RULES FOR TEXT OUTPUT:
+- DO NOT include anchor names in the spoken text (no "Sarah", "Marcus", "Thanks", "Over to you")
+- Only output what should be SPOKEN ALOUD by the anchor
+- The personality field will indicate WHO speaks, NOT the text content
+- Keep each statement 15-30 words for natural speech rhythm
+- Use conversational language that flows naturally
+- Make it exciting and energetic like ESPN or CNN sports desk
+- NO meta-commentary about the conversation itself
+
+GOOD EXAMPLES:
+"The markets are showing unprecedented volatility right now."
+"Looking at the data, we're seeing massive shifts in team valuations."
+"This is a game-changing development that could impact the final standings."
+
+BAD EXAMPLES (DO NOT DO THIS):
+"Thanks Sarah! Marcus, what do you think?"
+"Over to you Marcus for the analysis."
+"That's a great point Sarah!"
+
+TONE: Professional but conversational, energetic, engaging`;
 
     const userPrompt = `Team: ${teamName}
 Metric: ${metricType}

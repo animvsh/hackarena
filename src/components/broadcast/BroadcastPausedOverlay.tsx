@@ -1,11 +1,25 @@
 import { motion } from 'framer-motion';
 import { Pause } from 'lucide-react';
+import { useState, useEffect } from 'react';
 
 interface BroadcastPausedOverlayProps {
   pausedAt?: string | null;
 }
 
 export function BroadcastPausedOverlay({ pausedAt }: BroadcastPausedOverlayProps) {
+  const [pauseDuration, setPauseDuration] = useState(0);
+
+  useEffect(() => {
+    if (!pausedAt) return;
+    
+    const interval = setInterval(() => {
+      const elapsed = Date.now() - new Date(pausedAt).getTime();
+      setPauseDuration(Math.floor(elapsed / 1000));
+    }, 1000);
+
+    return () => clearInterval(interval);
+  }, [pausedAt]);
+
   return (
     <motion.div
       initial={{ opacity: 0 }}
@@ -76,24 +90,43 @@ export function BroadcastPausedOverlay({ pausedAt }: BroadcastPausedOverlayProps
           ))}
         </motion.div>
 
-        {/* Optional: Show when paused */}
-        {pausedAt && (
-          <motion.p
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 0.5 }}
-            className="text-sm text-white/50 mt-4"
-          >
-            Paused at {new Date(pausedAt).toLocaleTimeString()}
-          </motion.p>
-        )}
+        {/* Pause duration */}
+        <motion.p
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.3 }}
+          className="text-xl text-white/80 mt-4"
+        >
+          Paused for {Math.floor(pauseDuration / 60)}:{(pauseDuration % 60).toString().padStart(2, '0')}
+        </motion.p>
+
+        {/* Status indicators */}
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.5 }}
+          className="mt-8 grid grid-cols-3 gap-4 text-center"
+        >
+          <div className="p-4 rounded-lg bg-white/5 border border-white/10">
+            <p className="text-xs text-white/50 mb-2">Timers</p>
+            <p className="text-sm text-red-400 font-bold">⏸ PAUSED</p>
+          </div>
+          <div className="p-4 rounded-lg bg-white/5 border border-white/10">
+            <p className="text-xs text-white/50 mb-2">API Calls</p>
+            <p className="text-sm text-red-400 font-bold">⏸ STOPPED</p>
+          </div>
+          <div className="p-4 rounded-lg bg-white/5 border border-white/10">
+            <p className="text-xs text-white/50 mb-2">Animations</p>
+            <p className="text-sm text-red-400 font-bold">⏸ FROZEN</p>
+          </div>
+        </motion.div>
 
         {/* Info Message */}
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: 0.7 }}
-          className="mt-8 p-4 rounded-lg bg-white/5 border border-white/10"
+          className="mt-6 p-4 rounded-lg bg-white/5 border border-white/10"
         >
           <p className="text-sm text-white/60">
             The broadcast will resume automatically when the master user unpauses it.

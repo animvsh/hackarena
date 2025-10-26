@@ -35,17 +35,17 @@ export function DynamicTextOverlay({ narrative, scene }: DynamicTextOverlayProps
   const getPositionClass = () => {
     switch (scene) {
       case 'anchor':
-        return 'top-1/4 left-1/2 -translate-x-1/2 text-center max-w-4xl';
+        return 'top-[15%] left-1/2 -translate-x-1/2 text-center max-w-[90vw] md:max-w-3xl px-4';
       case 'team':
-        return 'bottom-1/3 left-8 max-w-2xl';
+        return 'bottom-[35%] left-4 md:left-8 max-w-[85vw] md:max-w-xl px-4';
       case 'market':
-        return 'top-1/3 right-8 max-w-2xl text-right';
+        return 'top-[30%] right-4 md:right-8 max-w-[85vw] md:max-w-xl text-right px-4';
       case 'stats':
-        return 'top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-center max-w-3xl';
+        return 'top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-center max-w-[90vw] md:max-w-2xl px-4';
       case 'highlight':
-        return 'bottom-1/4 left-1/2 -translate-x-1/2 text-center max-w-4xl';
+        return 'bottom-[25%] left-1/2 -translate-x-1/2 text-center max-w-[90vw] md:max-w-3xl px-4';
       default:
-        return 'top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-center max-w-4xl';
+        return 'top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-center max-w-[90vw] md:max-w-3xl px-4';
     }
   };
 
@@ -53,10 +53,12 @@ export function DynamicTextOverlay({ narrative, scene }: DynamicTextOverlayProps
 
   return (
     <div className={`absolute ${getPositionClass()} z-20 animate-in fade-in duration-500`}>
-      <p className="text-2xl md:text-3xl lg:text-4xl font-bold text-foreground leading-relaxed drop-shadow-[0_2px_10px_rgba(0,0,0,0.8)]">
-        {displayedText}
-        {isTyping && <span className="animate-pulse">|</span>}
-      </p>
+      <div className="bg-black/60 backdrop-blur-sm rounded-lg p-3 md:p-4 border border-white/10 max-h-[25vh] overflow-hidden">
+        <p className="text-lg md:text-2xl lg:text-3xl font-bold text-white leading-relaxed drop-shadow-[0_2px_10px_rgba(0,0,0,0.8)] break-words line-clamp-4">
+          {displayedText}
+          {isTyping && <span className="animate-pulse">|</span>}
+        </p>
+      </div>
     </div>
   );
 }

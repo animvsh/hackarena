@@ -170,7 +170,7 @@ export const EnhancedChatWidget: React.FC = () => {
             created_at: msg.created_at,
             reply_to: msg.reply_to || undefined,
             reply_to_username: replyData,
-            reactions: msg.reactions || {}
+            reactions: (msg.reactions as Record<string, number>) || {}
           };
         })
       );

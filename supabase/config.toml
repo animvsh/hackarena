@@ -1,15 +1,5 @@
 project_id = "jqdfjcpgevgajdljckur"
 
-[auth]
-# GitHub OAuth Provider Configuration
-# You need to add these in the Supabase Dashboard:
-# 1. Go to Authentication → Providers → GitHub
-# 2. Enable it
-# 3. Add your GitHub OAuth app client ID and secret
-# 4. Add redirect URL: http://localhost:8080/auth/callback/github
-#
-# Get OAuth credentials from: https://github.com/settings/developers
-
 [functions.analyze-team-profile]
 verify_jwt = false
 
@@ -43,17 +33,5 @@ verify_jwt = false
 [functions.simulate-live-updates]
 verify_jwt = false
 
-[functions.fetch-github-activity]
-verify_jwt = false
-
-[functions.recalculate-team-stats]
-verify_jwt = false
-
-[functions.calculate-betting-odds]
-verify_jwt = false
-
-[functions.place-bet]
-verify_jwt = true
-
-[functions.resolve-bets]
+[functions.text-to-speech]
 verify_jwt = false

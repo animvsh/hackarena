@@ -1,14 +1,20 @@
 import { useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 
 export function useOAuthCallback() {
+  const navigate = useNavigate();
+
   useEffect(() => {
     const handleOAuthCallback = async () => {
       const { data: { session } } = await supabase.auth.getSession();
 
       if (session?.user) {
         const provider = session.user.app_metadata.provider;
+        
+        // Check if returning from OAuth during onboarding
+        const isOnboardingOAuth = localStorage.getItem('onboarding_oauth_pending');
 
         if (provider === 'github' && session.user.user_metadata.user_name) {
           const githubUsername = session.user.user_metadata.user_name;
@@ -107,9 +113,16 @@ export function useOAuthCallback() {
             }
           }
         }
+        
+        // If this was during onboarding, redirect back with success flag
+        if (isOnboardingOAuth) {
+          localStorage.removeItem('onboarding_oauth_pending');
+          localStorage.setItem('oauth_import_success', provider);
+          navigate('/onboarding');
+        }
       }
     };
 
     handleOAuthCallback();
-  }, []);
+  }, [navigate]);
 }

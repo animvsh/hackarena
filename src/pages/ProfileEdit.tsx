@@ -16,6 +16,8 @@ import { Progress } from '@/components/ui/progress';
 import { PrivacySettings } from '@/components/profile/PrivacySettings';
 import { LinkedInSyncButton } from '@/components/profile/LinkedInSyncButton';
 import { HackathonParticipation } from '@/components/profile/HackathonParticipation';
+import { Sidebar } from '@/components/Sidebar';
+import { Header } from '@/components/Header';
 
 export default function ProfileEdit() {
   const { user } = useAuth();
@@ -260,9 +262,15 @@ export default function ProfileEdit() {
 
   if (loading) {
     return (
-      <div className="container max-w-4xl mx-auto p-6">
-        <div className="flex items-center justify-center h-64">
-          <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      <div className="flex min-h-screen bg-background">
+        <Sidebar />
+        <div className="flex-1 flex flex-col">
+          <Header />
+          <main className="flex-1 p-4 md:p-6">
+            <div className="flex items-center justify-center h-64">
+              <Loader2 className="h-8 w-8 animate-spin text-primary" />
+            </div>
+          </main>
         </div>
       </div>
     );
@@ -271,7 +279,12 @@ export default function ProfileEdit() {
   const completeness = calculateProfileCompleteness(profile);
 
   return (
-    <div className="container max-w-4xl mx-auto p-6 space-y-6">
+    <div className="flex min-h-screen bg-background">
+      <Sidebar />
+      <div className="flex-1 flex flex-col">
+        <Header />
+        <main className="flex-1 p-4 md:p-6">
+          <div className="max-w-4xl mx-auto space-y-6">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
@@ -715,6 +728,9 @@ export default function ProfileEdit() {
             </>
           )}
         </Button>
+      </div>
+          </div>
+        </main>
       </div>
     </div>
   );

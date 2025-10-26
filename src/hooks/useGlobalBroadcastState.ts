@@ -163,9 +163,20 @@ export function useGlobalBroadcastState(hackathonId?: string) {
   }, [isMasterUser, hackathonId]);
 
   const togglePause = useCallback(async () => {
+    console.log('[togglePause] Current isPaused:', broadcastState.isPaused);
+    
+    // Optimistically update local state immediately for better UX
+    setBroadcastState(prev => ({
+      ...prev,
+      isPaused: !prev.isPaused,
+      pausedAt: !prev.isPaused ? new Date().toISOString() : null,
+    }));
+    
     if (broadcastState.isPaused) {
+      console.log('[togglePause] Resuming broadcast');
       await resumeBroadcast();
     } else {
+      console.log('[togglePause] Pausing broadcast');
       await pauseBroadcast();
     }
   }, [broadcastState.isPaused, pauseBroadcast, resumeBroadcast]);

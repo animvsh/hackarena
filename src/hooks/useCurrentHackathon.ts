@@ -1,5 +1,5 @@
-import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
+import { useOptimizedQuery } from './useOptimizedQuery';
 
 interface Hackathon {
   id: string;
@@ -15,31 +15,23 @@ interface Hackathon {
 }
 
 export function useCurrentHackathon(hackathonId?: string) {
-  const [hackathon, setHackathon] = useState<Hackathon | null>(null);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    if (!hackathonId) {
-      setLoading(false);
-      return;
-    }
-
-    const fetchHackathon = async () => {
-      setLoading(true);
+  const { data: hackathon = null, isLoading: loading } = useOptimizedQuery<Hackathon>({
+    queryKey: ['hackathon', hackathonId || 'none'],
+    customFn: async () => {
+      if (!hackathonId) return null as any;
+      
       const { data, error } = await supabase
         .from('hackathons')
         .select('*')
         .eq('id', hackathonId)
         .single();
 
-      if (data && !error) {
-        setHackathon(data as Hackathon);
-      }
-      setLoading(false);
-    };
-
-    fetchHackathon();
-  }, [hackathonId]);
+      if (error) throw error;
+      return data as Hackathon;
+    },
+    enabled: !!hackathonId,
+    staleTime: 5 * 60 * 1000, // Cache for 5 minutes
+  });
 
   return { hackathon, loading };
 }

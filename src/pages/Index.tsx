@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { Sidebar } from "@/components/Sidebar";
 import { Header } from "@/components/Header";
 import { StatCard } from "@/components/StatCard";
@@ -7,16 +8,18 @@ import { TrendingTeams } from "@/components/TrendingTeams";
 import { RevenueDrivers } from "@/components/RevenueDrivers";
 import { LiveMarketChart } from "@/components/LiveMarketChart";
 import { LiveCommentaryTicker } from "@/components/LiveCommentaryTicker";
-import { UnifiedBroadcastPlayer } from "@/components/broadcast/UnifiedBroadcastPlayer";
+import { LazyBroadcastPlayer } from "@/components/LazyBroadcastPlayer";
 import { HackathonInfoCard } from "@/components/HackathonInfoCard";
 import { useActiveBroadcasts } from "@/hooks/useActiveBroadcasts";
-import { SimulationController } from "@/components/SimulationController";
+
 import { LinkedInVerificationModal } from "@/components/LinkedInVerificationModal";
 import { useAuth } from "@/contexts/AuthContext";
 import { Users, TrendingUp, Zap, Trophy, Radio, BarChart3 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "sonner";
+import { Button } from "@/components/ui/button";
+import { BroadcastPauseProvider } from "@/contexts/BroadcastPauseContext";
 
 interface DashboardStats {
   activeTeams: number;
@@ -27,7 +30,8 @@ interface DashboardStats {
 }
 
 const Index = () => {
-  const { user } = useAuth();
+  const { user, profile } = useAuth();
+  const navigate = useNavigate();
   const { hackathons, selectedHackathon, selectHackathon, loading: hackathonsLoading } = useActiveBroadcasts();
   const [stats, setStats] = useState<DashboardStats>({
     activeTeams: 0,
@@ -39,6 +43,13 @@ const Index = () => {
   const [loading, setLoading] = useState(true);
   const [showLinkedInModal, setShowLinkedInModal] = useState(false);
   const [linkedinVerified, setLinkedinVerified] = useState<boolean | null>(null);
+
+  // Redirect authenticated users to onboarding if not completed
+  useEffect(() => {
+    if (user && profile && profile.onboarding_completed === false) {
+      navigate('/onboarding');
+    }
+  }, [user, profile, navigate]);
 
   // Check LinkedIn verification status on mount
   useEffect(() => {
@@ -288,29 +299,44 @@ const Index = () => {
   };
 
   return (
-    <div className="flex min-h-screen bg-background">
-      <Sidebar />
+    <BroadcastPauseProvider hackathonId={selectedHackathon?.id}>
+      <div className="flex min-h-screen bg-background">
+        <Sidebar />
 
-      <main className="flex-1 p-8">
-        <Header />
+        <main className="flex-1 p-8">
+          <Header />
 
-        {/* Unified Live Broadcast */}
-        <div className="mb-8">
-          <div className="mb-4">
-            <h2 className="text-3xl font-bold mb-2 bg-gradient-to-r from-neon-yellow via-neon-blue to-neon-purple bg-clip-text text-transparent">
-              Unified Hackathon Broadcast
-            </h2>
-            <p className="text-muted-foreground text-sm">
-              Real-time AI commentary covering all active hackathons - automatically switching based on breaking events
-            </p>
-          </div>
-
-          {hackathonsLoading ? (
-            <Skeleton className="h-[500px] rounded-2xl" />
-          ) : (
-            <UnifiedBroadcastPlayer />
+          {/* Guest Mode Banner */}
+          {!user && (
+            <div className="bg-gradient-to-r from-primary/10 to-primary/5 border border-primary/20 rounded-lg p-4 mb-6 flex items-center justify-between flex-wrap gap-3">
+              <div className="flex items-center gap-3">
+                <div className="w-2 h-2 bg-primary rounded-full animate-pulse" />
+                <p className="text-sm font-medium">
+                  <span className="text-muted-foreground">Viewing in guest mode.</span>{' '}
+                  <span className="text-foreground">Sign in to place bets, create teams, and compete!</span>
+                </p>
+              </div>
+              <Button onClick={() => navigate('/auth')} size="sm">
+                Sign In
+              </Button>
+            </div>
           )}
-        </div>
+
+          {/* Unified Live Broadcast */}
+          <div className="mb-8">
+            <div className="mb-3">
+              <h2 className="text-2xl font-bold">Live Broadcast</h2>
+              <p className="text-muted-foreground text-sm">
+                AI commentary covering all active hackathons
+              </p>
+            </div>
+
+            {hackathonsLoading ? (
+              <Skeleton className="h-[500px] rounded-2xl" />
+            ) : (
+              <LazyBroadcastPlayer />
+            )}
+          </div>
 
         {/* Hackathon Info Card */}
         {selectedHackathon && !hackathonsLoading && (
@@ -321,83 +347,45 @@ const Index = () => {
 
         {/* Live Statistics */}
         <div className="mb-6">
-          <div className="flex items-center justify-between mb-6">
-            <h2 className="text-xl font-bold">Live Metrics - {selectedHackathon?.name || 'Hackathon'}</h2>
-          </div>
+          <h2 className="text-xl font-bold mb-4">Live Metrics</h2>
 
           {loading ? (
-            <div className="space-y-4">
-              <div className="grid grid-cols-3 gap-4">
-                <Skeleton className="h-32" />
-                <Skeleton className="h-32" />
-                <Skeleton className="h-32" />
-              </div>
-              <div className="grid grid-cols-3 gap-4">
-                <Skeleton className="h-32" />
-                <Skeleton className="h-32" />
-                <Skeleton className="h-32" />
-              </div>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              <Skeleton className="h-24" />
+              <Skeleton className="h-24" />
+              <Skeleton className="h-24" />
+              <Skeleton className="h-24" />
             </div>
           ) : (
-            <>
-              <div className="grid grid-cols-3 gap-4 mb-6">
-                <StatCard
-                  icon={Users}
-                  label="Active Teams"
-                  value={stats.activeTeams.toString()}
-                  trend={15}
-                  iconColor="neon-purple"
-                />
-                <StatCard
-                  icon={TrendingUp}
-                  label="Commits / Hour"
-                  value={stats.commitsPerHour.toString()}
-                  trend={8}
-                  iconColor="neon-blue"
-                />
-                <StatCard
-                  icon={Zap}
-                  label="Markets Open"
-                  value={stats.marketsOpen.toString()}
-                  iconColor="neon-pink"
-                />
-              </div>
-
-              <div className="grid grid-cols-3 gap-4">
-                <StatCard
-                  icon={Trophy}
-                  label="Featured Track"
-                  value=""
-                  iconColor="neon-blue"
-                  highlight
-                  highlightContent={
-                    <div className="flex items-center gap-4">
-                      <div className="w-12 h-12 rounded-xl bg-background/10 flex items-center justify-center flex-shrink-0">
-                        <Trophy className="w-6 h-6 text-info-foreground" />
-                      </div>
-                      <div className="flex-1">
-                        <p className="text-sm font-semibold text-info-foreground mb-1">Best AI Application</p>
-                        <p className="text-xs text-info-foreground/70">{stats.activeTeams} Teams • $10K Prize</p>
-                      </div>
-                    </div>
-                  }
-                />
-                <StatCard
-                  icon={BarChart3}
-                  label="Predictions Made"
-                  value={stats.predictionsMade.toLocaleString()}
-                  trend={23}
-                  iconColor="neon-pink"
-                />
-                <StatCard
-                  icon={Radio}
-                  label="Commentary Events"
-                  value={stats.commentaryEvents.toString()}
-                  trend={12}
-                  iconColor="neon-blue"
-                />
-              </div>
-            </>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              <StatCard
+                icon={Users}
+                label="Active Teams"
+                value={stats.activeTeams.toString()}
+                trend={15}
+                iconColor="neon-purple"
+              />
+              <StatCard
+                icon={TrendingUp}
+                label="Commits/Hour"
+                value={stats.commitsPerHour.toString()}
+                trend={8}
+                iconColor="neon-blue"
+              />
+              <StatCard
+                icon={Zap}
+                label="Markets Open"
+                value={stats.marketsOpen.toString()}
+                iconColor="neon-pink"
+              />
+              <StatCard
+                icon={BarChart3}
+                label="Predictions"
+                value={stats.predictionsMade.toLocaleString()}
+                trend={23}
+                iconColor="neon-pink"
+              />
+            </div>
           )}
         </div>
 
@@ -407,7 +395,7 @@ const Index = () => {
             <LiveMarketChart hackathonId={selectedHackathon.id} />
 
             <div className="space-y-6">
-              <UserWallet />
+              {user && <UserWallet />}
               <TrendingTeams hackathonId={selectedHackathon.id} />
               <RevenueDrivers />
             </div>
@@ -418,17 +406,14 @@ const Index = () => {
         {selectedHackathon && <LiveCommentaryTicker hackathonId={selectedHackathon.id} />}
       </main>
 
-      {/* Simulation Controller (Dev Mode Only) */}
-      {import.meta.env.DEV && selectedHackathon && (
-        <SimulationController />
-      )}
 
-      {/* LinkedIn Verification Modal */}
-      <LinkedInVerificationModal
-        open={showLinkedInModal}
-        onOpenChange={handleLinkedInModalClose}
-      />
-    </div>
+        {/* LinkedIn Verification Modal */}
+        <LinkedInVerificationModal
+          open={showLinkedInModal}
+          onOpenChange={handleLinkedInModalClose}
+        />
+      </div>
+    </BroadcastPauseProvider>
   );
 };
 

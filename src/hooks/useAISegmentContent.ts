@@ -1,6 +1,7 @@
 import { useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import type { BroadcastScene } from '@/types/broadcast';
+import { useBroadcastPause } from '@/contexts/BroadcastPauseContext';
 
 export interface AICommentaryPiece {
   text: string;
@@ -18,12 +19,19 @@ export interface AISegmentContent {
 }
 
 export function useAISegmentContent() {
+  const { isPaused } = useBroadcastPause();
+
   const generateAICommentary = useCallback(async (
     scene: BroadcastScene,
     teamName?: string,
     metricType?: string,
     currentValue?: number
   ): Promise<string> => {
+    if (isPaused) {
+      console.log('[useAISegmentContent] Skipping AI commentary - broadcast paused');
+      return getFallbackCommentary(scene);
+    }
+    
     try {
       const { data, error } = await supabase.functions.invoke('generate-broadcast-commentary', {
         body: {
@@ -40,9 +48,26 @@ export function useAISegmentContent() {
       console.error('AI commentary generation failed:', error);
       return getFallbackCommentary(scene);
     }
-  }, []);
+  }, [isPaused]);
 
   const generateSegmentWithAI = useCallback(async (scene: BroadcastScene): Promise<AISegmentContent> => {
+    if (isPaused) {
+      console.log('[useAISegmentContent] Skipping segment generation - broadcast paused');
+      // Return minimal fallback segment
+      return {
+        title: getSceneTitle(scene),
+        bannerText: getBannerText(scene),
+        commentary: [{
+          text: getFallbackCommentary(scene),
+          duration: 8,
+          personality: 'left',
+          priority: 'normal'
+        }],
+        tickerItems: await generateTickerItems(scene),
+        totalDuration: 8
+      };
+    }
+
     // Generate multiple commentary pieces for the segment
     const commentaryPromises = Array.from({ length: 3 + Math.floor(Math.random() * 3) }).map(async (_, index) => {
       const text = await generateAICommentary(scene);
@@ -70,7 +95,7 @@ export function useAISegmentContent() {
       tickerItems,
       totalDuration
     };
-  }, [generateAICommentary]);
+  }, [generateAICommentary, isPaused]);
 
   return { generateSegmentWithAI, generateAICommentary };
 }

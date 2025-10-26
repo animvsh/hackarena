@@ -16,6 +16,7 @@ interface UserProfile {
   linkedin_url?: string | null;
   profile_enrichment_source?: string | null;
   last_profile_sync?: string | null;
+  onboarding_completed?: boolean;
 }
 
 interface AuthContextType {
@@ -47,22 +48,38 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const fetchUserProfile = async (userId: string) => {
     try {
-      const { data: userData } = await supabase
-        .from('users')
-        .select('id, username, email, avatar_url, wallet_balance, xp, linkedin_verified, linkedin_id, linkedin_url, profile_enrichment_source, last_profile_sync')
-        .eq('id', userId)
-        .single();
+      // Check cache first
+      const cacheKey = `user_profile_${userId}`;
+      const cached = localStorage.getItem(cacheKey);
+      const cacheExpiry = localStorage.getItem(`${cacheKey}_expiry`);
+      
+      if (cached && cacheExpiry && Date.now() < parseInt(cacheExpiry)) {
+        setProfile(JSON.parse(cached));
+      }
 
-      const { data: rolesData } = await supabase
-        .from('user_roles')
-        .select('role')
-        .eq('user_id', userId);
+      // Fetch fresh data in background (non-blocking)
+      const [{ data: userData }, { data: rolesData }] = await Promise.all([
+        supabase
+          .from('users')
+          .select('id, username, email, avatar_url, wallet_balance, xp, linkedin_verified, linkedin_id, linkedin_url, profile_enrichment_source, last_profile_sync, onboarding_completed')
+          .eq('id', userId)
+          .single(),
+        supabase
+          .from('user_roles')
+          .select('role')
+          .eq('user_id', userId)
+      ]);
 
       if (userData) {
-        setProfile({
+        const profileData = {
           ...userData,
           roles: rolesData?.map(r => r.role) || []
-        });
+        };
+        setProfile(profileData);
+        
+        // Cache for 5 minutes
+        localStorage.setItem(cacheKey, JSON.stringify(profileData));
+        localStorage.setItem(`${cacheKey}_expiry`, (Date.now() + 5 * 60 * 1000).toString());
       }
     } catch (error) {
       console.error('Error fetching profile:', error);
@@ -70,14 +87,15 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   };
 
   useEffect(() => {
-    // Set up auth state listener
+    // Set up auth state listener FIRST
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, currentSession) => {
+      (event, currentSession) => {
+        console.log('Auth state changed:', event, currentSession?.user?.id);
         setSession(currentSession);
         setUser(currentSession?.user ?? null);
         
+        // Defer profile fetching to avoid blocking
         if (currentSession?.user) {
-          // Defer profile fetching to avoid blocking
           setTimeout(() => {
             fetchUserProfile(currentSession.user.id);
           }, 0);
@@ -85,12 +103,16 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           setProfile(null);
         }
         
-        setLoading(false);
+        // Only set loading to false after initial session check
+        if (event === 'INITIAL_SESSION') {
+          setLoading(false);
+        }
       }
     );
 
-    // Check for existing session
+    // THEN check for existing session
     supabase.auth.getSession().then(({ data: { session: currentSession } }) => {
+      console.log('Initial session check:', currentSession?.user?.id);
       setSession(currentSession);
       setUser(currentSession?.user ?? null);
       

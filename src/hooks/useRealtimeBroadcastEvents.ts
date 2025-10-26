@@ -1,5 +1,6 @@
 import { useEffect, useCallback, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
+import { useBroadcastPause } from '@/contexts/BroadcastPauseContext';
 
 export interface RealtimeBroadcastEvent {
   type: 'bet_placed' | 'odds_change' | 'team_update' | 'milestone' | 'breaking_news';
@@ -14,10 +15,16 @@ export interface RealtimeBroadcastEvent {
 export function useRealtimeBroadcastEvents(
   onEvent: (event: RealtimeBroadcastEvent) => void
 ) {
+  const { isPaused } = useBroadcastPause();
   const channelRef = useRef<ReturnType<typeof supabase.channel> | null>(null);
   const eventProcessedRef = useRef<Set<string>>(new Set());
 
   const handleDatabaseEvent = useCallback((payload: any) => {
+    if (isPaused) {
+      console.log('[useRealtimeBroadcastEvents] Ignoring event - broadcast paused');
+      return;
+    }
+    
     // Prevent duplicate processing
     const eventId = `${payload.table}-${payload.new?.id}-${payload.eventType}`;
     if (eventProcessedRef.current.has(eventId)) return;
@@ -91,7 +98,7 @@ export function useRealtimeBroadcastEvents(
     if (event) {
       onEvent(event);
     }
-  }, [onEvent]);
+  }, [onEvent, isPaused]);
 
   useEffect(() => {
     // Create a single channel for all database changes

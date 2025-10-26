@@ -9,6 +9,7 @@ import { HackathonHeader } from '@/components/HackathonHeader';
 import { useNavigate, useParams } from 'react-router-dom';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
+import { BroadcastPauseProvider } from '@/contexts/BroadcastPauseContext';
 
 export default function BroadcastStream() {
   const navigate = useNavigate();
@@ -73,7 +74,8 @@ export default function BroadcastStream() {
   }, []);
 
   return (
-    <div className="min-h-screen bg-background flex flex-col">
+    <BroadcastPauseProvider hackathonId={hackathonId}>
+      <div className="min-h-screen bg-background flex flex-col">
       {/* Minimal Header */}
       <header className="border-b border-border p-4 bg-card/50 backdrop-blur-sm sticky top-0 z-50">
         <div className="flex items-center justify-between">
@@ -163,6 +165,7 @@ export default function BroadcastStream() {
         isOpen={!!selectedMarketId}
         onClose={() => setSelectedMarketId(null)}
       />
-    </div>
+      </div>
+    </BroadcastPauseProvider>
   );
 }

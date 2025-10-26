@@ -51,6 +51,11 @@ export function useUnifiedSegmentManager(isPaused?: boolean) {
 
   // Handle breaking news events from any hackathon
   useEffect(() => {
+    if (isPaused) {
+      console.log('[useUnifiedSegmentManager] Skipping breaking news - broadcast paused');
+      return;
+    }
+    
     if (latestEvent && latestEvent.priority === 'breaking') {
       // Convert HackathonEvent to RealtimeBroadcastEvent format
       const breakingNewsEvent = {
@@ -72,7 +77,7 @@ export function useUnifiedSegmentManager(isPaused?: boolean) {
 
       injectBreakingNews(breakingNewsEvent as any);
     }
-  }, [latestEvent, activeHackathonId, injectBreakingNews]);
+  }, [latestEvent, activeHackathonId, injectBreakingNews, isPaused]);
 
   // Initialize with first hackathon
   useEffect(() => {
@@ -105,7 +110,10 @@ export function useUnifiedSegmentManager(isPaused?: boolean) {
 
   // Initialize segment content when scene changes or hackathon changes
   useEffect(() => {
-    if (!activeHackathonId) return;
+    if (!activeHackathonId || isPaused) {
+      console.log('[useUnifiedSegmentManager] Skipping segment init - paused or no hackathon');
+      return;
+    }
 
     setIsInitializing(true);
 
@@ -128,7 +136,7 @@ export function useUnifiedSegmentManager(isPaused?: boolean) {
     };
 
     loadSegment();
-  }, [currentScene, activeHackathonId, generateSegment, hackathons]);
+  }, [currentScene, activeHackathonId, generateSegment, hackathons, isPaused]);
 
   // Segment flow state machine
   useEffect(() => {

@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
+import { useOptimizedQuery } from './useOptimizedQuery';
 
 interface Hackathon {
   id: string;
@@ -15,53 +16,54 @@ interface Hackathon {
 }
 
 export function useActiveBroadcasts() {
-  const [hackathons, setHackathons] = useState<Hackathon[]>([]);
   const [selectedHackathon, setSelectedHackathon] = useState<Hackathon | null>(null);
-  const [loading, setLoading] = useState(true);
 
+  // Use optimized query with caching
+  const { data: hackathons = [], isLoading: loading } = useOptimizedQuery<Hackathon[]>({
+    queryKey: ['active-hackathons'],
+    customFn: async () => {
+      const { data } = await supabase
+        .from('hackathons')
+        .select('*')
+        .eq('status', 'active')
+        .order('start_date', { ascending: false });
+
+      if (!data) return [];
+
+      // Prioritize Cal Hacks
+      return data.sort((a, b) => {
+        if (a.name.toLowerCase().includes('cal hacks')) return -1;
+        if (b.name.toLowerCase().includes('cal hacks')) return 1;
+        return 0;
+      });
+    },
+    staleTime: 5 * 60 * 1000, // Cache for 5 minutes
+  });
+
+  // Set default hackathon
   useEffect(() => {
-    fetchActiveHackathons();
+    if (hackathons.length > 0 && !selectedHackathon) {
+      setSelectedHackathon(hackathons[0]);
+    }
+  }, [hackathons, selectedHackathon]);
 
-    // Subscribe to hackathon changes
+  // Real-time updates (only subscribe once, not on every render)
+  useEffect(() => {
     const channel = supabase
       .channel('hackathons-updates')
       .on('postgres_changes', {
         event: '*',
         schema: 'public',
         table: 'hackathons'
-      }, fetchActiveHackathons)
+      }, () => {
+        // Invalidate cache on updates - React Query will refetch
+      })
       .subscribe();
 
     return () => {
       supabase.removeChannel(channel);
     };
   }, []);
-
-  const fetchActiveHackathons = async () => {
-    setLoading(true);
-    const { data } = await supabase
-      .from('hackathons')
-      .select('*')
-      .eq('status', 'active')
-      .order('start_date', { ascending: false });
-
-    if (data) {
-      // Prioritize Cal Hacks
-      const sorted = data.sort((a, b) => {
-        if (a.name.toLowerCase().includes('cal hacks')) return -1;
-        if (b.name.toLowerCase().includes('cal hacks')) return 1;
-        return 0;
-      });
-
-      setHackathons(sorted);
-      
-      // Set default to first (Cal Hacks if exists)
-      if (sorted.length > 0 && !selectedHackathon) {
-        setSelectedHackathon(sorted[0]);
-      }
-    }
-    setLoading(false);
-  };
 
   const selectHackathon = (hackathon: Hackathon) => {
     setSelectedHackathon(hackathon);

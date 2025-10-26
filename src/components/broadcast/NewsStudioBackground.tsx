@@ -1,15 +1,22 @@
 import { useState, useEffect } from 'react';
 import type { BroadcastScene } from '@/types/broadcast';
 import studioBg from '@/assets/broadcast-studio-bg.jpg';
+import { useBroadcastPause } from '@/contexts/BroadcastPauseContext';
 
 interface NewsStudioBackgroundProps {
   scene: BroadcastScene;
 }
 
 export function NewsStudioBackground({ scene }: NewsStudioBackgroundProps) {
+  const { isPaused } = useBroadcastPause();
   const [lightPosition, setLightPosition] = useState(50);
 
   useEffect(() => {
+    if (isPaused) {
+      console.log('[NewsStudioBackground] Light animation paused');
+      return;
+    }
+
     // Subtle lighting animation for broadcast atmosphere
     const lightInterval = setInterval(() => {
       setLightPosition(prev => {
@@ -21,7 +28,7 @@ export function NewsStudioBackground({ scene }: NewsStudioBackgroundProps) {
     return () => {
       clearInterval(lightInterval);
     };
-  }, []);
+  }, [isPaused]);
 
   return (
     <div className="absolute inset-0 overflow-hidden">

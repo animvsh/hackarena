@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useBroadcastPause } from '@/contexts/BroadcastPauseContext';
 
 interface LowerThirdBannerProps {
   teamName: string;
@@ -8,9 +9,15 @@ interface LowerThirdBannerProps {
 }
 
 export function LowerThirdBanner({ teamName, metric, value, change }: LowerThirdBannerProps) {
+  const { isPaused } = useBroadcastPause();
   const [isVisible, setIsVisible] = useState(false);
 
   useEffect(() => {
+    if (isPaused) {
+      console.log('[LowerThirdBanner] Banner animation paused');
+      return;
+    }
+
     // Slide in animation
     setIsVisible(false);
     const showTimer = setTimeout(() => setIsVisible(true), 100);
@@ -22,7 +29,7 @@ export function LowerThirdBanner({ teamName, metric, value, change }: LowerThird
       clearTimeout(showTimer);
       clearTimeout(hideTimer);
     };
-  }, [teamName, metric, value]);
+  }, [teamName, metric, value, isPaused]);
 
   const changeColor = change > 0 ? 'text-success' : change < 0 ? 'text-destructive' : 'text-muted-foreground';
   const changeIcon = change > 0 ? '↑' : change < 0 ? '↓' : '→';

@@ -12,31 +12,6 @@ export type Database = {
   __InternalSupabase: {
     PostgrestVersion: "13.0.5"
   }
-  graphql_public: {
-    Tables: {
-      [_ in never]: never
-    }
-    Views: {
-      [_ in never]: never
-    }
-    Functions: {
-      graphql: {
-        Args: {
-          extensions?: Json
-          operationName?: string
-          query?: string
-          variables?: Json
-        }
-        Returns: Json
-      }
-    }
-    Enums: {
-      [_ in never]: never
-    }
-    CompositeTypes: {
-      [_ in never]: never
-    }
-  }
   public: {
     Tables: {
       anthropic_id: {
@@ -212,7 +187,10 @@ export type Database = {
           current_segment_id: string | null
           hackathon_id: string | null
           id: string
+          is_paused: boolean | null
           live_viewer_count: number | null
+          paused_at: string | null
+          paused_by_user_id: string | null
           phase: string | null
           singleton: boolean | null
           state: string
@@ -224,7 +202,10 @@ export type Database = {
           current_segment_id?: string | null
           hackathon_id?: string | null
           id?: string
+          is_paused?: boolean | null
           live_viewer_count?: number | null
+          paused_at?: string | null
+          paused_by_user_id?: string | null
           phase?: string | null
           singleton?: boolean | null
           state: string
@@ -236,7 +217,10 @@ export type Database = {
           current_segment_id?: string | null
           hackathon_id?: string | null
           id?: string
+          is_paused?: boolean | null
           live_viewer_count?: number | null
+          paused_at?: string | null
+          paused_by_user_id?: string | null
           phase?: string | null
           singleton?: boolean | null
           state?: string
@@ -520,6 +504,7 @@ export type Database = {
           github_url: string | null
           hackathon_id: string | null
           id: string
+          invite_code: string | null
           logo_url: string | null
           momentum_score: number | null
           name: string
@@ -536,6 +521,7 @@ export type Database = {
           github_url?: string | null
           hackathon_id?: string | null
           id?: string
+          invite_code?: string | null
           logo_url?: string | null
           momentum_score?: number | null
           name: string
@@ -552,6 +538,7 @@ export type Database = {
           github_url?: string | null
           hackathon_id?: string | null
           id?: string
+          invite_code?: string | null
           logo_url?: string | null
           momentum_score?: number | null
           name?: string
@@ -581,6 +568,7 @@ export type Database = {
         Row: {
           created_at: string | null
           description: string | null
+          devpost_url: string | null
           end_date: string | null
           id: string
           location: string | null
@@ -595,6 +583,7 @@ export type Database = {
         Insert: {
           created_at?: string | null
           description?: string | null
+          devpost_url?: string | null
           end_date?: string | null
           id?: string
           location?: string | null
@@ -609,6 +598,7 @@ export type Database = {
         Update: {
           created_at?: string | null
           description?: string | null
+          devpost_url?: string | null
           end_date?: string | null
           id?: string
           location?: string | null
@@ -2033,6 +2023,11 @@ export type Database = {
       }
     }
     Functions: {
+      auto_analyze_teams: { Args: never; Returns: undefined }
+      can_manage_team: {
+        Args: { _team_id: string; _user_id: string }
+        Returns: boolean
+      }
       generate_team_invite_code: { Args: never; Returns: string }
       generate_xrp_destination_tag: { Args: never; Returns: string }
       get_user_balance: { Args: { p_user_id: string }; Returns: number }
@@ -2041,6 +2036,10 @@ export type Database = {
           _role: Database["public"]["Enums"]["app_role"]
           _user_id: string
         }
+        Returns: boolean
+      }
+      is_team_member: {
+        Args: { _team_id: string; _user_id: string }
         Returns: boolean
       }
       place_bet: {
@@ -2190,9 +2189,6 @@ export type CompositeTypes<
     : never
 
 export const Constants = {
-  graphql_public: {
-    Enums: {},
-  },
   public: {
     Enums: {
       app_role: ["admin", "spectator", "hacker", "sponsor", "judge"],
