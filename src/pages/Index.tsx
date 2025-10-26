@@ -7,7 +7,7 @@ import { TrendingTeams } from "@/components/TrendingTeams";
 import { RevenueDrivers } from "@/components/RevenueDrivers";
 import { LiveMarketChart } from "@/components/LiveMarketChart";
 import { LiveCommentaryTicker } from "@/components/LiveCommentaryTicker";
-import { BroadcastCarousel } from "@/components/broadcast/BroadcastCarousel";
+import { UnifiedBroadcastPlayer } from "@/components/broadcast/UnifiedBroadcastPlayer";
 import { HackathonInfoCard } from "@/components/HackathonInfoCard";
 import { useActiveBroadcasts } from "@/hooks/useActiveBroadcasts";
 import { SimulationController } from "@/components/SimulationController";
@@ -175,24 +175,21 @@ const Index = () => {
       <main className="flex-1 p-8">
         <Header />
 
-        {/* Live Broadcast Carousel */}
+        {/* Unified Live Broadcast */}
         <div className="mb-8">
           <div className="mb-4">
             <h2 className="text-3xl font-bold mb-2 bg-gradient-to-r from-neon-yellow via-neon-blue to-neon-purple bg-clip-text text-transparent">
-              Live Hackathon Broadcasts
+              Unified Hackathon Broadcast
             </h2>
             <p className="text-muted-foreground text-sm">
-              Real-time AI commentary from active hackathons
+              Real-time AI commentary covering all active hackathons - automatically switching based on breaking events
             </p>
           </div>
-          
+
           {hackathonsLoading ? (
             <Skeleton className="h-[500px] rounded-2xl" />
           ) : (
-            <BroadcastCarousel 
-              hackathons={hackathons} 
-              onHackathonChange={selectHackathon}
-            />
+            <UnifiedBroadcastPlayer />
           )}
         </div>
 
