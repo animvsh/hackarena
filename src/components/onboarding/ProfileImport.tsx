@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -42,6 +42,55 @@ export const ProfileImport = ({ onComplete }: ProfileImportProps) => {
   const [profileData, setProfileData] = useState<ProfileData | null>(null);
   const [linkedinUrl, setLinkedinUrl] = useState("");
   const [githubUsername, setGithubUsername] = useState("");
+
+  // Check if returning from OAuth
+  useEffect(() => {
+    const checkOAuthSuccess = async () => {
+      const oauthProvider = localStorage.getItem('oauth_import_success');
+      if (oauthProvider) {
+        localStorage.removeItem('oauth_import_success');
+        
+        // Fetch the updated user profile
+        const { data: { user } } = await supabase.auth.getUser();
+        if (user) {
+          const { data: userData } = await supabase
+            .from('users')
+            .select('*')
+            .eq('id', user.id)
+            .single();
+          
+          if (userData) {
+            // Auto-complete with OAuth data
+            const importedData: ProfileData = {
+              name: userData.username,
+              email: userData.email,
+              bio: userData.bio || "",
+              skills: Array.isArray(userData.skills) ? userData.skills as Array<{ name: string; level: string }> : [],
+              experience: Array.isArray(userData.experience) ? userData.experience as Array<{
+                title: string;
+                company: string;
+                startDate: string;
+                endDate?: string;
+                description: string;
+              }> : [],
+              education: Array.isArray(userData.education) ? userData.education as Array<{
+                degree: string;
+                institution: string;
+                year: string;
+              }> : [],
+              linkedin_url: userData.linkedin_url || "",
+              github_url: userData.github_url || "",
+              portfolio_url: userData.portfolio_url || "",
+            };
+            
+            onComplete(importedData, oauthProvider);
+          }
+        }
+      }
+    };
+    
+    checkOAuthSuccess();
+  }, [onComplete]);
 
   const handleResumeUpload = async (file: File) => {
     setLoading(true);
@@ -119,6 +168,9 @@ export const ProfileImport = ({ onComplete }: ProfileImportProps) => {
   const handleLinkedInOAuth = async () => {
     setLoading(true);
     try {
+      // Mark that we're doing OAuth during onboarding
+      localStorage.setItem('onboarding_oauth_pending', 'true');
+      
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'linkedin_oidc',
         options: {
@@ -131,6 +183,7 @@ export const ProfileImport = ({ onComplete }: ProfileImportProps) => {
 
       toast.info('Redirecting to LinkedIn for verification...');
     } catch (error) {
+      localStorage.removeItem('onboarding_oauth_pending');
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';
       toast.error(`Failed to connect to LinkedIn: ${errorMessage}`);
       setLoading(false);
