@@ -16,8 +16,13 @@ import { UserHoverCard } from '@/components/profile/UserHoverCard';
 import { useMarketOdds } from '@/hooks/useMarketOdds';
 import { useOddsHistory } from '@/hooks/useOddsHistory';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
-import { ArrowLeft, Users, TrendingUp, Target, Github, ExternalLink, Trophy } from 'lucide-react';
+import { ArrowLeft, Users, TrendingUp, Target, Github, ExternalLink, Trophy, Code, Settings, Edit } from 'lucide-react';
 import { toast } from 'sonner';
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
+import { Label } from '@/components/ui/label';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { useAuth } from '@/contexts/AuthContext';
 
 interface Team {
   id: string;
@@ -32,6 +37,7 @@ interface Team {
   momentum_score: number;
   team_size: number;
   status: string;
+  invite_code?: string;
 }
 
 interface TeamMember {
@@ -53,6 +59,9 @@ export default function TeamProfile() {
   const [members, setMembers] = useState<TeamMember[]>([]);
   const [marketId, setMarketId] = useState<string | undefined>();
   const [loading, setLoading] = useState(true);
+  const [isTeamCreator, setIsTeamCreator] = useState(false);
+  const [currentUserId, setCurrentUserId] = useState<string | null>(null);
+  const [dialogOpen, setDialogOpen] = useState(false);
 
   const { odds } = useMarketOdds(marketId);
   const teamOdds = odds.find(o => o.team_id === teamId);
@@ -61,6 +70,12 @@ export default function TeamProfile() {
   useEffect(() => {
     const fetchTeamData = async () => {
       if (!teamId) return;
+
+      // Get current user
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        setCurrentUserId(user.id);
+      }
 
       // Fetch team from hackathon_teams
       const { data: teamData } = await supabase
@@ -84,6 +99,7 @@ export default function TeamProfile() {
           momentum_score: parseFloat(teamData.momentum_score || '0'),
           team_size: teamData.team_size || 0,
           status: 'active',
+          invite_code: teamData.invite_code || '',
         });
       }
 
@@ -104,6 +120,33 @@ export default function TeamProfile() {
         .eq('team_id', teamId);
 
       if (membersData) {
+        // Check if current user is the team creator (has role "Owner")
+        const ownerMember = membersData.find((m: any) => 
+          m.role === 'Owner' || m.role === 'owner'
+        );
+        
+        if (ownerMember && user) {
+          // Check if the owner's hacker is linked to the current user
+          // We need to check if user has a hacker profile
+          const { data: currentUser } = await supabase
+            .from('users')
+            .select('github_username, linkedin_url')
+            .eq('id', user.id)
+            .single();
+          
+          if (currentUser) {
+            const { data: hackerProfile } = await supabase
+              .from('hackers')
+              .select('id')
+              .or(`github_username.eq.${currentUser.github_username || ''},linkedin_url.eq.${currentUser.linkedin_url || ''}`)
+              .single();
+            
+            if (hackerProfile && hackerProfile.id === ownerMember.hacker_id) {
+              setIsTeamCreator(true);
+            }
+          }
+        }
+
         // Fetch stats for each member
         const membersWithStats = await Promise.all(membersData.map(async (m: any) => {
           const { data: stats } = await supabase
@@ -268,16 +311,42 @@ export default function TeamProfile() {
                     </div>
                   </div>
 
-                  <Button variant="ghost" onClick={() => navigate(-1)}>
-                    <ArrowLeft className="w-4 h-4 mr-2" />
-                    Back
-                  </Button>
+                  <div className="flex gap-2">
+                    {isTeamCreator && (
+                      <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+                        <DialogTrigger asChild>
+                          <Button variant="outline">
+                            <Settings className="w-4 h-4 mr-2" />
+                            Manage Team
+                          </Button>
+                        </DialogTrigger>
+                        <DialogContent className="sm:max-w-2xl">
+                          <DialogHeader>
+                            <DialogTitle>Manage Team Settings</DialogTitle>
+                          </DialogHeader>
+                          <TeamSettingsDialog 
+                            team={team} 
+                            onUpdate={(updatedTeam) => {
+                              setTeam({...team, ...updatedTeam});
+                              setDialogOpen(false);
+                              // Force refresh to show new GitHub activity
+                              window.location.reload();
+                            }} 
+                          />
+                        </DialogContent>
+                      </Dialog>
+                    )}
+                    <Button variant="ghost" onClick={() => navigate(-1)}>
+                      <ArrowLeft className="w-4 h-4 mr-2" />
+                      Back
+                    </Button>
+                  </div>
                 </div>
               </div>
             </div>
 
             {/* Stats Bar */}
-            <div className="grid grid-cols-4 gap-4 mt-6 pt-6 border-t">
+            <div className={`grid gap-4 mt-6 pt-6 border-t ${team.invite_code || teamOdds ? 'grid-cols-4' : 'grid-cols-3'}`}>
               <StatsCard
                 title="Progress"
                 value={`${team.current_progress}%`}
@@ -293,7 +362,14 @@ export default function TeamProfile() {
                 value={team.team_size}
                 icon={Users}
               />
-              {teamOdds && (
+              {team.invite_code && isTeamCreator && (
+                <StatsCard
+                  title="Invite Code"
+                  value={team.invite_code}
+                  icon={Code}
+                />
+              )}
+              {teamOdds && teamOdds.current_odds > 0 && (
                 <StatsCard
                   title="Current Odds"
                   value={`${teamOdds.current_odds.toFixed(1)}%`}
@@ -340,13 +416,16 @@ export default function TeamProfile() {
                     </div>
                   </Card>
 
-                  <TeamActivityFeed teamId={team.id} />
+                  <TeamActivityFeed teamId={team.id} githubUrl={team.github_repo} />
                 </TabsContent>
 
                 <TabsContent value="performance">
                   <Card className="p-6">
-                    <h3 className="font-semibold mb-4">24-Hour Odds Performance</h3>
-                    <ResponsiveContainer width="100%" height={400}>
+                    <h3 className="font-semibold mb-4">Performance Metrics</h3>
+                    <p className="text-muted-foreground text-sm mb-4">
+                      Based on commits from the last 24 hours
+                    </p>
+                    <ResponsiveContainer width="100%" height={300}>
                       <LineChart data={oddsHistory}>
                         <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
                         <XAxis 
@@ -453,3 +532,88 @@ export default function TeamProfile() {
     </div>
   );
 }
+
+// Team Settings Dialog Component
+interface TeamSettingsDialogProps {
+  team: Team;
+  onUpdate: (updatedTeam: Partial<Team>) => void;
+}
+
+const TeamSettingsDialog = ({ team, onUpdate }: TeamSettingsDialogProps) => {
+  const [githubUrl, setGithubUrl] = useState(team.github_repo);
+  const [devpostUrl, setDevpostUrl] = useState(team.devpost_url);
+  const [tagline, setTagline] = useState(team.tagline);
+  const [saving, setSaving] = useState(false);
+
+  const handleSave = async () => {
+    setSaving(true);
+    try {
+      const { error } = await supabase
+        .from('hackathon_teams')
+        .update({
+          github_url: githubUrl,  // Update github_url in Supabase
+          devpost_url: devpostUrl,
+          tagline: tagline,
+        })
+        .eq('id', team.id);
+
+      if (error) throw error;
+
+      // Update local state with new github_repo (mapped from github_url)
+      onUpdate({
+        github_repo: githubUrl,  // This will be used by TeamActivityFeed
+        devpost_url: devpostUrl,
+        tagline: tagline,
+      });
+      
+      toast.success('Team settings updated successfully!');
+    } catch (error: any) {
+      toast.error(error.message || 'Failed to update team settings');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <div className="space-y-4">
+      <div>
+        <Label htmlFor="tagline">Tagline</Label>
+        <Textarea
+          id="tagline"
+          value={tagline}
+          onChange={(e) => setTagline(e.target.value)}
+          placeholder="Describe your team..."
+          rows={3}
+        />
+      </div>
+
+      <div>
+        <Label htmlFor="github">GitHub Repository URL</Label>
+        <Input
+          id="github"
+          type="url"
+          value={githubUrl}
+          onChange={(e) => setGithubUrl(e.target.value)}
+          placeholder="https://github.com/username/repo"
+        />
+      </div>
+
+      <div>
+        <Label htmlFor="devpost">Devpost URL (Optional)</Label>
+        <Input
+          id="devpost"
+          type="url"
+          value={devpostUrl}
+          onChange={(e) => setDevpostUrl(e.target.value)}
+          placeholder="https://devpost.com/software/..."
+        />
+      </div>
+
+      <div className="flex gap-3 pt-4">
+        <Button onClick={handleSave} disabled={saving} className="flex-1">
+          {saving ? 'Saving...' : 'Save Changes'}
+        </Button>
+      </div>
+    </div>
+  );
+};

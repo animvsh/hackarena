@@ -9,6 +9,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Progress } from "@/components/ui/progress";
 import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { supabase } from "@/integrations/supabase/client";
 import { Target, TrendingUp, Users, DollarSign, Search, Trophy } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -34,19 +35,51 @@ interface Team {
   };
 }
 
+interface Prize {
+  id: string;
+  category: string;
+  prize_amount: string;
+  position: number;
+  description: string;
+}
+
 const Markets = () => {
   const { hackathonId } = useParams<{ hackathonId: string }>();
   const [teams, setTeams] = useState<Team[]>([]);
+  const [prizes, setPrizes] = useState<Prize[]>([]);
+  const [selectedPrize, setSelectedPrize] = useState<Prize | null>(null);
   const [loading, setLoading] = useState(true);
+  const [loadingMessage, setLoadingMessage] = useState("Loading...");
   const [searchQuery, setSearchQuery] = useState("");
   const [betAmount, setBetAmount] = useState("");
   const [selectedTeam, setSelectedTeam] = useState<Team | null>(null);
+  const [isCalculatingOdds, setIsCalculatingOdds] = useState(false);
 
   useEffect(() => {
     if (hackathonId) {
-      fetchHackathonTeams();
+      autoCalculateAndFetch();
     }
   }, [hackathonId]);
+
+  const autoCalculateAndFetch = async () => {
+    if (!hackathonId) return;
+    
+    setLoadingMessage("Calculating betting lines...");
+    
+    // First calculate odds (this saves them to database)
+    try {
+      await supabase.functions.invoke('calculate-betting-odds', {
+        body: { hackathonId }
+      });
+      console.log('Odds auto-calculated and saved to database');
+      setLoadingMessage("Loading teams and odds...");
+    } catch (error) {
+      console.error('Error auto-calculating odds:', error);
+    }
+    
+    // Then fetch the teams with the updated odds
+    await fetchHackathonTeams();
+  };
 
   const fetchHackathonTeams = async () => {
     setLoading(true);
@@ -64,7 +97,67 @@ const Markets = () => {
         return;
       }
 
-      // Fetch teams for this hackathon with their stats from team_stats
+      // Fetch all prizes for this hackathon
+      const { data: prizes } = await supabase
+        .from('hackathon_prizes')
+        .select('*')
+        .eq('hackathon_id', hackathonId);
+
+      console.log('Prizes:', prizes);
+
+      // Store prizes
+      if (prizes && prizes.length > 0) {
+        setPrizes(prizes);
+        // Only set initial prize if none is selected yet
+        if (!selectedPrize) {
+          setSelectedPrize(prizes[0]);
+        }
+      }
+
+      // If no prizes exist, just fetch teams for display and return early
+      if (!prizes || prizes.length === 0) {
+        console.log('No prizes found. Skipping odds fetch.');
+        // Still fetch teams for display
+        const { data: hackathonTeams, error: teamsError } = await supabase
+          .from('hackathon_teams')
+          .select(`
+            *,
+            team_stats (
+              avg_overall_rating,
+              avg_technical_skill,
+              avg_hackathon_experience,
+              avg_innovation
+            )
+          `)
+          .eq('hackathon_id', hackathonId);
+
+        if (hackathonTeams && hackathonTeams.length > 0) {
+          const teamsWithStats = hackathonTeams.map(team => {
+            const stats = team.team_stats?.[0];
+            if (stats) {
+              const overallRating = parseFloat(stats.avg_overall_rating) || 70;
+              return {
+                ...team,
+                overall_rating: overallRating,
+                technical_skill: parseFloat(stats.avg_technical_skill) || 70,
+                hackathon_experience: parseFloat(stats.avg_hackathon_experience) || 60,
+                innovation_score: parseFloat(stats.avg_innovation) || 70,
+                betting_odds: {
+                  american_odds: 0,
+                  decimal_odds: 1.0,
+                  win_probability: 0
+                }
+              };
+            }
+            return generateTeamStats(team);
+          });
+          setTeams(teamsWithStats);
+        }
+        setLoading(false);
+        return;
+      }
+
+      // Fetch teams for this hackathon with their stats
       const { data: hackathonTeams, error: teamsError } = await supabase
         .from('hackathon_teams')
       .select(`
@@ -84,38 +177,89 @@ const Markets = () => {
         return;
       }
 
+      // Continue only if we have prizes
+      if (!prizes || prizes.length === 0) {
+        setLoading(false);
+        return;
+      }
+
+      // Use selected prize (or first prize if none selected)
+      const currentPrize = selectedPrize || prizes[0];
+
+      // Fetch betting odds from database for the current prize
+      const { data: oddsData, error: oddsError } = await supabase
+        .from('betting_odds')
+        .select('*')
+        .eq('prize_id', currentPrize.id);
+
+      console.log('Fetched odds:', oddsData);
+
       if (hackathonTeams && hackathonTeams.length > 0) {
-        // Use actual stats from database or fallback to random
+        // Map odds to teams
         const teamsWithStats = hackathonTeams.map(team => {
           const stats = team.team_stats?.[0];
+          const teamOdds = oddsData?.find(odds => odds.team_id === team.id);
+
           if (stats) {
-            // Use real stats from database
             const overallRating = parseFloat(stats.avg_overall_rating) || 70;
-            const winProbability = Math.min(95, Math.max(5, overallRating));
-            const americanOdds = winProbability > 50 
-              ? Math.floor(-100 * winProbability / (100 - winProbability))
-              : Math.floor(100 * (100 - winProbability) / winProbability);
-            const decimalOdds = winProbability > 50 
-              ? 100 / winProbability 
-              : (100 - winProbability) / winProbability + 1;
+            const technical_skill = parseFloat(stats.avg_technical_skill) || 70;
+            const hackathon_experience = parseFloat(stats.avg_hackathon_experience) || 60;
+            const innovation_score = parseFloat(stats.avg_innovation) || 70;
+
+            // Use stored odds if available, otherwise calculate
+            let bettingOdds;
+            if (teamOdds) {
+              bettingOdds = {
+                american_odds: teamOdds.odds_american,
+                decimal_odds: parseFloat(teamOdds.odds_decimal),
+                win_probability: Math.round(parseFloat(teamOdds.implied_probability) * 10000) / 100
+              };
+            } else {
+              // Calculate odds based on rating vs competitors
+              // Get average rating of all teams
+              const avgRating = hackathonTeams.reduce((sum, t) => {
+                const tStats = t.team_stats?.[0];
+                return sum + parseFloat(tStats?.avg_overall_rating || '70');
+              }, 0) / hackathonTeams.length;
+
+              // Calculate relative strength
+              const relativeStrength = overallRating / Math.max(avgRating, 1);
+              const winProbability = Math.min(95, Math.max(5, relativeStrength * 50));
+
+              let americanOdds;
+              if (winProbability > 50) {
+                americanOdds = Math.floor(-100 * winProbability / (100 - winProbability));
+              } else {
+                americanOdds = Math.floor(100 * (100 - winProbability) / winProbability);
+              }
+
+              let decimalOdds;
+              if (americanOdds > 0) {
+                decimalOdds = 1 + (americanOdds / 100);
+              } else {
+                decimalOdds = 1 + (100 / Math.abs(americanOdds));
+              }
+
+              bettingOdds = {
+                american_odds: americanOdds,
+                decimal_odds: Math.round(decimalOdds * 100) / 100,
+                win_probability: winProbability
+              };
+            }
 
             return {
               ...team,
               overall_rating: overallRating,
-              technical_skill: parseFloat(stats.avg_technical_skill) || 70,
-              hackathon_experience: parseFloat(stats.avg_hackathon_experience) || 60,
-              innovation_score: parseFloat(stats.avg_innovation) || 70,
-              betting_odds: {
-                american_odds: americanOdds,
-                decimal_odds: Math.round(decimalOdds * 100) / 100,
-                win_probability: winProbability
-              }
+              technical_skill,
+              hackathon_experience,
+              innovation_score,
+              betting_odds: bettingOdds
             };
           } else {
-            // Fallback to random stats if no team_stats
             return generateTeamStats(team);
           }
         });
+
         setTeams(teamsWithStats);
       }
     } catch (error) {
@@ -164,6 +308,36 @@ const Markets = () => {
     return "text-red-600";
   };
 
+  const calculateOdds = async () => {
+    if (!hackathonId) return;
+
+    setIsCalculatingOdds(true);
+    try {
+      // Call the Edge Function to calculate betting odds
+      const { data, error } = await supabase.functions.invoke('calculate-betting-odds', {
+        body: { hackathonId }
+      });
+
+      if (error) {
+        console.error('Error calculating odds:', error);
+        alert('Failed to calculate odds. Please try again.');
+        return;
+      }
+
+      console.log('Odds calculated:', data);
+      
+      // Refresh the teams data
+      await fetchHackathonTeams();
+      
+      alert(`Successfully calculated odds for ${data.calculated} teams!`);
+    } catch (error) {
+      console.error('Error calculating odds:', error);
+      alert('Failed to calculate odds. Please try again.');
+    } finally {
+      setIsCalculatingOdds(false);
+    }
+  };
+
   const filteredTeams = teams.filter(team =>
     team.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
     team.category.toLowerCase().includes(searchQuery.toLowerCase())
@@ -178,9 +352,70 @@ const Markets = () => {
 
         {/* Page Header */}
         <div className="mb-8">
-          <div className="flex items-center gap-2 mb-2">
-            <Target className="w-8 h-8 text-primary" />
-            <h1 className="text-3xl font-bold">Team Betting Lines</h1>
+          <div className="flex items-center justify-between mb-2">
+            <div className="flex items-center gap-2">
+              <Target className="w-8 h-8 text-primary" />
+              <h1 className="text-3xl font-bold">Team Betting Lines</h1>
+            </div>
+            <Dialog>
+              <DialogTrigger asChild>
+                <Button variant="outline" size="sm">
+                  <Trophy className="h-4 w-4 mr-2" />
+                  What do these numbers mean?
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="sm:max-w-2xl">
+                <DialogHeader>
+                  <DialogTitle>Understanding Betting Lines</DialogTitle>
+                </DialogHeader>
+                <div className="space-y-4 text-sm">
+                  <div className="border-l-4 border-primary pl-4">
+                    <h3 className="font-semibold mb-2">Overall Rating</h3>
+                    <p className="text-muted-foreground">
+                      A score from 0-100 that represents the team's overall capability, calculated by averaging each team member's GitHub/LinkedIn stats, hackathon experience, and technical skills.
+                    </p>
+                  </div>
+                  
+                  <div className="border-l-4 border-green-500 pl-4">
+                    <h3 className="font-semibold mb-2">American Odds (+120, -150, etc.)</h3>
+                    <p className="text-muted-foreground mb-2">
+                      Shows how much you'll win relative to a $100 bet:
+                    </p>
+                    <ul className="list-disc list-inside space-y-1 text-muted-foreground ml-4">
+                      <li><strong>+120</strong> means you'll win $120 on a $100 bet (total payout: $220)</li>
+                      <li><strong>-150</strong> means you need to bet $150 to win $100 (total payout: $250)</li>
+                      <li>Higher numbers = less likely to win (underdogs)</li>
+                      <li>Lower numbers = more likely to win (favorites)</li>
+                    </ul>
+                  </div>
+                  
+                  <div className="border-l-4 border-blue-500 pl-4">
+                    <h3 className="font-semibold mb-2">Win Probability</h3>
+                    <p className="text-muted-foreground">
+                      The percentage chance this team will win, calculated based on their stats compared to all other teams. For example, 35% means they have a 35% chance of winning.
+                    </p>
+                  </div>
+                  
+                  <div className="border-l-4 border-purple-500 pl-4">
+                    <h3 className="font-semibold mb-2">Individual Stats Breakdown</h3>
+                    <ul className="list-disc list-inside space-y-1 text-muted-foreground ml-4">
+                      <li><strong>Technical Skill:</strong> Average coding ability (0-100)</li>
+                      <li><strong>Experience:</strong> Years of hackathon participation</li>
+                      <li><strong>Innovation:</strong> Creative problem-solving ability</li>
+                      <li><strong>Progress:</strong> Current project completion %</li>
+                    </ul>
+                  </div>
+                  
+                  <div className="bg-muted p-4 rounded-lg">
+                    <h3 className="font-semibold mb-2">How Betting Works</h3>
+                    <p className="text-muted-foreground">
+                      Place a bet amount, and if the team wins, you'll receive your bet back plus the winnings based on the odds. 
+                      The higher the odds, the riskier the bet but the bigger the potential payout!
+                    </p>
+                  </div>
+                </div>
+              </DialogContent>
+            </Dialog>
           </div>
           <p className="text-muted-foreground">
             Place bets on teams based on their performance stats and odds
@@ -202,14 +437,51 @@ const Markets = () => {
             <Trophy className="h-3 w-3 mr-1" />
             {teams.length} Teams Competing
           </Badge>
+          <Button
+            onClick={calculateOdds}
+            disabled={isCalculatingOdds}
+            className="ml-auto"
+          >
+            <TrendingUp className="h-4 w-4 mr-2" />
+            {isCalculatingOdds ? 'Recalculating...' : 'Recalculate Odds'}
+          </Button>
         </div>
+
+        {/* Prize Categories Tabs */}
+        {prizes && prizes.length > 0 ? (
+          <div className="mb-6">
+            <Tabs value={selectedPrize?.id || prizes[0]?.id} onValueChange={(prizeId) => {
+              const prize = prizes.find(p => p.id === prizeId);
+              if (prize) {
+                setSelectedPrize(prize);
+                // Wait a moment for state to update, then fetch
+                setTimeout(() => fetchHackathonTeams(), 100);
+              }
+            }}>
+              <TabsList className="flex-wrap h-auto p-1 gap-2 bg-card">
+                {prizes.map((prize) => (
+                  <TabsTrigger key={prize.id} value={prize.id} className="text-sm">
+                    <Trophy className="h-4 w-4 mr-2" />
+                    {prize.category} - ${parseFloat(prize.prize_amount).toLocaleString()}
+                  </TabsTrigger>
+                ))}
+              </TabsList>
+            </Tabs>
+          </div>
+        ) : (
+          <div className="mb-6 p-4 bg-muted rounded-lg text-center text-muted-foreground">
+            No prizes configured for this hackathon
+          </div>
+        )}
 
         {/* Teams Grid */}
         {loading ? (
-          <div className="grid grid-cols-1 gap-4">
-            {[1, 2, 3, 4].map((i) => (
-              <Skeleton key={i} className="h-48 w-full" />
-            ))}
+          <div className="flex flex-col items-center justify-center py-12">
+            <Progress className="w-full max-w-md mb-4" value={33} />
+            <div className="text-center">
+              <p className="text-lg font-semibold mb-2">{loadingMessage}</p>
+              <p className="text-sm text-muted-foreground">This may take a few moments...</p>
+            </div>
           </div>
         ) : filteredTeams.length === 0 ? (
           <Card className="p-12 text-center">

@@ -6,7 +6,7 @@ import { TeamCard } from "@/components/TeamCard";
 import { supabase } from "@/integrations/supabase/client";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Search, Users2, ArrowLeft } from "lucide-react";
+import { Search, Users2, ArrowLeft, Plus } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 
@@ -165,6 +165,13 @@ const HackathonTeams = () => {
               <SelectItem value="name">Name</SelectItem>
             </SelectContent>
           </Select>
+          <Button 
+            onClick={() => navigate(`/hackathons/${hackathonId}/teams/new`)}
+            className="ml-auto"
+          >
+            <Plus className="h-4 w-4 mr-2" />
+            Create Team
+          </Button>
         </div>
 
         {/* Teams Grid */}

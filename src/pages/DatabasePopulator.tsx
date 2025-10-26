@@ -7,6 +7,7 @@ import { populateDatabase } from '@/lib/database-populator';
 import { createHackerStatsTables } from '@/lib/create-tables';
 import { populateWithRealDevpostHackathons } from '@/lib/devpost-populator';
 import { clearAndPopulateRealData } from '@/lib/clear-and-populate';
+import { populateDiverseTeams } from '@/lib/populate-diverse-teams';
 
 const DatabasePopulator: React.FC = () => {
   const [isLoading, setIsLoading] = useState(false);
@@ -96,6 +97,35 @@ const DatabasePopulator: React.FC = () => {
       setStatus(`✅ Successfully cleared old data and added ${result.created} real Devpost hackathons!`);
     } catch (error) {
       console.error('Error populating real Devpost:', error);
+      setStatus('❌ Error. Check console for details.');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handlePopulateDiverseTeams = async () => {
+    setIsLoading(true);
+    setProgress(0);
+    setStatus('Populating diverse team members...');
+
+    try {
+      const progressInterval = setInterval(() => {
+        setProgress(prev => {
+          if (prev >= 90) {
+            clearInterval(progressInterval);
+            return prev;
+          }
+          return prev + Math.random() * 10;
+        });
+      }, 500);
+
+      await populateDiverseTeams();
+      
+      clearInterval(progressInterval);
+      setProgress(100);
+      setStatus('✅ Successfully populated 50+ diverse hackers with real GitHub profiles and OpenAI-generated stats!');
+    } catch (error) {
+      console.error('Error populating diverse teams:', error);
       setStatus('❌ Error. Check console for details.');
     } finally {
       setIsLoading(false);
@@ -244,6 +274,37 @@ const DatabasePopulator: React.FC = () => {
                 </Button>
 
                 {!isLoading && status && (status.includes('Devpost') || status.includes('hackathon')) && (
+                  <div className="p-4 bg-muted rounded-lg">
+                    <p className="text-sm">{status}</p>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+
+            {/* Populate Diverse Teams */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center space-x-2">
+                  <Users className="h-5 w-5" />
+                  <span>Populate Diverse Team Members</span>
+                </CardTitle>
+                <CardDescription>
+                  Fetch 50+ real GitHub accounts, generate stats using OpenAI pipeline, and assign distinct members to each team.
+                  This will create realistic variation in team stats and betting odds.
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <Button 
+                  onClick={handlePopulateDiverseTeams}
+                  disabled={isLoading}
+                  className="w-full"
+                  size="lg"
+                  variant="secondary"
+                >
+                  {isLoading ? 'Fetching & Generating...' : 'Populate 50+ Diverse Hackers with OpenAI Stats'}
+                </Button>
+
+                {!isLoading && status && status.includes('Diverse') && (
                   <div className="p-4 bg-muted rounded-lg">
                     <p className="text-sm">{status}</p>
                   </div>

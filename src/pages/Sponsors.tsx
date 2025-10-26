@@ -18,7 +18,7 @@ interface Sponsor {
 
 interface Hackathon {
   id: string;
-  name: string;
+    name: string;
   description: string;
   location: string;
   startDate: string;
@@ -195,43 +195,43 @@ const Sponsors = () => {
       <div className="flex-1 flex flex-col">
         <Header />
         <div className="flex-1 p-6">
-          <div className="mb-8">
+        <div className="mb-8">
             <h1 className="text-3xl font-bold mb-2">Sponsors</h1>
             <p className="text-gray-600">Discover hackathons by sponsor and place your bets</p>
-          </div>
+        </div>
 
           <div className="grid gap-6">
-            {sponsors.map((sponsor) => (
+          {sponsors.map((sponsor) => (
               <Card key={sponsor.id} className="hover:shadow-lg transition-shadow">
                 <CardHeader>
                   <div className="flex items-center justify-between">
                     <div className="flex items-center space-x-4">
-                      <img 
-                        src={sponsor.logo_url} 
-                        alt={sponsor.name}
+                  <img
+                    src={sponsor.logo_url}
+                    alt={sponsor.name}
                         className="h-12 w-12 object-contain"
-                      />
-                      <div>
+                  />
+                <div>
                         <CardTitle className="text-xl">{sponsor.name}</CardTitle>
                         <p className="text-gray-600 text-sm">{sponsor.description}</p>
                         <div className="flex items-center mt-2">
                           <ExternalLink className="h-4 w-4 text-gray-400 mr-1" />
                           <a 
                             href={sponsor.website} 
-                            target="_blank" 
-                            rel="noopener noreferrer"
+                      target="_blank"
+                      rel="noopener noreferrer"
                             className="text-blue-600 hover:text-blue-800 text-sm"
-                          >
+                    >
                             {sponsor.website}
-                          </a>
-                        </div>
-                      </div>
-                    </div>
+                    </a>
+                </div>
+              </div>
+                  </div>
                     <div className="text-right">
                       <div className="text-sm text-gray-600">
                         {sponsor.hackathons.length} Hackathon{sponsor.hackathons.length !== 1 ? 's' : ''}
-                      </div>
-                    </div>
+                  </div>
+                </div>
                   </div>
                 </CardHeader>
                 <CardContent>
@@ -239,30 +239,30 @@ const Sponsors = () => {
                     {sponsor.hackathons.map((hackathon) => (
                       <div key={hackathon.id} className="border rounded-lg p-4 bg-gray-50">
                         <div className="flex items-center justify-between mb-3">
-                          <div>
+                  <div>
                             <h3 className="font-semibold text-lg">{hackathon.name}</h3>
                             <p className="text-gray-600 text-sm">{hackathon.description}</p>
                           </div>
                           <div className="text-right">
                             {getStatusBadge(hackathon.status)}
-                          </div>
-                        </div>
+                  </div>
+                </div>
 
                         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
                           <div className="flex items-center">
                             <DollarSign className="h-4 w-4 text-green-600 mr-2" />
-                            <div>
+                  <div>
                               <div className="text-sm font-semibold">${hackathon.totalPrizePool.toLocaleString()}</div>
                               <div className="text-xs text-gray-600">Prize Pool</div>
-                            </div>
-                          </div>
+                  </div>
+                </div>
                           <div className="flex items-center">
                             <Users className="h-4 w-4 text-blue-600 mr-2" />
-                            <div>
+                  <div>
                               <div className="text-sm font-semibold">{hackathon.teamCount}</div>
                               <div className="text-xs text-gray-600">Teams</div>
-                            </div>
-                          </div>
+                  </div>
+                </div>
                           <div className="flex items-center">
                             <MapPin className="h-4 w-4 text-purple-600 mr-2" />
                             <div>
@@ -275,9 +275,9 @@ const Sponsors = () => {
                             <div>
                               <div className="text-sm font-semibold">
                                 {new Date(hackathon.startDate).toLocaleDateString()}
-                              </div>
+                        </div>
                               <div className="text-xs text-gray-600">Start Date</div>
-                            </div>
+                    </div>
                           </div>
                         </div>
 
@@ -287,7 +287,7 @@ const Sponsors = () => {
                             {hackathon.categories.map((category) => (
                               <Badge key={category} variant="outline" className="text-xs">
                                 {category}
-                              </Badge>
+                            </Badge>
                             ))}
                           </div>
                         </div>
@@ -300,12 +300,12 @@ const Sponsors = () => {
                             <Target className="h-4 w-4 mr-2" />
                             Go to Hackathon
                           </Button>
-                        </div>
-                      </div>
+                    </div>
+                    </div>
                     ))}
                   </div>
                 </CardContent>
-              </Card>
+                </Card>
             ))}
           </div>
         </div>

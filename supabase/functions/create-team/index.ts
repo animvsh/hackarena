@@ -41,96 +41,106 @@ serve(async (req) => {
     }: CreateTeamRequest = await req.json();
 
     // Generate unique invite code
-    const { data: inviteCodeData } = await supabase.rpc('generate_team_invite_code');
-    const inviteCode = inviteCodeData || `hc_live_${Math.random().toString(36).substring(2, 15)}`;
+    const inviteCode = `PIEFI-${Math.random().toString(36).substring(2, 10).toUpperCase()}`;
 
-    // Create team
+    // Create team in hackathon_teams table
+    // Set team_size to 0 initially, will update after adding creator
     const { data: team, error: teamError } = await supabase
-      .from('teams')
+      .from('hackathon_teams')
       .insert({
         name: teamName,
         tagline: tagline,
-        category: industryTags || [],
+        category: industryTags?.[0] || '', // Use first category as string
         tech_stack: techStack || [],
-        team_size: teamSize || 4,
-        status: 'active',
-        team_type: aiAnalysis?.company_type || 'startup',
-        owner_id: userId,
-        invite_code: inviteCode,
+        team_size: 0, // Start at 0, will update after adding members
         hackathon_id: hackathonId || null,
-        github_repo: githubRepo || null,
-        onboarding_completed: false,
+        github_url: githubRepo || null,
+        invite_code: inviteCode, // Store invite code directly in hackathon_teams
       })
       .select()
       .single();
 
     if (teamError) throw teamError;
 
-    // Create team member record (owner)
-    const { error: memberError } = await supabase
-      .from('team_members')
-      .insert({
-        team_id: team.id,
-        user_id: userId,
-        role: 'owner',
-      });
+    // Get user's data to create/find their hacker profile
+    const { data: userData, error: userError } = await supabase
+      .from('users')
+      .select('*')
+      .eq('id', userId)
+      .single();
 
-    if (memberError) console.error('Team member creation error:', memberError);
+    if (userError || !userData) {
+      console.error('Error fetching user data:', userError);
+    } else {
+      // Check if user already has a hacker profile
+      let hackerId = userData.github_id || userData.linkedin_id;
+      
+      // Try to find existing hacker record by github_username or linkedin_url
+      let existingHacker = null;
+      
+      if (userData.github_username) {
+        const { data } = await supabase
+          .from('hackers')
+          .select('id')
+          .eq('github_username', userData.github_username)
+          .maybeSingle();
+        existingHacker = data;
+      }
+      
+      // If still not found and user has linkedin, try that
+      if (!existingHacker && userData.linkedin_url) {
+        const { data } = await supabase
+          .from('hackers')
+          .select('id')
+          .eq('linkedin_url', userData.linkedin_url)
+          .maybeSingle();
+        existingHacker = data;
+      }
 
-    // Create team permissions (owner)
-    const { error: permError } = await supabase
-      .from('team_permissions')
-      .insert({
-        team_id: team.id,
-        user_id: userId,
-        role: 'owner',
-        can_manage_members: true,
-        can_manage_integrations: true,
-        can_view_analytics: true,
-      });
+      // If no hacker exists, create one
+      if (!existingHacker) {
+        const { data: newHacker, error: hackerError } = await supabase
+          .from('hackers')
+          .insert({
+            github_username: userData.github_username || userData.username,
+            name: userData.username,
+            avatar_url: userData.avatar_url,
+            bio: userData.bio,
+            location: userData.location,
+            linkedin_url: userData.linkedin_url,
+            website: userData.portfolio_url,
+          })
+          .select()
+          .single();
 
-    if (permError) throw permError;
+        if (hackerError) {
+          console.error('Error creating hacker profile:', hackerError);
+        } else {
+          existingHacker = newHacker;
+        }
+      }
 
-    // Create team profile with AI analysis
-    if (aiAnalysis) {
-      const { error: profileError } = await supabase
-        .from('team_profiles')
-        .insert({
-          team_id: team.id,
-          company_type: aiAnalysis.company_type,
-          industry: aiAnalysis.industry,
-          business_model: aiAnalysis.business_model,
-          target_metrics: aiAnalysis.key_metrics || [],
-          ai_analysis: aiAnalysis,
-        });
+      // Add user as team member
+      if (existingHacker) {
+        const { error: memberError } = await supabase
+          .from('hackathon_team_members')
+          .insert({
+            team_id: team.id,
+            hacker_id: existingHacker.id,
+            role: 'Owner',
+          });
 
-      if (profileError) console.error('Profile creation error:', profileError);
+        if (memberError) {
+          console.error('Error adding team member:', memberError);
+        } else {
+          console.log('Successfully added creator as team member');
+          // team_size is automatically updated by database trigger
+        }
+      }
     }
 
-    // Create invite code record
-    const { error: inviteError } = await supabase
-      .from('team_invite_codes')
-      .insert({
-        team_id: team.id,
-        code: inviteCode,
-        created_by: userId,
-        is_active: true,
-      });
-
-    if (inviteError) console.error('Invite code creation error:', inviteError);
-
-    // Create audit log
-    await supabase
-      .from('team_audit_logs')
-      .insert({
-        team_id: team.id,
-        user_id: userId,
-        action: 'team_created',
-        details: {
-          team_name: teamName,
-          team_type: aiAnalysis?.company_type,
-        },
-      });
+    // Invite code is already stored in hackathon_teams
+    // No need to create a separate record in team_invite_codes
 
     return new Response(JSON.stringify({ 
       team,

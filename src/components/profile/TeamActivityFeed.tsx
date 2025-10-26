@@ -1,10 +1,12 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { Card } from '@/components/ui/card';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import { supabase } from '@/integrations/supabase/client';
-import { GitCommit, TrendingUp, Trophy, Users } from 'lucide-react';
+import { GitCommit, TrendingUp, Trophy, Users, RefreshCw } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
+import { toast } from 'sonner';
 
 interface ActivityItem {
   id: string;
@@ -17,27 +19,62 @@ interface ActivityItem {
 
 interface TeamActivityFeedProps {
   teamId: string;
+  githubUrl?: string;
 }
 
-export function TeamActivityFeed({ teamId }: TeamActivityFeedProps) {
+export function TeamActivityFeed({ teamId, githubUrl }: TeamActivityFeedProps) {
   const [activities, setActivities] = useState<ActivityItem[]>([]);
   const [loading, setLoading] = useState(true);
+  const [syncing, setSyncing] = useState(false);
+
+  const fetchActivities = useCallback(async () => {
+    // Fetch ALL commits for this team, not just the latest 20
+    const { data } = await supabase
+      .from('progress_updates')
+      .select('*')
+      .eq('team_id', teamId)
+      .order('created_at', { ascending: false });
+
+    if (data) {
+      setActivities(data);
+    }
+    setLoading(false);
+  }, [teamId]);
+
+  const syncGitHubActivity = async () => {
+    if (!githubUrl) {
+      toast.error('No GitHub URL configured for this team');
+      return;
+    }
+
+    setSyncing(true);
+    try {
+      console.log('Calling fetch-github-activity with:', { teamId, githubUrl });
+      
+      const { data, error } = await supabase.functions.invoke('fetch-github-activity', {
+        body: { 
+          teamId, 
+          githubUrl
+        }
+      });
+
+      if (error) {
+        console.error('Edge function error:', error);
+        throw error;
+      }
+
+      console.log('Edge function response:', data);
+      toast.success(`Synced ${data.commits} commits (${data.inserted} new)`);
+      fetchActivities();
+    } catch (error: any) {
+      console.error('Sync error:', error);
+      toast.error(error.message || 'Failed to sync GitHub activity');
+    } finally {
+      setSyncing(false);
+    }
+  };
 
   useEffect(() => {
-    const fetchActivities = async () => {
-      const { data } = await supabase
-        .from('progress_updates')
-        .select('*')
-        .eq('team_id', teamId)
-        .order('created_at', { ascending: false })
-        .limit(20);
-
-      if (data) {
-        setActivities(data);
-      }
-      setLoading(false);
-    };
-
     fetchActivities();
 
     const channel = supabase
@@ -55,7 +92,7 @@ export function TeamActivityFeed({ teamId }: TeamActivityFeedProps) {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [teamId]);
+  }, [teamId, fetchActivities]);
 
   const getIcon = (type: string) => {
     switch (type) {
@@ -81,7 +118,20 @@ export function TeamActivityFeed({ teamId }: TeamActivityFeedProps) {
 
   return (
     <Card className="p-6">
-      <h3 className="font-semibold mb-4">Recent Activity</h3>
+      <div className="flex items-center justify-between mb-4">
+        <h3 className="font-semibold">Recent Activity</h3>
+        {githubUrl && (
+          <Button 
+            variant="default" 
+            size="sm" 
+            onClick={syncGitHubActivity} 
+            disabled={syncing}
+          >
+            <RefreshCw className={`w-4 h-4 mr-2 ${syncing ? 'animate-spin' : ''}`} />
+            Sync GitHub
+          </Button>
+        )}
+      </div>
       <ScrollArea className="h-[400px] pr-4">
         <div className="space-y-4">
           {activities.map((activity) => {
