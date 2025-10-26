@@ -16,6 +16,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { Users, TrendingUp, Zap, Trophy, Radio, BarChart3 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Skeleton } from "@/components/ui/skeleton";
+import { BroadcastPauseProvider } from "@/contexts/BroadcastPauseContext";
 
 interface DashboardStats {
   activeTeams: number;
@@ -176,29 +177,30 @@ const Index = () => {
   };
 
   return (
-    <div className="flex min-h-screen bg-background">
-      <Sidebar />
+    <BroadcastPauseProvider hackathonId={selectedHackathon?.id}>
+      <div className="flex min-h-screen bg-background">
+        <Sidebar />
 
-      <main className="flex-1 p-8">
-        <Header />
+        <main className="flex-1 p-8">
+          <Header />
 
-        {/* Unified Live Broadcast */}
-        <div className="mb-8">
-          <div className="mb-4">
-            <h2 className="text-3xl font-bold mb-2 bg-gradient-to-r from-neon-yellow via-neon-blue to-neon-purple bg-clip-text text-transparent">
-              Unified Hackathon Broadcast
-            </h2>
-            <p className="text-muted-foreground text-sm">
-              Real-time AI commentary covering all active hackathons - automatically switching based on breaking events
-            </p>
+          {/* Unified Live Broadcast */}
+          <div className="mb-8">
+            <div className="mb-4">
+              <h2 className="text-3xl font-bold mb-2 bg-gradient-to-r from-neon-yellow via-neon-blue to-neon-purple bg-clip-text text-transparent">
+                Unified Hackathon Broadcast
+              </h2>
+              <p className="text-muted-foreground text-sm">
+                Real-time AI commentary covering all active hackathons - automatically switching based on breaking events
+              </p>
+            </div>
+
+            {hackathonsLoading ? (
+              <Skeleton className="h-[500px] rounded-2xl" />
+            ) : (
+              <UnifiedBroadcastPlayer />
+            )}
           </div>
-
-          {hackathonsLoading ? (
-            <Skeleton className="h-[500px] rounded-2xl" />
-          ) : (
-            <UnifiedBroadcastPlayer />
-          )}
-        </div>
 
         {/* Hackathon Info Card */}
         {selectedHackathon && !hackathonsLoading && (
@@ -311,12 +313,13 @@ const Index = () => {
         <SimulationController />
       )}
 
-      {/* LinkedIn Verification Modal */}
-      <LinkedInVerificationModal
-        open={showLinkedInModal}
-        onOpenChange={handleLinkedInModalClose}
-      />
-    </div>
+        {/* LinkedIn Verification Modal */}
+        <LinkedInVerificationModal
+          open={showLinkedInModal}
+          onOpenChange={handleLinkedInModalClose}
+        />
+      </div>
+    </BroadcastPauseProvider>
   );
 };
 
