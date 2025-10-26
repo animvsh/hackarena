@@ -59,7 +59,7 @@ BEGIN
   ON CONFLICT (email) DO NOTHING;
 
   -- Update existing teams to link to hackathon
-  UPDATE teams SET hackathon_id = hackathon_id WHERE hackathon_id IS NULL;
+  UPDATE teams SET hackathon_id = (SELECT id FROM hackathons WHERE name = 'HackCast LIVE Demo 2025' LIMIT 1) WHERE teams.hackathon_id IS NULL;
 
   -- Insert prediction markets linked to hackathon
   INSERT INTO prediction_markets (category, sponsor_id, prize_amount, total_pool, status, hackathon_id) VALUES
@@ -70,8 +70,14 @@ BEGIN
   ('Best Overall Hack', NULL, 25000, 0, 'open', hackathon_id),
   ('Most Innovative UI', NULL, 7000, 0, 'open', hackathon_id),
   ('Best Developer Tool', NULL, 6000, 0, 'open', hackathon_id)
-  ON CONFLICT DO NOTHING
-  RETURNING ARRAY_AGG(id) INTO market_ids;
+  ON CONFLICT DO NOTHING;
+
+  -- Get market IDs
+  SELECT ARRAY_AGG(id ORDER BY created_at DESC) INTO market_ids FROM (
+    SELECT id, created_at FROM prediction_markets
+    WHERE prediction_markets.hackathon_id = (SELECT id FROM hackathons WHERE name = 'HackCast LIVE Demo 2025' LIMIT 1)
+    ORDER BY created_at DESC LIMIT 7
+  ) AS recent_markets;
 
   -- Get team and user IDs for cross-referencing
   SELECT ARRAY_AGG(id) INTO team_ids FROM teams LIMIT 8;
@@ -191,7 +197,7 @@ BEGIN
   ('This is it folks! The most exciting hackathon finale of 2025!', 'Analyst Ava', 'general', hackathon_id, NOW() - INTERVAL '30 seconds');
 
   -- Update commentary feed for old entries to link to hackathon
-  UPDATE commentary_feed SET hackathon_id = hackathon_id WHERE hackathon_id IS NULL;
+  UPDATE commentary_feed SET hackathon_id = (SELECT id FROM hackathons WHERE name = 'HackCast LIVE Demo 2025' LIMIT 1) WHERE commentary_feed.hackathon_id IS NULL;
 
   -- Insert API usage data
   FOR i IN 1..ARRAY_LENGTH(team_ids, 1) LOOP
@@ -202,7 +208,7 @@ BEGIN
         sponsor_id,
         endpoint,
         call_count,
-        last_called_at
+        last_called
       )
       VALUES (
         team_ids[i],
@@ -223,11 +229,29 @@ CREATE INDEX IF NOT EXISTS idx_predictions_market_created ON predictions(market_
 CREATE INDEX IF NOT EXISTS idx_commentary_hackathon_created ON commentary_feed(hackathon_id, created_at DESC);
 CREATE INDEX IF NOT EXISTS idx_progress_team_created ON progress_updates(team_id, created_at DESC);
 
--- Grant permissions for real-time subscriptions
-ALTER PUBLICATION supabase_realtime ADD TABLE teams;
-ALTER PUBLICATION supabase_realtime ADD TABLE predictions;
-ALTER PUBLICATION supabase_realtime ADD TABLE market_odds;
-ALTER PUBLICATION supabase_realtime ADD TABLE progress_updates;
-ALTER PUBLICATION supabase_realtime ADD TABLE commentary_feed;
+-- Grant permissions for real-time subscriptions (ignore if already added)
+DO $$
+BEGIN
+  BEGIN
+    ALTER PUBLICATION supabase_realtime ADD TABLE teams;
+  EXCEPTION WHEN duplicate_object THEN NULL;
+  END;
+  BEGIN
+    ALTER PUBLICATION supabase_realtime ADD TABLE predictions;
+  EXCEPTION WHEN duplicate_object THEN NULL;
+  END;
+  BEGIN
+    ALTER PUBLICATION supabase_realtime ADD TABLE market_odds;
+  EXCEPTION WHEN duplicate_object THEN NULL;
+  END;
+  BEGIN
+    ALTER PUBLICATION supabase_realtime ADD TABLE progress_updates;
+  EXCEPTION WHEN duplicate_object THEN NULL;
+  END;
+  BEGIN
+    ALTER PUBLICATION supabase_realtime ADD TABLE commentary_feed;
+  EXCEPTION WHEN duplicate_object THEN NULL;
+  END;
+END $$;
 
 COMMENT ON TABLE hackathons IS 'Hackathon events with teams, markets, and live data';
