@@ -10,6 +10,8 @@ import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Progress } from "@/components/ui/progress";
 
+import { Sidebar } from "@/components/Sidebar";
+import { Header } from "@/components/Header";
 import { UserBettingHistory } from "@/components/profile/UserBettingHistory";
 import { AvatarUpload } from "@/components/profile/AvatarUpload";
 import { UserTeamsSection } from "@/components/profile/UserTeamsSection";
@@ -102,9 +104,15 @@ export default function MyProfile() {
 
   if (loading) {
     return (
-      <div className="container max-w-6xl mx-auto p-6 space-y-6">
-        <Skeleton className="h-64 w-full" />
-        <Skeleton className="h-96 w-full" />
+      <div className="flex min-h-screen bg-background">
+        <Sidebar />
+        <div className="flex-1 flex flex-col">
+          <Header />
+          <main className="flex-1 p-4 md:p-6 space-y-6">
+            <Skeleton className="h-64 w-full" />
+            <Skeleton className="h-96 w-full" />
+          </main>
+        </div>
       </div>
     );
   }
@@ -116,7 +124,11 @@ export default function MyProfile() {
     : "0.0";
 
   return (
-    <div className="container max-w-7xl mx-auto p-4 md:p-6 space-y-6">
+    <div className="flex min-h-screen bg-background">
+      <Sidebar />
+      <div className="flex-1 flex flex-col">
+        <Header />
+        <main className="flex-1 p-4 md:p-6 space-y-6 max-w-7xl mx-auto w-full">
       {/* Pending Invites Banner */}
       <PendingInvitesBanner userId={user.id} />
       
@@ -467,6 +479,8 @@ export default function MyProfile() {
           <ProfileViewsCard userId={user.id} />
           <RecentVisitors userId={user.id} />
         </div>
+      </div>
+        </main>
       </div>
     </div>
   );
