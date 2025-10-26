@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import hackcastLogo from "@/assets/hackcast-logo.png";
 
 interface SplashScreenProps {
   onComplete?: () => void;
@@ -109,12 +110,7 @@ export function SplashScreen({ onComplete }: SplashScreenProps) {
                 transition={{ duration: 2, repeat: Infinity }}
                 className="rounded-2xl p-8 bg-card/50 backdrop-blur-xl border border-primary/20"
               >
-                <h1 className="text-6xl md:text-7xl font-bold">
-                  <span className="bg-gradient-to-r from-primary via-neon-blue to-neon-purple bg-clip-text text-transparent">
-                    HackCast
-                  </span>
-                  <span className="text-foreground"> LIVE</span>
-                </h1>
+                <img src={hackcastLogo} alt="HackCast LIVE" className="h-24 md:h-32" />
               </motion.div>
 
               {/* Pulsing rings */}

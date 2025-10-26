@@ -6,6 +6,7 @@ import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { NotificationCenter } from "./NotificationCenter";
 import { UserSearch } from "@/components/search/UserSearch";
+import hackcastLogo from "@/assets/hackcast-logo.png";
 
 export const Header = () => {
   const { user, profile, signOut } = useAuth();
@@ -20,7 +21,7 @@ export const Header = () => {
     <header className="flex items-center justify-between mb-8">
       <div>
         <div className="flex items-center gap-3 mb-1">
-          <h1 className="text-3xl font-bold gradient-text">HackCast LIVE</h1>
+          <img src={hackcastLogo} alt="HackCast LIVE" className="h-12" />
           <div className="flex items-center gap-2 px-3 py-1 bg-destructive/10 rounded-full glass">
             <div className="w-2 h-2 bg-destructive rounded-full animate-pulse"></div>
             <span className="text-xs font-bold text-destructive">BROADCASTING</span>

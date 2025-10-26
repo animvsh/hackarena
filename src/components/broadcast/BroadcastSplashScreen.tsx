@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import hackcastLogo from "@/assets/hackcast-logo.png";
 
 interface BroadcastSplashScreenProps {
   onComplete: () => void;
@@ -81,8 +82,8 @@ export function BroadcastSplashScreen({ onComplete }: BroadcastSplashScreenProps
               animate={{ scale: 1, rotate: 0 }}
               transition={{ type: 'spring', duration: 1.5, bounce: 0.4 }}
             >
-              <div className="w-32 h-32 mx-auto mb-8 bg-gradient-to-br from-primary to-accent rounded-full flex items-center justify-center shadow-2xl shadow-primary/50">
-                <span className="text-6xl font-bold text-white">H</span>
+              <div className="mx-auto mb-8 flex items-center justify-center">
+                <img src={hackcastLogo} alt="HackCast LIVE" className="h-32 md:h-40 drop-shadow-2xl" />
               </div>
             </motion.div>
           )}
@@ -94,24 +95,13 @@ export function BroadcastSplashScreen({ onComplete }: BroadcastSplashScreenProps
               animate={{ opacity: 1, y: 0 }}
               className="space-y-6"
             >
-              <motion.h1
-                className="text-7xl md:text-9xl font-black text-white tracking-tighter"
-                initial={{ letterSpacing: '0.5em', opacity: 0 }}
-                animate={{ letterSpacing: '0em', opacity: 1 }}
-                transition={{ duration: 0.8 }}
-              >
-                HACKCAST
-              </motion.h1>
-              
               <motion.div
-                className="flex items-center justify-center gap-4"
-                initial={{ scaleX: 0 }}
-                animate={{ scaleX: 1 }}
-                transition={{ delay: 0.3, duration: 0.6 }}
+                initial={{ scale: 0.8, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                transition={{ duration: 0.8 }}
+                className="flex justify-center"
               >
-                <div className="h-1 w-24 bg-gradient-to-r from-transparent via-primary to-transparent" />
-                <span className="text-3xl md:text-4xl font-bold text-primary tracking-wider">LIVE</span>
-                <div className="h-1 w-24 bg-gradient-to-r from-transparent via-primary to-transparent" />
+                <img src={hackcastLogo} alt="HackCast LIVE" className="h-32 md:h-48 drop-shadow-2xl" />
               </motion.div>
 
               <motion.p
