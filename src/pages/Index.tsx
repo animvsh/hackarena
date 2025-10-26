@@ -11,7 +11,7 @@ import { LiveCommentaryTicker } from "@/components/LiveCommentaryTicker";
 import { UnifiedBroadcastPlayer } from "@/components/broadcast/UnifiedBroadcastPlayer";
 import { HackathonInfoCard } from "@/components/HackathonInfoCard";
 import { useActiveBroadcasts } from "@/hooks/useActiveBroadcasts";
-import { SimulationController } from "@/components/SimulationController";
+
 import { LinkedInVerificationModal } from "@/components/LinkedInVerificationModal";
 import { useAuth } from "@/contexts/AuthContext";
 import { Users, TrendingUp, Zap, Trophy, Radio, BarChart3 } from "lucide-react";
@@ -327,10 +327,6 @@ const Index = () => {
         {selectedHackathon && <LiveCommentaryTicker hackathonId={selectedHackathon.id} />}
       </main>
 
-      {/* Simulation Controller (Dev Mode Only) */}
-      {import.meta.env.DEV && selectedHackathon && (
-        <SimulationController />
-      )}
 
         {/* LinkedIn Verification Modal */}
         <LinkedInVerificationModal
