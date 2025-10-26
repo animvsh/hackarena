@@ -48,22 +48,38 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const fetchUserProfile = async (userId: string) => {
     try {
-      const { data: userData } = await supabase
-        .from('users')
-        .select('id, username, email, avatar_url, wallet_balance, xp, linkedin_verified, linkedin_id, linkedin_url, profile_enrichment_source, last_profile_sync, onboarding_completed')
-        .eq('id', userId)
-        .single();
+      // Check cache first
+      const cacheKey = `user_profile_${userId}`;
+      const cached = localStorage.getItem(cacheKey);
+      const cacheExpiry = localStorage.getItem(`${cacheKey}_expiry`);
+      
+      if (cached && cacheExpiry && Date.now() < parseInt(cacheExpiry)) {
+        setProfile(JSON.parse(cached));
+      }
 
-      const { data: rolesData } = await supabase
-        .from('user_roles')
-        .select('role')
-        .eq('user_id', userId);
+      // Fetch fresh data in background (non-blocking)
+      const [{ data: userData }, { data: rolesData }] = await Promise.all([
+        supabase
+          .from('users')
+          .select('id, username, email, avatar_url, wallet_balance, xp, linkedin_verified, linkedin_id, linkedin_url, profile_enrichment_source, last_profile_sync, onboarding_completed')
+          .eq('id', userId)
+          .single(),
+        supabase
+          .from('user_roles')
+          .select('role')
+          .eq('user_id', userId)
+      ]);
 
       if (userData) {
-        setProfile({
+        const profileData = {
           ...userData,
           roles: rolesData?.map(r => r.role) || []
-        });
+        };
+        setProfile(profileData);
+        
+        // Cache for 5 minutes
+        localStorage.setItem(cacheKey, JSON.stringify(profileData));
+        localStorage.setItem(`${cacheKey}_expiry`, (Date.now() + 5 * 60 * 1000).toString());
       }
     } catch (error) {
       console.error('Error fetching profile:', error);

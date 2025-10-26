@@ -8,7 +8,7 @@ import { TrendingTeams } from "@/components/TrendingTeams";
 import { RevenueDrivers } from "@/components/RevenueDrivers";
 import { LiveMarketChart } from "@/components/LiveMarketChart";
 import { LiveCommentaryTicker } from "@/components/LiveCommentaryTicker";
-import { UnifiedBroadcastPlayer } from "@/components/broadcast/UnifiedBroadcastPlayer";
+import { LazyBroadcastPlayer } from "@/components/LazyBroadcastPlayer";
 import { HackathonInfoCard } from "@/components/HackathonInfoCard";
 import { useActiveBroadcasts } from "@/hooks/useActiveBroadcasts";
 
@@ -215,7 +215,7 @@ const Index = () => {
             {hackathonsLoading ? (
               <Skeleton className="h-[500px] rounded-2xl" />
             ) : (
-              <UnifiedBroadcastPlayer />
+              <LazyBroadcastPlayer />
             )}
           </div>
 

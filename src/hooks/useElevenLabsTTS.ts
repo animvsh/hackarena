@@ -127,38 +127,13 @@ export function useElevenLabsTTS({ text, voiceId = 'EXAVITQu4vr4xnSDxMaL', isMut
     }
   }, [isPaused, isMuted]);
 
-  // Effect to handle text changes with debouncing
+  // DISABLED: TTS temporarily disabled due to quota exceeded error
   useEffect(() => {
-    // Only generate speech if:
-    // 1. Not muted
-    // 2. Not paused
-    // 3. Enabled
-    // 4. Text has changed
-    // 5. Text is not empty
-    // 6. Not currently generating (prevent race conditions)
-    
-    if (!isMuted && !isPaused && enabled && text && text !== textToSpeakRef.current && !isGeneratingRef.current) {
-      textToSpeakRef.current = text;
-      isGeneratingRef.current = true;
-      
-      // Small debounce to prevent rapid-fire changes
-      const debounceTimer = setTimeout(() => {
-        generateSpeech(text).finally(() => {
-          isGeneratingRef.current = false;
-        });
-      }, 100);  // 100ms debounce
-      
-      return () => {
-        clearTimeout(debounceTimer);
-        isGeneratingRef.current = false;
-      };
-    } else if (isMuted || isPaused) {
-      // Stop audio if muted or paused
-      stopAudio();
-      isGeneratingRef.current = false;
-      textToSpeakRef.current = '';
-    }
-  }, [text, isMuted, isPaused, enabled, generateSpeech, stopAudio]);
+    // Disable all TTS functionality
+    setError('TTS temporarily disabled - ElevenLabs quota exceeded');
+    console.log('[useElevenLabsTTS] TTS DISABLED - quota exceeded');
+    return;
+  }, []);
 
   // Cleanup on unmount
   useEffect(() => {
