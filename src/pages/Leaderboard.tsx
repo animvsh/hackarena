@@ -14,26 +14,25 @@ interface TeamRanking {
   id: string;
   name: string;
   logo_url: string | null;
-  category: string[];
-  current_progress: number;
-  momentum_score: number;
+  category: string;
+  hackathon_name: string;
+  hackathon_id: string;
+  overall_rating: number;
+  technical_skill: number;
+  hackathon_experience: number;
+  innovation: number;
 }
 
-interface UserRanking {
-  id: string;
-  username: string;
-  avatar_url: string | null;
-  xp: number;
-  total_predictions: number;
-  correct_predictions: number;
-  wallet_balance: number;
+interface HackathonLeaderboard {
+  hackathon_id: string;
+  hackathon_name: string;
+  teams: TeamRanking[];
 }
 
 const Leaderboard = () => {
   const navigate = useNavigate();
-  const [teamsByProgress, setTeamsByProgress] = useState<TeamRanking[]>([]);
-  const [teamsByMomentum, setTeamsByMomentum] = useState<TeamRanking[]>([]);
-  const [topPredictors, setTopPredictors] = useState<UserRanking[]>([]);
+  const [hackathonLeaderboards, setHackathonLeaderboards] = useState<HackathonLeaderboard[]>([]);
+  const [topPredictors, setTopPredictors] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -43,28 +42,72 @@ const Leaderboard = () => {
   const fetchLeaderboards = async () => {
     setLoading(true);
 
-    // Fetch teams by progress
-    const { data: progressData } = await supabase
-      .from('teams')
-      .select('id, name, logo_url, category, current_progress, momentum_score')
-      .order('current_progress', { ascending: false })
-      .limit(10);
+    // Fetch all hackathons
+    const { data: hackathons } = await supabase
+      .from('hackathons')
+      .select('id, name')
+      .eq('status', 'active');
 
-    if (progressData) setTeamsByProgress(progressData);
+    if (hackathons && hackathons.length > 0) {
+      const leaderboards: HackathonLeaderboard[] = [];
 
-    // Fetch teams by momentum
-    const { data: momentumData } = await supabase
-      .from('teams')
-      .select('id, name, logo_url, category, current_progress, momentum_score')
-      .order('momentum_score', { ascending: false })
-      .limit(10);
+      // For each hackathon, get top 10 teams by overall rating
+      for (const hackathon of hackathons) {
+        const { data: teamsData } = await supabase
+          .from('hackathon_teams')
+          .select(`
+            id,
+            name,
+            logo_url,
+            category,
+            hackathon_id,
+            hackathons!hackathon_teams_hackathon_id_fkey (name),
+            team_stats (
+              avg_overall_rating,
+              avg_technical_skill,
+              avg_hackathon_experience,
+              avg_innovation
+            )
+          `)
+          .eq('hackathon_id', hackathon.id)
+          .order('current_progress', { ascending: false })
+          .limit(3);
 
-    if (momentumData) setTeamsByMomentum(momentumData);
+        if (teamsData && teamsData.length > 0) {
+          const teamsWithStats = teamsData
+            .map(team => {
+              const stats = team.team_stats?.[0];
+              return {
+                id: team.id,
+                name: team.name,
+                logo_url: team.logo_url,
+                category: team.category || '',
+                hackathon_name: team.hackathons?.name || hackathon.name,
+                hackathon_id: team.hackathon_id,
+                overall_rating: parseFloat(stats?.avg_overall_rating || '0'),
+                technical_skill: parseFloat(stats?.avg_technical_skill || '0'),
+                hackathon_experience: parseFloat(stats?.avg_hackathon_experience || '0'),
+                innovation: parseFloat(stats?.avg_innovation || '0')
+              };
+            })
+            .filter(team => team.overall_rating > 0) // Only include teams with stats
+            .sort((a, b) => b.overall_rating - a.overall_rating);
+
+          leaderboards.push({
+            hackathon_id: hackathon.id,
+            hackathon_name: hackathon.name,
+            teams: teamsWithStats
+          });
+        }
+      }
+
+      setHackathonLeaderboards(leaderboards);
+    }
 
     // Fetch top predictors
     const { data: predictorsData } = await supabase
       .from('users')
-      .select('id, username, avatar_url, xp, total_predictions, correct_predictions, wallet_balance')
+      .select('id, username, avatar_url, xp, total_predictions, correct_predictions, wallet_balance, accuracy_rate')
       .order('xp', { ascending: false })
       .limit(10);
 
@@ -80,7 +123,11 @@ const Leaderboard = () => {
     return `#${rank}`;
   };
 
-  const getAccuracyRate = (user: UserRanking) => {
+  const getAccuracyRate = (user: any) => {
+    // Use accuracy_rate if available (from betting), otherwise calculate from predictions
+    if (user.accuracy_rate !== undefined && user.accuracy_rate !== null) {
+      return user.accuracy_rate.toFixed(1);
+    }
     if (user.total_predictions === 0) return 0;
     return ((user.correct_predictions / user.total_predictions) * 100).toFixed(1);
   };
@@ -116,15 +163,11 @@ const Leaderboard = () => {
         </div>
 
         {/* Leaderboards */}
-        <Tabs defaultValue="progress" className="w-full">
-          <TabsList className="grid w-full grid-cols-3">
-            <TabsTrigger value="progress">
-              <TrendingUp className="w-4 h-4 mr-2" />
-              Top Teams (Progress)
-            </TabsTrigger>
-            <TabsTrigger value="momentum">
+        <Tabs defaultValue="teams" className="w-full">
+          <TabsList className="grid w-full grid-cols-2">
+            <TabsTrigger value="teams">
               <Trophy className="w-4 h-4 mr-2" />
-              Top Teams (Momentum)
+              Top Teams by Hackathon
             </TabsTrigger>
             <TabsTrigger value="predictors">
               <Coins className="w-4 h-4 mr-2" />
@@ -132,92 +175,57 @@ const Leaderboard = () => {
             </TabsTrigger>
           </TabsList>
 
-          {/* Teams by Progress */}
-          <TabsContent value="progress" className="mt-6">
-            <Card className="p-6">
-              <div className="space-y-3">
-                {teamsByProgress.map((team, index) => (
-                  <div
-                    key={team.id}
-                    className={`flex items-center gap-4 p-4 rounded-lg transition-colors cursor-pointer hover:bg-muted ${
-                      index < 3
-                        ? 'bg-gradient-to-r from-yellow-500/10 to-transparent'
-                        : 'bg-background'
-                    }`}
-                    onClick={() => navigate(`/teams/${team.id}`)}
-                  >
-                    <div className="text-2xl font-bold w-12 text-center">
-                      {getMedalIcon(index + 1)}
-                    </div>
-                    <img
-                      src={team.logo_url || `https://api.dicebear.com/7.x/shapes/svg?seed=${team.name}`}
-                      alt={team.name}
-                      className="w-12 h-12 rounded-lg"
-                    />
-                    <div className="flex-1">
-                      <p className="font-semibold">{team.name}</p>
-                      <div className="flex flex-wrap gap-1 mt-1">
-                        {team.category?.slice(0, 3).map((cat) => (
-                          <Badge key={cat} variant="secondary" className="text-xs">
-                            {cat}
-                          </Badge>
-                        ))}
-                      </div>
-                    </div>
-                    <div className="text-right">
-                      <p className="text-2xl font-bold text-primary">
-                        {team.current_progress}%
-                      </p>
-                      <p className="text-xs text-muted-foreground">Progress</p>
-                    </div>
+          {/* Teams by Hackathon */}
+          <TabsContent value="teams" className="mt-6">
+            <div className="space-y-6">
+              {hackathonLeaderboards.map((leaderboard) => (
+                <Card key={leaderboard.hackathon_id} className="p-6">
+                  <div className="mb-4">
+                    <h2 className="text-xl font-bold">{leaderboard.hackathon_name}</h2>
+                    <p className="text-sm text-muted-foreground">Top {leaderboard.teams.length} teams by rating</p>
                   </div>
-                ))}
-              </div>
-            </Card>
-          </TabsContent>
-
-          {/* Teams by Momentum */}
-          <TabsContent value="momentum" className="mt-6">
-            <Card className="p-6">
-              <div className="space-y-3">
-                {teamsByMomentum.map((team, index) => (
-                  <div
-                    key={team.id}
-                    className={`flex items-center gap-4 p-4 rounded-lg transition-colors cursor-pointer hover:bg-muted ${
-                      index < 3
-                        ? 'bg-gradient-to-r from-red-500/10 to-transparent'
-                        : 'bg-background'
-                    }`}
-                    onClick={() => navigate(`/teams/${team.id}`)}
-                  >
-                    <div className="text-2xl font-bold w-12 text-center">
-                      {getMedalIcon(index + 1)}
-                    </div>
-                    <img
-                      src={team.logo_url || `https://api.dicebear.com/7.x/shapes/svg?seed=${team.name}`}
-                      alt={team.name}
-                      className="w-12 h-12 rounded-lg"
-                    />
-                    <div className="flex-1">
-                      <p className="font-semibold">{team.name}</p>
-                      <div className="flex flex-wrap gap-1 mt-1">
-                        {team.category?.slice(0, 3).map((cat) => (
-                          <Badge key={cat} variant="secondary" className="text-xs">
-                            {cat}
-                          </Badge>
-                        ))}
+                  <div className="space-y-3">
+                    {leaderboard.teams.map((team, index) => (
+                      <div
+                        key={team.id}
+                        className={`flex items-center gap-4 p-4 rounded-lg transition-colors cursor-pointer hover:bg-muted ${
+                          index < 3
+                            ? 'bg-gradient-to-r from-yellow-500/10 to-transparent'
+                            : 'bg-background'
+                        }`}
+                        onClick={() => navigate(`/hackathons/${leaderboard.hackathon_id}/teams/${team.id}`)}
+                      >
+                        <div className="text-2xl font-bold w-12 text-center">
+                          {getMedalIcon(index + 1)}
+                        </div>
+                        <img
+                          src={team.logo_url || `https://api.dicebear.com/7.x/shapes/svg?seed=${team.name}`}
+                          alt={team.name}
+                          className="w-12 h-12 rounded-lg"
+                        />
+                        <div className="flex-1">
+                          <p className="font-semibold">{team.name}</p>
+                          <div className="flex items-center gap-3 mt-1">
+                            <Badge variant="secondary" className="text-xs">
+                              {team.category}
+                            </Badge>
+                            <span className="text-xs text-muted-foreground">
+                              Skill: {team.technical_skill} | Exp: {team.hackathon_experience} | Innovation: {team.innovation}
+                            </span>
+                          </div>
+                        </div>
+                        <div className="text-right">
+                          <p className="text-2xl font-bold text-primary">
+                            {team.overall_rating.toFixed(1)}
+                          </p>
+                          <p className="text-xs text-muted-foreground">Overall Rating</p>
+                        </div>
                       </div>
-                    </div>
-                    <div className="text-right">
-                      <p className="text-2xl font-bold text-red-500">
-                        {team.momentum_score.toFixed(1)}
-                      </p>
-                      <p className="text-xs text-muted-foreground">Momentum</p>
-                    </div>
+                    ))}
                   </div>
-                ))}
-              </div>
-            </Card>
+                </Card>
+              ))}
+            </div>
           </TabsContent>
 
           {/* Top Predictors */}
