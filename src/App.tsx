@@ -6,6 +6,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
+import { EnhancedChatWidget } from "@/components/chat/EnhancedChatWidget";
 import { SplashScreen } from "@/components/SplashScreen";
 import { Skeleton } from "@/components/ui/skeleton";
 
@@ -31,6 +32,7 @@ const BetDetail = lazy(() => import("./pages/BetDetail"));
 const TeamInvite = lazy(() => import("./pages/TeamInvite"));
 const MyProfile = lazy(() => import("./pages/MyProfile"));
 const ProfileEdit = lazy(() => import("./pages/ProfileEdit"));
+const LinkedInCallback = lazy(() => import("./pages/LinkedInCallback"));
 
 // Loading fallback component
 const PageLoader = () => (
@@ -94,12 +96,15 @@ const App = () => {
                 <Route path="/radio" element={<RadioPage />} />
                 <Route path="/sponsors" element={<Sponsors />} />
                 <Route path="/wallet" element={<ProtectedRoute><WalletPage /></ProtectedRoute>} />
+                <Route path="/broadcast" element={<BroadcastStream />} />
                 <Route path="/bets/:betId" element={<ProtectedRoute><BetDetail /></ProtectedRoute>} />
                 <Route path="/invite/:inviteId" element={<TeamInvite />} />
+                <Route path="/auth/callback/linkedin" element={<LinkedInCallback />} />
                 {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
                 <Route path="*" element={<NotFound />} />
               </Routes>
             </Suspense>
+            <EnhancedChatWidget />
           </AuthProvider>
         </BrowserRouter>
       </TooltipProvider>

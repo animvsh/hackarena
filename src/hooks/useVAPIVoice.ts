@@ -6,8 +6,6 @@ export function useVAPIVoice() {
 
   const speak = async (text: string) => {
     // TODO: User implements VAPI integration here
-    console.log('VAPI would speak:', text);
-    
     // Simulate speaking
     setIsSpeaking(true);
     setTimeout(() => {

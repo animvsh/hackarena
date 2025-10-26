@@ -4,7 +4,8 @@ import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Upload, Linkedin, Github, FileText } from "lucide-react";
+import { Separator } from "@/components/ui/separator";
+import { Upload, Linkedin, Github, FileText, ShieldCheck } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { ResumeUploader } from "./ResumeUploader";
@@ -115,6 +116,27 @@ export const ProfileImport = ({ onComplete }: ProfileImportProps) => {
     }
   };
 
+  const handleLinkedInOAuth = async () => {
+    setLoading(true);
+    try {
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: 'linkedin_oidc',
+        options: {
+          redirectTo: `${window.location.origin}/auth/callback/linkedin`,
+          scopes: 'openid profile email',
+        },
+      });
+
+      if (error) throw error;
+
+      toast.info('Redirecting to LinkedIn for verification...');
+    } catch (error) {
+      console.error('LinkedIn OAuth error:', error);
+      toast.error('Failed to connect to LinkedIn. Please try again.');
+      setLoading(false);
+    }
+  };
+
   const handleConfirm = (source: string) => {
     if (profileData) {
       onComplete(profileData, source);
@@ -158,37 +180,79 @@ export const ProfileImport = ({ onComplete }: ProfileImportProps) => {
         </TabsContent>
 
         <TabsContent value="linkedin" className="space-y-4">
-          <Card className="p-6 space-y-4">
-            <div className="flex items-center gap-3 mb-4">
+          <Card className="p-6 space-y-6">
+            <div className="flex items-center gap-3">
               <div className="p-3 rounded-lg bg-primary/10">
                 <Linkedin className="w-6 h-6 text-primary" />
               </div>
               <div>
                 <h3 className="font-semibold">Import from LinkedIn</h3>
                 <p className="text-sm text-muted-foreground">
-                  Enter your LinkedIn profile URL
+                  Choose how to import your profile
                 </p>
               </div>
             </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="linkedin">LinkedIn Profile URL</Label>
-              <Input
-                id="linkedin"
-                type="url"
-                placeholder="https://linkedin.com/in/yourprofile"
-                value={linkedinUrl}
-                onChange={(e) => setLinkedinUrl(e.target.value)}
-              />
+            {/* Recommended: OAuth Verification */}
+            <div className="space-y-3 p-4 border-2 border-primary/20 rounded-lg bg-primary/5">
+              <div className="flex items-start gap-3">
+                <ShieldCheck className="w-5 h-5 text-primary mt-0.5" />
+                <div className="flex-1">
+                  <div className="flex items-center gap-2">
+                    <h4 className="font-semibold text-sm">Verify with LinkedIn</h4>
+                    <span className="text-xs bg-primary text-primary-foreground px-2 py-0.5 rounded-full">
+                      Recommended
+                    </span>
+                  </div>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Securely connect and auto-import your profile data
+                  </p>
+                </div>
+              </div>
+              <Button
+                onClick={handleLinkedInOAuth}
+                disabled={loading}
+                className="w-full"
+                size="lg"
+              >
+                <ShieldCheck className="w-4 h-4 mr-2" />
+                {loading ? "Connecting..." : "Connect & Verify LinkedIn"}
+              </Button>
             </div>
 
-            <Button
-              onClick={handleLinkedinImport}
-              disabled={loading || !linkedinUrl}
-              className="w-full"
-            >
-              {loading ? "Importing..." : "Import from LinkedIn"}
-            </Button>
+            <div className="relative">
+              <div className="absolute inset-0 flex items-center">
+                <Separator />
+              </div>
+              <div className="relative flex justify-center text-xs uppercase">
+                <span className="bg-background px-2 text-muted-foreground">
+                  Or import manually
+                </span>
+              </div>
+            </div>
+
+            {/* Alternative: Manual URL Import */}
+            <div className="space-y-3">
+              <div className="space-y-2">
+                <Label htmlFor="linkedin">LinkedIn Profile URL</Label>
+                <Input
+                  id="linkedin"
+                  type="url"
+                  placeholder="https://linkedin.com/in/yourprofile"
+                  value={linkedinUrl}
+                  onChange={(e) => setLinkedinUrl(e.target.value)}
+                />
+              </div>
+
+              <Button
+                onClick={handleLinkedinImport}
+                disabled={loading || !linkedinUrl}
+                variant="outline"
+                className="w-full"
+              >
+                {loading ? "Importing..." : "Import from URL"}
+              </Button>
+            </div>
           </Card>
         </TabsContent>
 

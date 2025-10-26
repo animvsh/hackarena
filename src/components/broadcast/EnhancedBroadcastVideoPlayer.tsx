@@ -71,8 +71,6 @@ export function EnhancedBroadcastVideoPlayer({ hackathonId }: EnhancedBroadcastV
 
   // Real-time event integration
   useRealtimeBroadcastEvents((event) => {
-    console.log('📡 Broadcast event received:', event);
-    
     // Show toast for breaking news
     if (event.priority === 'breaking') {
       toast({
@@ -122,7 +120,7 @@ export function EnhancedBroadcastVideoPlayer({ hackathonId }: EnhancedBroadcastV
   // Note: Play/pause is controlled globally now
   const togglePlayPause = () => {
     // In global mode, users cannot control play/pause
-    console.log('Broadcast state is controlled globally');
+    // No-op: Broadcast state is controlled globally
   };
 
   const handleFullscreen = () => {
@@ -160,6 +158,12 @@ export function EnhancedBroadcastVideoPlayer({ hackathonId }: EnhancedBroadcastV
   // Keyboard shortcuts - MUST be before early returns
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
+      // Don't prevent spacebar if user is typing in an input/textarea
+      const target = e.target as HTMLElement;
+      if (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA') {
+        return;
+      }
+      
       if (e.code === 'Space') {
         e.preventDefault();
         togglePlayPause();
@@ -189,11 +193,11 @@ export function EnhancedBroadcastVideoPlayer({ hackathonId }: EnhancedBroadcastV
       >
         {/* Splash screen and commercial break are now INSIDE the video container */}
         {broadcastState === 'splash' && (
-          <BroadcastSplashScreen onComplete={() => console.log('Splash complete - controlled globally')} />
+          <BroadcastSplashScreen onComplete={() => {}} />
         )}
-        
+
         {broadcastState === 'commercial' && (
-          <CommercialBreak duration={30} onComplete={() => console.log('Commercial complete - controlled globally')} />
+          <CommercialBreak duration={30} onComplete={() => {}} />
         )}
 
         {/* Main broadcast content - only show when live */}

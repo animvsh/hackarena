@@ -24,7 +24,6 @@ export function useAIBroadcastContent() {
 
   // Handle real-time events
   const handleBroadcastEvent = useCallback(async (event: BroadcastEvent) => {
-    console.log('📡 Broadcast event received:', event);
     activityMonitor.current.updateActivity();
 
     // Generate commentary for this event
@@ -105,8 +104,6 @@ export function useAIBroadcastContent() {
     const processQueue = () => {
       const next = queue.getNext();
       if (!next) return;
-
-      console.log('🎬 Broadcasting:', next);
 
       if (next.content_type === 'commentary') {
         setCommentary(next);

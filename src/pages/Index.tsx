@@ -11,6 +11,8 @@ import { BroadcastCarousel } from "@/components/broadcast/BroadcastCarousel";
 import { HackathonInfoCard } from "@/components/HackathonInfoCard";
 import { useActiveBroadcasts } from "@/hooks/useActiveBroadcasts";
 import { SimulationController } from "@/components/SimulationController";
+import { LinkedInVerificationModal } from "@/components/LinkedInVerificationModal";
+import { useAuth } from "@/contexts/AuthContext";
 import { Users, TrendingUp, Zap, Trophy, Radio, BarChart3 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -24,6 +26,7 @@ interface DashboardStats {
 }
 
 const Index = () => {
+  const { user } = useAuth();
   const { hackathons, selectedHackathon, selectHackathon, loading: hackathonsLoading } = useActiveBroadcasts();
   const [stats, setStats] = useState<DashboardStats>({
     activeTeams: 0,
@@ -33,6 +36,36 @@ const Index = () => {
     commentaryEvents: 0,
   });
   const [loading, setLoading] = useState(true);
+  const [showLinkedInModal, setShowLinkedInModal] = useState(false);
+  const [linkedinVerified, setLinkedinVerified] = useState<boolean | null>(null);
+
+  // Check LinkedIn verification status on mount
+  useEffect(() => {
+    const checkLinkedInVerification = async () => {
+      if (!user) return;
+
+      const { data } = await supabase
+        .from('users')
+        .select('linkedin_verified')
+        .eq('id', user.id)
+        .single();
+
+      const isVerified = data?.linkedin_verified || false;
+      setLinkedinVerified(isVerified);
+
+      // Show modal if not verified and haven't seen it before (using localStorage)
+      const hasSeenModal = localStorage.getItem('linkedinVerificationPromptShown');
+      if (!isVerified && !hasSeenModal) {
+        // Delay showing the modal by 2 seconds to not overwhelm the user immediately
+        setTimeout(() => {
+          setShowLinkedInModal(true);
+          localStorage.setItem('linkedinVerificationPromptShown', 'true');
+        }, 2000);
+      }
+    };
+
+    checkLinkedInVerification();
+  }, [user]);
 
   useEffect(() => {
     if (selectedHackathon) {
@@ -265,6 +298,12 @@ const Index = () => {
       {import.meta.env.DEV && selectedHackathon && (
         <SimulationController />
       )}
+
+      {/* LinkedIn Verification Modal */}
+      <LinkedInVerificationModal
+        open={showLinkedInModal}
+        onOpenChange={setShowLinkedInModal}
+      />
     </div>
   );
 };
