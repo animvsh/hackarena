@@ -59,13 +59,21 @@ const Index = () => {
         // Delay showing the modal by 2 seconds to not overwhelm the user immediately
         setTimeout(() => {
           setShowLinkedInModal(true);
-          localStorage.setItem('linkedinVerificationPromptShown', 'true');
         }, 2000);
       }
     };
 
     checkLinkedInVerification();
   }, [user]);
+
+  // Mark modal as seen when user interacts with it
+  const handleLinkedInModalClose = (open: boolean) => {
+    if (!open && showLinkedInModal) {
+      // User is closing the modal, mark it as seen
+      localStorage.setItem('linkedinVerificationPromptShown', 'true');
+    }
+    setShowLinkedInModal(open);
+  };
 
   useEffect(() => {
     if (selectedHackathon) {
@@ -302,7 +310,7 @@ const Index = () => {
       {/* LinkedIn Verification Modal */}
       <LinkedInVerificationModal
         open={showLinkedInModal}
-        onOpenChange={setShowLinkedInModal}
+        onOpenChange={handleLinkedInModalClose}
       />
     </div>
   );

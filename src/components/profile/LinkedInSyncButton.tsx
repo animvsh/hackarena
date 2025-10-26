@@ -6,20 +6,26 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { formatDistanceToNow } from "date-fns";
 
+interface ProfileData {
+  linkedin_verified?: boolean;
+  linkedin_id?: string | null;
+  linkedin_url?: string | null;
+  last_profile_sync?: string | null;
+}
+
 interface LinkedInSyncButtonProps {
-  isVerified: boolean;
-  linkedinId?: string | null;
-  lastSync?: string | null;
-  onSyncComplete?: () => void;
+  profile: ProfileData;
+  onProfileUpdate?: (updatedProfile: Partial<ProfileData>) => void;
 }
 
 export const LinkedInSyncButton = ({
-  isVerified,
-  linkedinId,
-  lastSync,
-  onSyncComplete
+  profile,
+  onProfileUpdate
 }: LinkedInSyncButtonProps) => {
   const [syncing, setSyncing] = useState(false);
+  const isVerified = profile?.linkedin_verified || false;
+  const linkedinId = profile?.linkedin_id;
+  const lastSync = profile?.last_profile_sync;
 
   const handleVerify = async () => {
     try {
@@ -37,8 +43,7 @@ export const LinkedInSyncButton = ({
 
       toast.info('Redirecting to LinkedIn...');
     } catch (error) {
-      console.error('LinkedIn OAuth error:', error);
-      toast.error('Failed to connect to LinkedIn');
+      toast.error('Failed to connect to LinkedIn. Please try again.');
     }
   };
 
@@ -57,24 +62,26 @@ export const LinkedInSyncButton = ({
         throw new Error('Not authenticated');
       }
 
-      const { data: profile } = await supabase
+      const { data: profileData } = await supabase
         .from('users')
         .select('linkedin_url')
         .eq('id', user.id)
         .single();
 
-      if (!profile?.linkedin_url) {
+      if (!profileData?.linkedin_url) {
         throw new Error('No LinkedIn URL found');
       }
 
       // Call the import function to re-scrape the profile
       const { data, error } = await supabase.functions.invoke('import-linkedin-profile', {
-        body: { linkedinUrl: profile.linkedin_url },
+        body: { linkedinUrl: profileData.linkedin_url },
       });
 
       if (error) {
         throw error;
       }
+
+      const syncTime = new Date().toISOString();
 
       // Update the user's profile with the new data
       const { error: updateError } = await supabase
@@ -84,7 +91,7 @@ export const LinkedInSyncButton = ({
           skills: data.profile.skills,
           experience: data.profile.experience,
           education: data.profile.education,
-          last_profile_sync: new Date().toISOString(),
+          last_profile_sync: syncTime,
         })
         .eq('id', user.id);
 
@@ -93,10 +100,15 @@ export const LinkedInSyncButton = ({
       }
 
       toast.success('Profile synced successfully!');
-      onSyncComplete?.();
+
+      // Call the callback with updated profile data
+      onProfileUpdate?.({
+        last_profile_sync: syncTime,
+        ...data.profile
+      });
     } catch (error) {
-      console.error('Sync error:', error);
-      toast.error('Failed to sync LinkedIn profile');
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      toast.error(`Failed to sync LinkedIn profile: ${errorMessage}`);
     } finally {
       setSyncing(false);
     }

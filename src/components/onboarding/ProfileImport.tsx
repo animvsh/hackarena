@@ -131,8 +131,8 @@ export const ProfileImport = ({ onComplete }: ProfileImportProps) => {
 
       toast.info('Redirecting to LinkedIn for verification...');
     } catch (error) {
-      console.error('LinkedIn OAuth error:', error);
-      toast.error('Failed to connect to LinkedIn. Please try again.');
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      toast.error(`Failed to connect to LinkedIn: ${errorMessage}`);
       setLoading(false);
     }
   };

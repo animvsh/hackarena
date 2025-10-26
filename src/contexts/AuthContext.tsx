@@ -11,6 +11,11 @@ interface UserProfile {
   wallet_balance: number;
   xp: number;
   roles: string[];
+  linkedin_verified?: boolean;
+  linkedin_id?: string | null;
+  linkedin_url?: string | null;
+  profile_enrichment_source?: string | null;
+  last_profile_sync?: string | null;
 }
 
 interface AuthContextType {
@@ -44,7 +49,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     try {
       const { data: userData } = await supabase
         .from('users')
-        .select('id, username, email, avatar_url, wallet_balance, xp')
+        .select('id, username, email, avatar_url, wallet_balance, xp, linkedin_verified, linkedin_id, linkedin_url, profile_enrichment_source, last_profile_sync')
         .eq('id', userId)
         .single();
 

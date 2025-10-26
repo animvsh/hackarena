@@ -90,10 +90,10 @@ export function useOAuthCallback() {
                   throw new Error('No profile data returned');
                 }
               } catch (error) {
-                console.error('LinkedIn profile import error:', error);
-                toast.error('LinkedIn verified, but profile import failed. You can manually sync later.', {
+                const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+                toast.error(`LinkedIn verified, but profile import failed: ${errorMessage}. You can manually sync later.`, {
                   id: 'linkedin-import',
-                  duration: 5000
+                  duration: 6000
                 });
 
                 // Still save the LinkedIn URL even if scraping fails
