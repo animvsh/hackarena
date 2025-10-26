@@ -11,8 +11,8 @@ serve(async (req) => {
   }
 
   try {
-    const { linkedinUrl } = await req.json();
-    
+    const { linkedinUrl, linkedinId } = await req.json();
+
     if (!linkedinUrl) {
       return new Response(
         JSON.stringify({ error: 'LinkedIn URL is required' }),
@@ -27,6 +27,13 @@ serve(async (req) => {
         JSON.stringify({ error: 'Clado API is not configured' }),
         { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
+    }
+
+    // Log whether this is an OAuth flow or regular URL import
+    if (linkedinId) {
+      console.log('LinkedIn OAuth import with ID:', linkedinId);
+    } else {
+      console.log('LinkedIn URL-based import');
     }
 
     // Call Clado API to enrich LinkedIn profile

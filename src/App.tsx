@@ -32,6 +32,7 @@ const BetDetail = lazy(() => import("./pages/BetDetail"));
 const TeamInvite = lazy(() => import("./pages/TeamInvite"));
 const MyProfile = lazy(() => import("./pages/MyProfile"));
 const ProfileEdit = lazy(() => import("./pages/ProfileEdit"));
+const LinkedInCallback = lazy(() => import("./pages/LinkedInCallback"));
 
 // Loading fallback component
 const PageLoader = () => (
@@ -98,6 +99,7 @@ const App = () => {
                 <Route path="/broadcast" element={<BroadcastStream />} />
                 <Route path="/bets/:betId" element={<ProtectedRoute><BetDetail /></ProtectedRoute>} />
                 <Route path="/invite/:inviteId" element={<TeamInvite />} />
+                <Route path="/auth/callback/linkedin" element={<LinkedInCallback />} />
                 {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
                 <Route path="*" element={<NotFound />} />
               </Routes>
