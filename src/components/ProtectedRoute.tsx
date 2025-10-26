@@ -13,16 +13,20 @@ export const ProtectedRoute = ({ children, requiredRole }: ProtectedRouteProps) 
   const navigate = useNavigate();
 
   useEffect(() => {
-    if (!loading && !user) {
-      navigate('/auth');
-    } else if (
-      !loading && 
-      user && 
-      profile && 
-      profile.onboarding_completed === false && 
-      window.location.pathname !== '/onboarding'
-    ) {
-      navigate('/onboarding');
+    // Only redirect if we're sure the user is not authenticated
+    if (!loading) {
+      if (!user) {
+        console.log('No user found, redirecting to auth');
+        navigate('/auth');
+      } else if (
+        user && 
+        profile && 
+        profile.onboarding_completed === false && 
+        window.location.pathname !== '/onboarding'
+      ) {
+        console.log('Onboarding not completed, redirecting to onboarding');
+        navigate('/onboarding');
+      }
     }
   }, [user, profile, loading, navigate]);
 
