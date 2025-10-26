@@ -16,7 +16,6 @@ import { useAuth } from "@/contexts/AuthContext";
 import { Users, TrendingUp, Zap, Trophy, Radio, BarChart3 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Skeleton } from "@/components/ui/skeleton";
-import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
 
 interface DashboardStats {
@@ -30,7 +29,6 @@ interface DashboardStats {
 const Index = () => {
   const { user } = useAuth();
   const { hackathons, selectedHackathon, selectHackathon, loading: hackathonsLoading } = useActiveBroadcasts();
-  const { user } = useAuth();
   const [stats, setStats] = useState<DashboardStats>({
     activeTeams: 0,
     commitsPerHour: 0,
