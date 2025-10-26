@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { Sidebar } from "@/components/Sidebar";
 import { Header } from "@/components/Header";
 import { StatCard } from "@/components/StatCard";
@@ -16,6 +17,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { Users, TrendingUp, Zap, Trophy, Radio, BarChart3 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Button } from "@/components/ui/button";
 import { BroadcastPauseProvider } from "@/contexts/BroadcastPauseContext";
 
 interface DashboardStats {
@@ -28,6 +30,7 @@ interface DashboardStats {
 
 const Index = () => {
   const { user, profile } = useAuth();
+  const navigate = useNavigate();
   const { hackathons, selectedHackathon, selectHackathon, loading: hackathonsLoading } = useActiveBroadcasts();
   const [stats, setStats] = useState<DashboardStats>({
     activeTeams: 0,
@@ -40,12 +43,12 @@ const Index = () => {
   const [showLinkedInModal, setShowLinkedInModal] = useState(false);
   const [linkedinVerified, setLinkedinVerified] = useState<boolean | null>(null);
 
-  // Redirect to onboarding if not completed (safety check)
+  // Redirect authenticated users to onboarding if not completed
   useEffect(() => {
-    if (profile && profile.onboarding_completed === false) {
-      window.location.href = '/onboarding';
+    if (user && profile && profile.onboarding_completed === false) {
+      navigate('/onboarding');
     }
-  }, [profile]);
+  }, [user, profile, navigate]);
 
   // Check LinkedIn verification status on mount
   useEffect(() => {
@@ -184,6 +187,22 @@ const Index = () => {
         <main className="flex-1 p-8">
           <Header />
 
+          {/* Guest Mode Banner */}
+          {!user && (
+            <div className="bg-gradient-to-r from-primary/10 to-primary/5 border border-primary/20 rounded-lg p-4 mb-6 flex items-center justify-between flex-wrap gap-3">
+              <div className="flex items-center gap-3">
+                <div className="w-2 h-2 bg-primary rounded-full animate-pulse" />
+                <p className="text-sm font-medium">
+                  <span className="text-muted-foreground">Viewing in guest mode.</span>{' '}
+                  <span className="text-foreground">Sign in to place bets, create teams, and compete!</span>
+                </p>
+              </div>
+              <Button onClick={() => navigate('/auth')} size="sm">
+                Sign In
+              </Button>
+            </div>
+          )}
+
           {/* Unified Live Broadcast */}
           <div className="mb-8">
             <div className="mb-4">
@@ -297,7 +316,7 @@ const Index = () => {
             <LiveMarketChart hackathonId={selectedHackathon.id} />
 
             <div className="space-y-6">
-              <UserWallet />
+              {user && <UserWallet />}
               <TrendingTeams hackathonId={selectedHackathon.id} />
               <RevenueDrivers />
             </div>

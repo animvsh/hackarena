@@ -75,9 +75,14 @@ export const Header = () => {
             </DropdownMenuContent>
           </DropdownMenu>
         ) : (
-          <Button onClick={() => navigate('/auth')} variant="default">
-            Sign In
-          </Button>
+          <div className="flex items-center gap-2">
+            <Button onClick={() => navigate('/auth')} variant="outline" size="sm">
+              Sign In
+            </Button>
+            <Button onClick={() => navigate('/auth')} size="sm">
+              Sign Up
+            </Button>
+          </div>
         )}
       </div>
     </header>

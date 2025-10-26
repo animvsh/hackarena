@@ -31,6 +31,9 @@ export const Sidebar = () => {
           <span className="text-primary">HackCast</span>
           <span className="text-muted-foreground text-sm ml-2">LIVE</span>
         </h1>
+        {!user && (
+          <p className="text-xs text-muted-foreground mt-2">Guest Mode</p>
+        )}
       </div>
 
       {/* User Profile */}
@@ -98,12 +101,17 @@ export const Sidebar = () => {
             </button>
           </>
         ) : (
-          <Link 
-            to="/auth"
-            className="w-full flex items-center justify-center gap-3 px-4 py-3 rounded-xl bg-primary text-primary-foreground hover:bg-primary/90 transition-colors font-medium text-sm"
-          >
-            Sign In
-          </Link>
+          <div className="space-y-2">
+            <Link 
+              to="/auth"
+              className="w-full flex items-center justify-center gap-3 px-4 py-3 rounded-xl bg-primary text-primary-foreground hover:bg-primary/90 transition-colors font-medium text-sm"
+            >
+              Sign In
+            </Link>
+            <p className="text-xs text-center text-muted-foreground">
+              Sign in to bet and compete
+            </p>
+          </div>
         )}
       </div>
 
