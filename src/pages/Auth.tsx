@@ -25,7 +25,10 @@ export default function Auth() {
 
   useEffect(() => {
     if (user) {
-      navigate('/');
+      // Check if there's a return path stored
+      const returnPath = localStorage.getItem('returnAfterSignIn');
+      localStorage.removeItem('returnAfterSignIn');
+      navigate(returnPath || '/');
     }
   }, [user, navigate]);
 
@@ -45,7 +48,9 @@ export default function Auth() {
             : error.message);
         } else {
           toast.success('Welcome back!');
-          navigate('/');
+          const returnPath = localStorage.getItem('returnAfterSignIn');
+          localStorage.removeItem('returnAfterSignIn');
+          navigate(returnPath || '/');
         }
       } else {
         const validated = signupSchema.parse(formData);

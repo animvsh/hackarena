@@ -6,6 +6,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
+import { EnhancedChatWidget } from "@/components/chat/EnhancedChatWidget";
 import { SplashScreen } from "@/components/SplashScreen";
 import { Skeleton } from "@/components/ui/skeleton";
 
@@ -94,12 +95,14 @@ const App = () => {
                 <Route path="/radio" element={<RadioPage />} />
                 <Route path="/sponsors" element={<Sponsors />} />
                 <Route path="/wallet" element={<ProtectedRoute><WalletPage /></ProtectedRoute>} />
+                <Route path="/broadcast" element={<BroadcastStream />} />
                 <Route path="/bets/:betId" element={<ProtectedRoute><BetDetail /></ProtectedRoute>} />
                 <Route path="/invite/:inviteId" element={<TeamInvite />} />
                 {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
                 <Route path="*" element={<NotFound />} />
               </Routes>
             </Suspense>
+            <EnhancedChatWidget />
           </AuthProvider>
         </BrowserRouter>
       </TooltipProvider>
