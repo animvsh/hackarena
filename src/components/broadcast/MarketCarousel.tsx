@@ -18,19 +18,25 @@ interface Market {
 
 interface MarketCarouselProps {
   onMarketClick?: (marketId: string) => void;
+  hackathonId?: string;
 }
 
-export function MarketCarousel({ onMarketClick }: MarketCarouselProps) {
+export function MarketCarousel({ onMarketClick, hackathonId }: MarketCarouselProps) {
   const [markets, setMarkets] = useState<Market[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const fetchMarkets = async () => {
-      const { data, error } = await supabase
+      let query = supabase
         .from('prediction_markets')
         .select('*')
-        .eq('status', 'open')
-        .order('created_at', { ascending: false });
+        .eq('status', 'open');
+      
+      if (hackathonId) {
+        query = query.eq('hackathon_id', hackathonId);
+      }
+      
+      const { data, error } = await query.order('created_at', { ascending: false });
 
       if (!error && data) {
         setMarkets(data);
@@ -39,7 +45,7 @@ export function MarketCarousel({ onMarketClick }: MarketCarouselProps) {
     };
 
     fetchMarkets();
-  }, []);
+  }, [hackathonId]);
 
   const hotMarkets = [...markets].sort((a, b) => b.total_pool - a.total_pool);
   const byPrize = [...markets].sort((a, b) => b.prize_amount - a.prize_amount);

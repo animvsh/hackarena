@@ -112,6 +112,7 @@ export type Database = {
           content_type: string
           created_at: string
           duration: number | null
+          hackathon_id: string | null
           id: string
           metadata: Json | null
           priority: string
@@ -123,6 +124,7 @@ export type Database = {
           content_type: string
           created_at?: string
           duration?: number | null
+          hackathon_id?: string | null
           id?: string
           metadata?: Json | null
           priority?: string
@@ -134,6 +136,7 @@ export type Database = {
           content_type?: string
           created_at?: string
           duration?: number | null
+          hackathon_id?: string | null
           id?: string
           metadata?: Json | null
           priority?: string
@@ -142,6 +145,13 @@ export type Database = {
           text?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "broadcast_content_hackathon_id_fkey"
+            columns: ["hackathon_id"]
+            isOneToOne: false
+            referencedRelation: "hackathons"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "broadcast_content_team_id_fkey"
             columns: ["team_id"]
@@ -156,6 +166,7 @@ export type Database = {
           commentary_index: number | null
           current_scene: string
           current_segment_id: string | null
+          hackathon_id: string | null
           id: string
           live_viewer_count: number | null
           phase: string | null
@@ -167,6 +178,7 @@ export type Database = {
           commentary_index?: number | null
           current_scene: string
           current_segment_id?: string | null
+          hackathon_id?: string | null
           id?: string
           live_viewer_count?: number | null
           phase?: string | null
@@ -178,6 +190,7 @@ export type Database = {
           commentary_index?: number | null
           current_scene?: string
           current_segment_id?: string | null
+          hackathon_id?: string | null
           id?: string
           live_viewer_count?: number | null
           phase?: string | null
@@ -185,13 +198,22 @@ export type Database = {
           state?: string
           updated_at?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "broadcast_state_hackathon_id_fkey"
+            columns: ["hackathon_id"]
+            isOneToOne: false
+            referencedRelation: "hackathons"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       commentary_feed: {
         Row: {
           audio_url: string | null
           created_at: string | null
           event_type: string | null
+          hackathon_id: string | null
           id: string
           related_market_id: string | null
           related_team_id: string | null
@@ -202,6 +224,7 @@ export type Database = {
           audio_url?: string | null
           created_at?: string | null
           event_type?: string | null
+          hackathon_id?: string | null
           id?: string
           related_market_id?: string | null
           related_team_id?: string | null
@@ -212,6 +235,7 @@ export type Database = {
           audio_url?: string | null
           created_at?: string | null
           event_type?: string | null
+          hackathon_id?: string | null
           id?: string
           related_market_id?: string | null
           related_team_id?: string | null
@@ -219,6 +243,13 @@ export type Database = {
           voice_persona?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "commentary_feed_hackathon_id_fkey"
+            columns: ["hackathon_id"]
+            isOneToOne: false
+            referencedRelation: "hackathons"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "commentary_feed_related_market_id_fkey"
             columns: ["related_market_id"]
@@ -713,6 +744,7 @@ export type Database = {
           category: string
           created_at: string | null
           end_time: string | null
+          hackathon_id: string | null
           id: string
           prize_amount: number
           sponsor_id: string | null
@@ -725,6 +757,7 @@ export type Database = {
           category: string
           created_at?: string | null
           end_time?: string | null
+          hackathon_id?: string | null
           id?: string
           prize_amount: number
           sponsor_id?: string | null
@@ -737,6 +770,7 @@ export type Database = {
           category?: string
           created_at?: string | null
           end_time?: string | null
+          hackathon_id?: string | null
           id?: string
           prize_amount?: number
           sponsor_id?: string | null
@@ -746,6 +780,13 @@ export type Database = {
           winner_team_id?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "prediction_markets_hackathon_id_fkey"
+            columns: ["hackathon_id"]
+            isOneToOne: false
+            referencedRelation: "hackathons"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "prediction_markets_sponsor_id_fkey"
             columns: ["sponsor_id"]
@@ -1403,6 +1444,7 @@ export type Database = {
           current_progress: number | null
           devpost_url: string | null
           github_repo: string | null
+          hackathon_id: string | null
           id: string
           invite_code: string | null
           logo_url: string | null
@@ -1423,6 +1465,7 @@ export type Database = {
           current_progress?: number | null
           devpost_url?: string | null
           github_repo?: string | null
+          hackathon_id?: string | null
           id?: string
           invite_code?: string | null
           logo_url?: string | null
@@ -1443,6 +1486,7 @@ export type Database = {
           current_progress?: number | null
           devpost_url?: string | null
           github_repo?: string | null
+          hackathon_id?: string | null
           id?: string
           invite_code?: string | null
           logo_url?: string | null
@@ -1457,7 +1501,15 @@ export type Database = {
           tech_stack?: string[] | null
           updated_at?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "teams_hackathon_id_fkey"
+            columns: ["hackathon_id"]
+            isOneToOne: false
+            referencedRelation: "hackathons"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       user_roles: {
         Row: {

@@ -21,9 +21,10 @@ interface Market {
 
 interface BettingSidebarProps {
   onMarketClick?: (marketId: string) => void;
+  hackathonId?: string;
 }
 
-export function BettingSidebar({ onMarketClick }: BettingSidebarProps) {
+export function BettingSidebar({ onMarketClick, hackathonId }: BettingSidebarProps) {
   const navigate = useNavigate();
   const [hotMarkets, setHotMarkets] = useState<Market[]>([]);
   const [tickerItems, setTickerItems] = useState<any[]>([]);
@@ -35,9 +36,15 @@ export function BettingSidebar({ onMarketClick }: BettingSidebarProps) {
 
   useEffect(() => {
     const fetchHotMarkets = async () => {
-      const { data } = await supabase
+      let query = supabase
         .from('prediction_markets')
-        .select('*')
+        .select('*');
+      
+      if (hackathonId) {
+        query = query.eq('hackathon_id', hackathonId);
+      }
+      
+      const { data } = await query
         .eq('status', 'open')
         .order('total_pool', { ascending: false })
         .limit(3);
@@ -76,7 +83,7 @@ export function BettingSidebar({ onMarketClick }: BettingSidebarProps) {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, []);
+  }, [hackathonId]);
 
   const handleQuickBet = (market: Market, teamData: any) => {
     setSelectedMarket(market);
