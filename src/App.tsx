@@ -11,6 +11,7 @@ import Index from "./pages/Index";
 import Auth from "./pages/Auth";
 import Onboarding from "./pages/Onboarding";
 import Markets from "./pages/Markets";
+import Hackathons from "./pages/Hackathons";
 import Teams from "./pages/Teams";
 import TeamSettings from "./pages/TeamSettings";
 import Leaderboard from "./pages/Leaderboard";
@@ -56,6 +57,9 @@ const App = () => {
             <Route path="/" element={<ProtectedRoute><Index /></ProtectedRoute>} />
             <Route path="/auth" element={<Auth />} />
             <Route path="/onboarding" element={<ProtectedRoute><Onboarding /></ProtectedRoute>} />
+            <Route path="/hackathons" element={<Hackathons />} />
+            <Route path="/hackathons/:hackathonId/markets" element={<Markets />} />
+            <Route path="/hackathons/:hackathonId/broadcast" element={<BroadcastStream />} />
             <Route path="/markets" element={<Markets />} />
             <Route path="/teams" element={<Teams />} />
             <Route path="/teams/:teamId" element={<ProtectedRoute><TeamProfile /></ProtectedRoute>} />
@@ -68,7 +72,6 @@ const App = () => {
             <Route path="/sponsors" element={<Sponsors />} />
             <Route path="/wallet" element={<ProtectedRoute><WalletPage /></ProtectedRoute>} />
             <Route path="/bets/:betId" element={<ProtectedRoute><BetDetail /></ProtectedRoute>} />
-            <Route path="/broadcast" element={<BroadcastStream />} />
             <Route path="/invite/:inviteId" element={<TeamInvite />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />

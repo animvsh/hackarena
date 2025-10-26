@@ -29,7 +29,11 @@ import { selectPersonalityForScene } from '@/types/broadcastPersonality';
 import type { BroadcastScene } from '@/types/broadcast';
 import { useToast } from '@/hooks/use-toast';
 
-export function EnhancedBroadcastVideoPlayer() {
+interface EnhancedBroadcastVideoPlayerProps {
+  hackathonId?: string;
+}
+
+export function EnhancedBroadcastVideoPlayer({ hackathonId }: EnhancedBroadcastVideoPlayerProps = {}) {
   const { toast } = useToast();
   
   // Segment-driven content management

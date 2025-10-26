@@ -6,11 +6,10 @@ import { Badge } from "@/components/ui/badge";
 
 const navItems = [
   { icon: Tv, label: "Dashboard", route: "/" },
-  { icon: TrendingUp, label: "Markets", route: "/markets" },
+  { icon: Trophy, label: "Hackathons", route: "/hackathons" },
   { icon: Users, label: "Teams", route: "/teams" },
   { icon: BarChart3, label: "Leaderboard", route: "/leaderboard" },
   { icon: User, label: "My Profile", route: "/profile" },
-  { icon: Trophy, label: "Sponsors", route: "/sponsors" },
   { icon: Wallet, label: "My Wallet", route: "/wallet" },
 ];
 

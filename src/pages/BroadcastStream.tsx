@@ -5,12 +5,14 @@ import { EnhancedBroadcastVideoPlayer } from '@/components/broadcast/EnhancedBro
 import { BettingSidebar } from '@/components/broadcast/BettingSidebar';
 import { MarketCarousel } from '@/components/broadcast/MarketCarousel';
 import { MarketDetailModal } from '@/components/MarketDetailModal';
-import { useNavigate } from 'react-router-dom';
+import { HackathonHeader } from '@/components/HackathonHeader';
+import { useNavigate, useParams } from 'react-router-dom';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 
 export default function BroadcastStream() {
   const navigate = useNavigate();
+  const { hackathonId } = useParams<{ hackathonId: string }>();
   const [selectedMarketId, setSelectedMarketId] = useState<string | null>(null);
   const [isFullscreen, setIsFullscreen] = useState(false);
 
@@ -79,11 +81,11 @@ export default function BroadcastStream() {
             <Button 
               variant="ghost" 
               size="sm"
-              onClick={() => navigate('/')}
+              onClick={() => navigate(hackathonId ? `/hackathons/${hackathonId}/markets` : '/hackathons')}
               className="gap-2"
             >
               <ArrowLeft className="w-4 h-4" />
-              Dashboard
+              {hackathonId ? 'Back to Markets' : 'Hackathons'}
             </Button>
             <div className="flex items-center gap-2">
               <div className="w-2 h-2 bg-destructive rounded-full animate-pulse shadow-[0_0_10px_rgba(255,75,100,0.8)]" />
@@ -107,9 +109,11 @@ export default function BroadcastStream() {
         {/* Left Column - Video & Markets */}
         <div className="flex-1 overflow-y-auto">
           <div className="p-4 lg:p-6 space-y-6 max-w-7xl mx-auto">
+            {hackathonId && <HackathonHeader hackathonId={hackathonId} />}
+            
             {/* Video Player */}
             <div className="w-full">
-              <EnhancedBroadcastVideoPlayer />
+              <EnhancedBroadcastVideoPlayer hackathonId={hackathonId} />
             </div>
 
             {/* Market Carousel */}
@@ -118,7 +122,7 @@ export default function BroadcastStream() {
                 📊 Active Markets
                 <span className="text-sm font-normal text-muted-foreground">Click to view details</span>
               </h2>
-              <MarketCarousel onMarketClick={setSelectedMarketId} />
+              <MarketCarousel onMarketClick={setSelectedMarketId} hackathonId={hackathonId} />
             </div>
 
             {/* Additional Stats Section */}
@@ -144,12 +148,12 @@ export default function BroadcastStream() {
 
         {/* Right Sidebar - Betting Interface (Hidden on mobile) */}
         <div className="w-full lg:w-[400px] hidden lg:block border-l border-border">
-          <BettingSidebar onMarketClick={setSelectedMarketId} />
+          <BettingSidebar onMarketClick={setSelectedMarketId} hackathonId={hackathonId} />
         </div>
 
         {/* Mobile Betting Drawer - Show on mobile */}
         <div className="lg:hidden fixed bottom-0 left-0 right-0 max-h-[50vh] bg-card border-t border-border z-40">
-          <BettingSidebar onMarketClick={setSelectedMarketId} />
+          <BettingSidebar onMarketClick={setSelectedMarketId} hackathonId={hackathonId} />
         </div>
       </div>
 
