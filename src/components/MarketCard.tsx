@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, memo, useCallback } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -28,7 +28,7 @@ interface MarketCardProps {
   status: string;
 }
 
-export const MarketCard = ({
+export const MarketCard = memo(({
   marketId,
   category,
   sponsor,
@@ -93,10 +93,10 @@ export const MarketCard = ({
     }
   };
 
-  const handlePlaceBet = (team: TeamOdds) => {
+  const handlePlaceBet = useCallback((team: TeamOdds) => {
     setSelectedTeam(team);
     setShowBettingModal(true);
-  };
+  }, []);
 
   return (
     <>
@@ -213,4 +213,4 @@ export const MarketCard = ({
       )}
     </>
   );
-};
+});

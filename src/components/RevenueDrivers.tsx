@@ -8,7 +8,11 @@ interface Metrics {
   activeTeams: number;
 }
 
-export const RevenueDrivers = () => {
+interface RevenueDriversProps {
+  hackathonId?: string;
+}
+
+export const RevenueDrivers = ({ hackathonId }: RevenueDriversProps) => {
   const [metrics, setMetrics] = useState<Metrics>({
     totalAPICalls: 0,
     totalPredictions: 0,
@@ -31,33 +35,65 @@ export const RevenueDrivers = () => {
         schema: 'public',
         table: 'predictions'
       }, fetchMetrics)
+      .on('postgres_changes', {
+        event: '*',
+        schema: 'public',
+        table: 'teams'
+      }, fetchMetrics)
       .subscribe();
 
     return () => {
       supabase.removeChannel(channel);
     };
-  }, []);
+  }, [hackathonId]);
 
   const fetchMetrics = async () => {
     setLoading(true);
 
-    // Get total API calls
-    const { data: apiData } = await supabase
+    // Get total API calls (filtered by team's hackathon if available)
+    let apiQuery = supabase
       .from('api_usage')
-      .select('call_count');
+      .select(`
+        call_count,
+        teams!inner (
+          hackathon_id
+        )
+      `);
 
+    if (hackathonId) {
+      apiQuery = apiQuery.eq('teams.hackathon_id', hackathonId);
+    }
+
+    const { data: apiData } = await apiQuery;
     const totalAPICalls = apiData?.reduce((sum, item) => sum + (item.call_count || 0), 0) || 0;
 
-    // Get total predictions
-    const { count: totalPredictions } = await supabase
+    // Get total predictions (filter by hackathon via market)
+    let predictionsQuery = supabase
       .from('predictions')
-      .select('*', { count: 'exact', head: true });
+      .select(`
+        id,
+        prediction_markets!inner (
+          hackathon_id
+        )
+      `, { count: 'exact', head: true });
 
-    // Get active teams count
-    const { count: activeTeams } = await supabase
+    if (hackathonId) {
+      predictionsQuery = predictionsQuery.eq('prediction_markets.hackathon_id', hackathonId);
+    }
+
+    const { count: totalPredictions } = await predictionsQuery;
+
+    // Get active teams count (filter by hackathon)
+    let teamsQuery = supabase
       .from('teams')
       .select('*', { count: 'exact', head: true })
       .eq('status', 'active');
+
+    if (hackathonId) {
+      teamsQuery = teamsQuery.eq('hackathon_id', hackathonId);
+    }
+
+    const { count: activeTeams } = await teamsQuery;
 
     setMetrics({
       totalAPICalls,

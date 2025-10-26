@@ -30,7 +30,6 @@ export function useSegmentContent() {
 
   // Handle breaking news injection
   const injectBreakingNews = useCallback((event: RealtimeBroadcastEvent) => {
-    console.log('🚨 Breaking news injected:', event);
     setBreakingEvent(event);
   }, []);
 
@@ -54,8 +53,7 @@ export function useSegmentContent() {
     if (useAI) {
       try {
         const aiContent = await generateSegmentWithAI(scene);
-        console.log('✅ AI segment generated:', scene);
-        
+
         // Convert AI format to our format
         return {
           scene,
@@ -73,7 +71,7 @@ export function useSegmentContent() {
           }))
         };
       } catch (error) {
-        console.error('❌ AI generation failed, falling back to mock:', error);
+        // Fallback to mock content if AI fails
         setUseAI(false); // Disable AI for this session if it fails
       }
     }

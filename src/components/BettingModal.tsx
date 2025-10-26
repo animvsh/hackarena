@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   Dialog,
   DialogContent,
@@ -11,6 +11,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/AuthContext";
 import { Coins, TrendingUp, AlertCircle } from "lucide-react";
 
 interface BettingModalProps {
@@ -35,12 +36,16 @@ export const BettingModal = ({
   team,
   onBetPlaced,
 }: BettingModalProps) => {
+  const { user, profile } = useAuth();
   const [betAmount, setBetAmount] = useState<string>("");
   const [isPlacing, setIsPlacing] = useState(false);
+  const [userBalance, setUserBalance] = useState<number>(0);
 
-  // Mock user - in production, get from auth
-  const mockUserId = "00000000-0000-0000-0000-000000000001";
-  const mockUserBalance = 1500; // Get from user context
+  useEffect(() => {
+    if (profile?.wallet_balance !== undefined) {
+      setUserBalance(profile.wallet_balance);
+    }
+  }, [profile]);
 
   const calculatePotentialPayout = () => {
     const amount = parseInt(betAmount) || 0;
@@ -49,6 +54,13 @@ export const BettingModal = ({
   };
 
   const handlePlaceBet = async () => {
+    // Check authentication
+    if (!user) {
+      toast.error("Please sign in to place bets");
+      onOpenChange(false);
+      return;
+    }
+
     const amount = parseInt(betAmount);
 
     if (!amount || amount <= 0) {
@@ -56,7 +68,7 @@ export const BettingModal = ({
       return;
     }
 
-    if (amount > mockUserBalance) {
+    if (amount > userBalance) {
       toast.error("Insufficient HackCoins!");
       return;
     }
@@ -64,68 +76,30 @@ export const BettingModal = ({
     setIsPlacing(true);
 
     try {
-      // Insert the prediction
-      const { data: prediction, error: predictionError } = await supabase
-        .from('predictions')
-        .insert({
-          user_id: mockUserId,
-          market_id: marketId,
-          team_id: team.team_id,
-          amount: amount,
-          odds_at_bet: team.current_odds,
-        })
-        .select()
-        .single();
+      // Use optimized database function for atomic bet placement
+      const { data, error } = await supabase.rpc('place_bet', {
+        p_user_id: user.id,
+        p_market_id: marketId,
+        p_team_id: team.team_id,
+        p_amount: amount,
+        p_current_odds: team.current_odds,
+      });
 
-      if (predictionError) throw predictionError;
+      if (error) throw error;
 
-      // Get current volume
-      const { data: currentOdds } = await supabase
-        .from('market_odds')
-        .select('volume')
-        .eq('market_id', marketId)
-        .eq('team_id', team.team_id)
-        .single();
-
-      // Update market odds with new volume
-      const newVolume = (currentOdds?.volume || 0) + amount;
-      const { error: oddsError } = await supabase
-        .from('market_odds')
-        .update({
-          volume: newVolume,
-          last_updated: new Date().toISOString(),
-        })
-        .eq('market_id', marketId)
-        .eq('team_id', team.team_id);
-
-      if (oddsError) throw oddsError;
-
-      // Recalculate odds for all teams in this market
-      const { data: allOdds } = await supabase
-        .from('market_odds')
-        .select('id, volume')
-        .eq('market_id', marketId);
-
-      if (allOdds) {
-        const totalVolume = allOdds.reduce((sum, odd) => sum + (odd.volume || 0), 0);
-
-        // Update odds for each team
-        for (const odd of allOdds) {
-          const newOdds = totalVolume > 0 ? ((odd.volume || 0) / totalVolume) * 100 : 0;
-          await supabase
-            .from('market_odds')
-            .update({ current_odds: newOdds })
-            .eq('id', odd.id);
-        }
-      }
+      // Update local balance
+      setUserBalance(data.new_balance);
 
       toast.success(`Bet placed! ${amount} HC on ${team.team_name}`);
       onBetPlaced();
       onOpenChange(false);
       setBetAmount("");
     } catch (error: any) {
-      console.error('Bet placement error:', error);
-      toast.error(error.message || "Failed to place bet");
+      if (error.message?.includes('Insufficient balance')) {
+        toast.error("Insufficient HackCoins!");
+      } else {
+        toast.error(error.message || "Failed to place bet");
+      }
     } finally {
       setIsPlacing(false);
     }
@@ -171,7 +145,8 @@ export const BettingModal = ({
               value={betAmount}
               onChange={(e) => setBetAmount(e.target.value)}
               min="1"
-              max={mockUserBalance}
+              max={userBalance}
+              disabled={!user}
             />
             <div className="flex gap-2">
               {quickAmounts.map((amount) => (
@@ -181,13 +156,14 @@ export const BettingModal = ({
                   size="sm"
                   onClick={() => setBetAmount(amount.toString())}
                   className="flex-1"
+                  disabled={!user || amount > userBalance}
                 >
                   {amount} HC
                 </Button>
               ))}
             </div>
             <p className="text-xs text-muted-foreground">
-              Balance: {mockUserBalance} HC
+              {user ? `Balance: ${userBalance.toLocaleString()} HC` : 'Sign in to place bets'}
             </p>
           </div>
 
@@ -228,10 +204,10 @@ export const BettingModal = ({
             </Button>
             <Button
               onClick={handlePlaceBet}
-              disabled={!betAmount || parseInt(betAmount) <= 0 || isPlacing}
+              disabled={!user || !betAmount || parseInt(betAmount) <= 0 || isPlacing}
               className="flex-1"
             >
-              {isPlacing ? "Placing..." : `Bet ${betAmount || 0} HC`}
+              {isPlacing ? "Placing..." : !user ? "Sign in to bet" : `Bet ${betAmount || 0} HC`}
             </Button>
           </div>
         </div>

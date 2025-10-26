@@ -29,8 +29,6 @@ export function useRealtimeBroadcastEvents(
       eventProcessedRef.current = new Set(entries.slice(-50));
     }
 
-    console.log('📡 Real-time database event:', payload);
-
     let event: RealtimeBroadcastEvent | null = null;
 
     // Process different table events
@@ -96,8 +94,6 @@ export function useRealtimeBroadcastEvents(
   }, [onEvent]);
 
   useEffect(() => {
-    console.log('🔌 Setting up real-time broadcast event listeners...');
-
     // Create a single channel for all database changes
     channelRef.current = supabase
       .channel('broadcast-events')
@@ -137,12 +133,9 @@ export function useRealtimeBroadcastEvents(
         },
         handleDatabaseEvent
       )
-      .subscribe((status) => {
-        console.log('📡 Broadcast events channel status:', status);
-      });
+      .subscribe();
 
     return () => {
-      console.log('🔌 Cleaning up real-time broadcast event listeners');
       if (channelRef.current) {
         supabase.removeChannel(channelRef.current);
         channelRef.current = null;

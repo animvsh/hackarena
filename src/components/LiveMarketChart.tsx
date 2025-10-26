@@ -42,40 +42,96 @@ export const LiveMarketChart = ({ hackathonId }: LiveMarketChartProps) => {
       .from('teams')
       .select('id, name')
       .limit(6);
-    
+
     if (hackathonId) {
       query = query.eq('hackathon_id', hackathonId);
     }
-    
+
     const { data: teamsData } = await query;
 
     if (teamsData) {
       setTeams(teamsData);
 
-      // Transform data for chart with mock odds
-      const chartData = teamsData.map((team, index) => ({
-        name: team.name,
-        odds: 50 + (index * 5), // Mock data until market_odds is populated
-      }));
+      // Get actual odds data from market_odds
+      const { data: oddsData } = await supabase
+        .from('market_odds')
+        .select(`
+          team_id,
+          current_odds,
+          teams!inner (
+            name,
+            hackathon_id
+          )
+        `)
+        .limit(6);
 
-      setOddsHistory(chartData);
+      if (oddsData && oddsData.length > 0) {
+        // Use real odds data
+        const filteredOdds = hackathonId
+          ? oddsData.filter((item: any) => item.teams?.hackathon_id === hackathonId)
+          : oddsData;
+
+        const chartData = filteredOdds.map((item: any) => ({
+          name: item.teams?.name || 'Unknown',
+          odds: item.current_odds || 0,
+        }));
+
+        setOddsHistory(chartData);
+      } else {
+        // Fallback to mock data if no odds available
+        const chartData = teamsData.map((team, index) => ({
+          name: team.name,
+          odds: 50 + (index * 5),
+        }));
+
+        setOddsHistory(chartData);
+      }
     }
 
-    // Fetch stats
-    const { data: oddsData } = await supabase
-      .from('market_odds')
-      .select('volume');
-
-    const totalVolume = oddsData?.reduce((sum, item) => sum + (item.volume || 0), 0) || 0;
-
-    const { count: activeMarkets } = await supabase
+    // Fetch stats - filter by hackathon
+    let marketsQuery = supabase
       .from('prediction_markets')
-      .select('*', { count: 'exact', head: true })
+      .select('id', { count: 'exact', head: true })
       .eq('status', 'open');
 
-    const { count: predictions } = await supabase
+    if (hackathonId) {
+      marketsQuery = marketsQuery.eq('hackathon_id', hackathonId);
+    }
+
+    const { count: activeMarkets } = await marketsQuery;
+
+    // Get volume for this hackathon's markets
+    let oddsVolumeQuery = supabase
+      .from('market_odds')
+      .select(`
+        volume,
+        prediction_markets!inner (
+          hackathon_id
+        )
+      `);
+
+    if (hackathonId) {
+      oddsVolumeQuery = oddsVolumeQuery.eq('prediction_markets.hackathon_id', hackathonId);
+    }
+
+    const { data: volumeData } = await oddsVolumeQuery;
+    const totalVolume = volumeData?.reduce((sum, item) => sum + (item.volume || 0), 0) || 0;
+
+    // Get predictions for this hackathon
+    let predictionsQuery = supabase
       .from('predictions')
-      .select('*', { count: 'exact', head: true });
+      .select(`
+        id,
+        prediction_markets!inner (
+          hackathon_id
+        )
+      `, { count: 'exact', head: true });
+
+    if (hackathonId) {
+      predictionsQuery = predictionsQuery.eq('prediction_markets.hackathon_id', hackathonId);
+    }
+
+    const { count: predictions } = await predictionsQuery;
 
     setStats({
       totalVolume,

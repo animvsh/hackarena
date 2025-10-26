@@ -10,6 +10,7 @@ import { LiveCommentaryTicker } from "@/components/LiveCommentaryTicker";
 import { BroadcastCarousel } from "@/components/broadcast/BroadcastCarousel";
 import { HackathonInfoCard } from "@/components/HackathonInfoCard";
 import { useActiveBroadcasts } from "@/hooks/useActiveBroadcasts";
+import { SimulationController } from "@/components/SimulationController";
 import { Users, TrendingUp, Zap, Trophy, Radio, BarChart3 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -259,6 +260,11 @@ const Index = () => {
         {/* Live Commentary Ticker */}
         {selectedHackathon && <LiveCommentaryTicker hackathonId={selectedHackathon.id} />}
       </main>
+
+      {/* Simulation Controller (Dev Mode Only) */}
+      {import.meta.env.DEV && selectedHackathon && (
+        <SimulationController />
+      )}
     </div>
   );
 };
