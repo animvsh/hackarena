@@ -1,30 +1,28 @@
-import { NavLink, useNavigate } from "react-router-dom";
-import { useAuth } from "@/contexts/AuthContext";
-import {
-  Home,
-  TrendingUp,
-  Users2,
+import { NavLink, useNavigate } from 'react-router-dom';
+import { useAuth } from '@/contexts/AuthContext';
+import { supabase } from '@/integrations/supabase/client';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { 
+  LayoutDashboard, 
+  TrendingUp, 
+  Users, 
+  Calendar, 
   Trophy,
-  BarChart3,
   Wallet,
   Radio,
   Settings,
-  LogOut,
-  Activity,
-} from "lucide-react";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Button } from "@/components/ui/button";
-import { Separator } from "@/components/ui/separator";
-import { supabase } from "@/integrations/supabase/client";
+  Coins
+} from 'lucide-react';
 
 const navItems = [
-  { icon: Home, label: "Dashboard", route: "/" },
-  { icon: TrendingUp, label: "Markets", route: "/markets" },
-  { icon: Users2, label: "Teams", route: "/teams" },
-  { icon: Trophy, label: "Hackathons", route: "/hackathons" },
-  { icon: BarChart3, label: "Leaderboard", route: "/leaderboard" },
-  { icon: Wallet, label: "Wallet", route: "/wallet" },
-  { icon: Radio, label: "Live Radio", route: "/radio" },
+  { icon: LayoutDashboard, label: 'Dashboard', path: '/', gradient: 'from-purple-500 to-pink-500' },
+  { icon: TrendingUp, label: 'Markets', path: '/markets', gradient: 'from-cyan-500 to-blue-500' },
+  { icon: Users, label: 'Teams', path: '/teams', gradient: 'from-orange-500 to-red-500' },
+  { icon: Calendar, label: 'Hackathons', path: '/hackathons', gradient: 'from-pink-500 to-purple-500' },
+  { icon: Trophy, label: 'Leaderboard', path: '/leaderboard', gradient: 'from-green-500 to-teal-500' },
+  { icon: Wallet, label: 'Wallet', path: '/wallet', gradient: 'from-yellow-500 to-orange-500' },
+  { icon: Radio, label: 'Broadcast', path: '/radio', gradient: 'from-blue-500 to-cyan-500' },
 ];
 
 export const NavigationSidebar = () => {
@@ -33,95 +31,97 @@ export const NavigationSidebar = () => {
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
-    navigate("/auth");
+    navigate('/auth');
   };
 
   return (
-    <aside className="fixed left-0 top-0 h-screen w-60 bg-slate-medium border-r border-border flex flex-col z-50">
-      {/* Logo */}
-      <div className="p-6 border-b border-border">
-        <div className="flex items-center gap-2">
-          <div className="w-8 h-8 bg-neon-green rounded-lg flex items-center justify-center">
-            <Activity className="w-5 h-5 text-background" />
-          </div>
-          <div>
-            <h1 className="text-xl font-bold text-foreground">HackArena</h1>
-            <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-              <div className="w-1.5 h-1.5 bg-neon-green rounded-full animate-pulse" />
-              <span>LIVE</span>
-            </div>
+    <TooltipProvider delayDuration={0}>
+      <aside className="fixed left-0 top-0 h-screen w-20 bg-slate-medium/50 backdrop-blur-xl border-r border-white/10 flex flex-col items-center py-6 z-50">
+        {/* Logo */}
+        <div className="mb-8">
+          <div className="w-12 h-12 bg-gradient-purple-pink rounded-2xl flex items-center justify-center shadow-lg shadow-neon-purple/30">
+            <Trophy className="w-7 h-7 text-white" />
           </div>
         </div>
-      </div>
 
-      {/* Navigation */}
-      <nav className="flex-1 px-3 py-4 space-y-1 overflow-y-auto">
-        {navItems.map((item) => (
-          <NavLink
-            key={item.route}
-            to={item.route}
-            end={item.route === "/"}
-            className={({ isActive }) =>
-              `flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200 ${
-                isActive
-                  ? "bg-neon-green/10 text-neon-green font-medium"
-                  : "text-muted-foreground hover:bg-slate-light hover:text-foreground"
-              }`
-            }
-          >
-            <item.icon className="w-5 h-5" />
-            <span className="text-sm">{item.label}</span>
-          </NavLink>
-        ))}
-      </nav>
+        {/* Navigation */}
+        <nav className="flex-1 flex flex-col gap-4 w-full px-3">
+          {navItems.map((item) => {
+            const Icon = item.icon;
+            return (
+              <Tooltip key={item.path}>
+                <TooltipTrigger asChild>
+                  <NavLink
+                    to={item.path}
+                    end={item.path === '/'}
+                    className={({ isActive }) =>
+                      `group relative flex items-center justify-center w-14 h-14 rounded-2xl transition-all duration-200 ${
+                        isActive
+                          ? 'bg-white/10 shadow-lg'
+                          : 'hover:bg-white/5'
+                      }`
+                    }
+                  >
+                    {({ isActive }) => (
+                      <div className={`w-10 h-10 bg-gradient-to-br ${item.gradient} rounded-xl flex items-center justify-center transition-transform group-hover:scale-110 ${isActive ? 'shadow-lg' : ''}`}>
+                        <Icon className="w-5 h-5 text-white" />
+                      </div>
+                    )}
+                  </NavLink>
+                </TooltipTrigger>
+                <TooltipContent side="right" className="bg-slate-medium border-white/20">
+                  <p className="font-medium">{item.label}</p>
+                </TooltipContent>
+              </Tooltip>
+            );
+          })}
+        </nav>
 
-      <Separator className="bg-border" />
+        {/* User Profile */}
+        {user && profile && (
+          <div className="mt-auto w-full px-3 space-y-3">
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <button
+                  onClick={() => navigate('/profile/edit')}
+                  className="w-14 h-14 rounded-2xl hover:bg-white/5 transition-all flex items-center justify-center group"
+                >
+                  <div className="w-10 h-10 bg-gradient-to-br from-gray-500 to-gray-600 rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform">
+                    <Settings className="w-5 h-5 text-white" />
+                  </div>
+                </button>
+              </TooltipTrigger>
+              <TooltipContent side="right" className="bg-slate-medium border-white/20">
+                <p className="font-medium">Settings</p>
+              </TooltipContent>
+            </Tooltip>
 
-      {/* User Profile */}
-      {user && profile && (
-        <div className="p-4 space-y-3">
-          <NavLink
-            to="/profile"
-            className="flex items-center gap-3 p-3 rounded-lg hover:bg-slate-light transition-colors"
-          >
-            <Avatar className="w-10 h-10 border-2 border-neon-green/30">
-              <AvatarImage src={profile.avatar_url || undefined} />
-              <AvatarFallback className="bg-neon-green/20 text-neon-green">
-                {profile.username?.[0]?.toUpperCase() || "U"}
-              </AvatarFallback>
-            </Avatar>
-            <div className="flex-1 min-w-0">
-              <p className="text-sm font-medium text-foreground truncate">
-                {profile.username || "User"}
-              </p>
-              <p className="text-xs text-muted-foreground truncate">
-                {profile.wallet_balance?.toLocaleString() || 0} HC
-              </p>
-            </div>
-          </NavLink>
-
-          <div className="flex gap-2">
-            <Button
-              variant="ghost"
-              size="sm"
-              className="flex-1 text-xs"
-              onClick={() => navigate("/profile/edit")}
-            >
-              <Settings className="w-3.5 h-3.5 mr-1.5" />
-              Settings
-            </Button>
-            <Button
-              variant="ghost"
-              size="sm"
-              className="flex-1 text-xs text-destructive hover:text-destructive"
-              onClick={handleLogout}
-            >
-              <LogOut className="w-3.5 h-3.5 mr-1.5" />
-              Logout
-            </Button>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <button
+                  onClick={() => navigate('/my-profile')}
+                  className="relative w-14 h-14 rounded-2xl hover:bg-white/5 transition-all flex items-center justify-center group"
+                >
+                  <Avatar className="w-12 h-12 border-2 border-white/20 group-hover:border-white/40 transition-all">
+                    <AvatarImage src={profile.avatar_url || undefined} />
+                    <AvatarFallback className="bg-gradient-purple-pink text-white font-bold">
+                      {profile.username?.[0]?.toUpperCase() || 'U'}
+                    </AvatarFallback>
+                  </Avatar>
+                  <div className="absolute -bottom-1 -right-1 flex items-center gap-1 px-1.5 py-0.5 bg-gradient-cyan-green rounded-full text-[10px] font-bold text-white shadow-lg">
+                    <Coins className="w-2.5 h-2.5" />
+                    <span>{(profile.wallet_balance || 0) > 999 ? `${Math.floor((profile.wallet_balance || 0) / 1000)}k` : profile.wallet_balance || 0}</span>
+                  </div>
+                </button>
+              </TooltipTrigger>
+              <TooltipContent side="right" className="bg-slate-medium border-white/20">
+                <p className="font-medium">{profile.username || 'User'}</p>
+                <p className="text-xs text-muted-foreground">{profile.wallet_balance?.toLocaleString() || 0} HC</p>
+              </TooltipContent>
+            </Tooltip>
           </div>
-        </div>
-      )}
-    </aside>
+        )}
+      </aside>
+    </TooltipProvider>
   );
 };

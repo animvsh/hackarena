@@ -8,59 +8,64 @@ All colors MUST be HSL.
 
 @layer base {
   :root {
-    /* HackArena - Dark Trading Platform Theme */
-    --background: 215 25% 10%;
-    --foreground: 0 0% 98%;
+    /* HackArena - Crypto Dashboard Theme */
+    --background: 222 24% 18%;        /* #2d3142 dark navy */
+    --foreground: 0 0% 100%;          /* pure white */
 
-    --card: 215 20% 14%;
-    --card-foreground: 0 0% 98%;
+    --card: 222 20% 23%;              /* #3a3f58 lighter slate */
+    --card-foreground: 0 0% 100%;
 
-    --popover: 215 25% 12%;
-    --popover-foreground: 0 0% 98%;
+    --popover: 222 24% 20%;
+    --popover-foreground: 0 0% 100%;
 
-    --primary: 160 84% 39%;
+    --primary: 270 80% 65%;           /* #9d4edd purple */
     --primary-foreground: 0 0% 100%;
 
-    --secondary: 215 20% 18%;
-    --secondary-foreground: 0 0% 98%;
+    --secondary: 222 20% 26%;
+    --secondary-foreground: 0 0% 100%;
 
-    --muted: 215 15% 20%;
-    --muted-foreground: 0 0% 65%;
+    --muted: 222 15% 30%;
+    --muted-foreground: 0 0% 70%;
 
-    --accent: 160 84% 39%;
+    --accent: 168 76% 42%;            /* #06d6a0 cyan */
     --accent-foreground: 0 0% 100%;
 
     --destructive: 0 72% 51%;
-    --destructive-foreground: 0 0% 98%;
+    --destructive-foreground: 0 0% 100%;
 
-    --border: 215 15% 25%;
-    --input: 215 20% 16%;
-    --ring: 160 84% 39%;
+    --border: 222 15% 30%;
+    --input: 222 20% 23%;
+    --ring: 270 80% 65%;
 
-    --radius: 0.5rem;
+    --radius: 0.75rem;
 
-    --chart-1: 160 84% 39%;
-    --chart-2: 0 72% 51%;
-    --chart-3: 45 93% 47%;
-    --chart-4: 199 89% 48%;
-    --chart-5: 270 80% 65%;
+    --chart-1: 270 80% 65%;           /* purple */
+    --chart-2: 333 93% 55%;           /* pink */
+    --chart-3: 15 100% 60%;           /* orange */
+    --chart-4: 168 76% 42%;           /* cyan */
+    --chart-5: 160 84% 39%;           /* green */
 
     --success: 160 84% 39%;
     --success-foreground: 0 0% 100%;
 
     --info: 199 89% 48%;
-    --info-foreground: 0 0% 98%;
+    --info-foreground: 0 0% 100%;
 
     --warning: 45 93% 47%;
     
-    /* Trading Platform Colors */
-    --neon-green: 160 84% 39%;
+    /* Vibrant Crypto Colors */
+    --neon-purple: 270 80% 65%;       /* #9d4edd */
+    --neon-cyan: 168 76% 42%;         /* #06d6a0 */
+    --neon-orange: 15 100% 60%;       /* #ff6b35 */
+    --neon-pink: 333 93% 55%;         /* #f72585 */
+    --neon-green: 160 84% 39%;        /* #10b981 */
     --neon-red: 0 72% 51%;
     --neon-yellow: 45 93% 47%;
-    --slate-darker: 215 25% 8%;
-    --slate-dark: 215 25% 10%;
-    --slate-medium: 215 20% 14%;
-    --slate-light: 215 15% 20%;
+    
+    --slate-darker: 222 24% 15%;
+    --slate-dark: 222 24% 18%;
+    --slate-medium: 222 20% 23%;
+    --slate-light: 222 15% 30%;
     
     /* Premium effects */
     --glow-sm: 0 0 10px;
@@ -77,6 +82,8 @@ All colors MUST be HSL.
 
   body {
     @apply bg-background text-foreground font-sans antialiased;
+    background: linear-gradient(135deg, hsl(270 80% 65% / 0.05) 0%, transparent 50%, hsl(333 93% 55% / 0.05) 100%);
+    background-attachment: fixed;
   }
 }
 
