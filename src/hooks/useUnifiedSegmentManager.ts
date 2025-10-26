@@ -29,7 +29,7 @@ const HACKATHON_SWITCH_DURATION = 3000; // 3s for hackathon transitions
 // How often to check for hackathon switches (between segments)
 const HACKATHON_CHECK_INTERVAL_SCENES = 2; // Check every 2 scenes
 
-export function useUnifiedSegmentManager() {
+export function useUnifiedSegmentManager(isPaused?: boolean) {
   const { generateSegment, injectBreakingNews } = useSegmentContent();
   const { hackathons, currentHackathon, latestEvent, getHackathonScores } = useMultiHackathonEvents();
 
@@ -132,8 +132,8 @@ export function useUnifiedSegmentManager() {
 
   // Segment flow state machine
   useEffect(() => {
-    // Don't run while initializing new scene
-    if (isInitializing) return;
+    // Don't run while initializing new scene or when broadcast is paused
+    if (isInitializing || isPaused) return;
     let timer: NodeJS.Timeout;
 
     switch (phase) {
@@ -216,7 +216,7 @@ export function useUnifiedSegmentManager() {
     }
 
     return () => clearTimeout(timer);
-  }, [phase, currentCommentaryIndex, isInitializing, segmentContent, isHackathonSwitching, activeHackathonId]);
+  }, [phase, currentCommentaryIndex, isInitializing, segmentContent, isHackathonSwitching, activeHackathonId, isPaused]);
 
   const getCurrentCommentary = useCallback(() => {
     if (!segmentContent || phase !== 'CONTENT_DELIVERY') return '';

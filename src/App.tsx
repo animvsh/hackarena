@@ -33,6 +33,7 @@ const TeamInvite = lazy(() => import("./pages/TeamInvite"));
 const MyProfile = lazy(() => import("./pages/MyProfile"));
 const ProfileEdit = lazy(() => import("./pages/ProfileEdit"));
 const LinkedInCallback = lazy(() => import("./pages/LinkedInCallback"));
+const GitHubCallback = lazy(() => import("./pages/GitHubCallback"));
 
 // Loading fallback component
 const PageLoader = () => (
@@ -100,6 +101,7 @@ const App = () => {
                 <Route path="/bets/:betId" element={<ProtectedRoute><BetDetail /></ProtectedRoute>} />
                 <Route path="/invite/:inviteId" element={<TeamInvite />} />
                 <Route path="/auth/callback/linkedin" element={<LinkedInCallback />} />
+                <Route path="/auth/callback/github" element={<GitHubCallback />} />
                 {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
                 <Route path="*" element={<NotFound />} />
               </Routes>
