@@ -2,21 +2,30 @@ import { useState, useEffect } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
+import { Sidebar } from "@/components/Sidebar";
+import { Header } from "@/components/Header";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
-import { Pencil, Linkedin, Github, Globe, Mail, Trophy, Target, TrendingUp, Award, Eye, Users, MapPin } from "lucide-react";
+import { Pencil, Linkedin, Github, Globe, Mail, Trophy, Target, TrendingUp, Award, Eye, Users, MapPin, ArrowRight, RefreshCw, ExternalLink, Code } from "lucide-react";
 import { toast } from "sonner";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { EmptyState } from "@/components/EmptyState";
 
-export default function MyProfile() {
+function MyProfile() {
   const { user, profile } = useAuth();
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
   const [fullProfile, setFullProfile] = useState<any>(null);
   const [isImportingLinkedIn, setIsImportingLinkedIn] = useState(false);
+  const [linkedinUrlInput, setLinkedinUrlInput] = useState("");
+  const [showLinkedInImport, setShowLinkedInImport] = useState(false);
+  const [githubUsernameInput, setGithubUsernameInput] = useState("");
+  const [showGitHubImport, setShowGitHubImport] = useState(false);
+  const [isResyncing, setIsResyncing] = useState(false);
 
   useEffect(() => {
     if (!user) {
@@ -82,13 +91,15 @@ export default function MyProfile() {
         if (hasMeaningfulData) {
           console.log('Updating profile with LinkedIn data');
           
-          // Update profile with structured data
+          // Update profile with structured data - DO NOT update username or email
           const updateData: any = {};
           
+          // Only update profile data fields, NOT username/email
           if (profileData.bio) updateData.bio = profileData.bio;
           if (profileData.headline) updateData.headline = profileData.headline;
           if (profileData.location) updateData.location = profileData.location;
-          if (profileData.linkedin_url) updateData.linkedin_url = profileData.linkedin_url;
+          // Save the LinkedIn URL that was provided/imported
+          updateData.linkedin_url = linkedinUrl;
           if (profileData.portfolio_url) updateData.portfolio_url = profileData.portfolio_url;
           if (profileData.skills && profileData.skills.length > 0) updateData.skills = profileData.skills;
           if (profileData.experience && profileData.experience.length > 0) updateData.experience = profileData.experience;
@@ -127,29 +138,163 @@ export default function MyProfile() {
     }
   };
 
+  const resyncAllProfiles = async () => {
+    setIsResyncing(true);
+    toast.loading("Resyncing LinkedIn and GitHub profiles...");
+
+    try {
+      const updates: any = {};
+
+      // Resync LinkedIn if URL exists
+      if (fullProfile.linkedin_url) {
+        toast.loading("Importing LinkedIn data...", { id: 'linkedin-sync' });
+        const linkedInResponse = await supabase.functions.invoke('import-linkedin-profile', {
+          body: { linkedinUrl: fullProfile.linkedin_url }
+        });
+
+        if (linkedInResponse.data?.profile) {
+          const profileData = linkedInResponse.data.profile;
+          
+          // Only update profile data fields - DO NOT change username/email
+          if (profileData.bio) updates.bio = profileData.bio;
+          if (profileData.headline) updates.headline = profileData.headline;
+          if (profileData.location) updates.location = profileData.location;
+          if (profileData.portfolio_url) updates.portfolio_url = profileData.portfolio_url;
+          if (profileData.skills && profileData.skills.length > 0) updates.skills = profileData.skills;
+          if (profileData.experience && profileData.experience.length > 0) updates.experience = profileData.experience;
+          if (profileData.education && profileData.education.length > 0) updates.education = profileData.education;
+          if (profileData.years_of_experience) updates.years_of_experience = profileData.years_of_experience;
+          if (profileData.certifications && profileData.certifications.length > 0) updates.certifications = profileData.certifications;
+        }
+        toast.success("LinkedIn data synced!", { id: 'linkedin-sync' });
+      }
+
+      // Resync GitHub if URL exists
+      if (fullProfile.github_url) {
+        toast.loading("Importing GitHub projects...", { id: 'github-sync' });
+        
+        try {
+          // Extract username from GitHub URL
+          const githubUsername = fullProfile.github_url.replace('https://github.com/', '').replace('github.com/', '').split('/')[0];
+          
+          console.log('Extracted GitHub username:', githubUsername);
+          
+          if (githubUsername) {
+            // Fetch GitHub repos
+            const reposResponse = await fetch(`https://api.github.com/users/${githubUsername}/repos?per_page=10&sort=updated`, {
+              headers: { 'User-Agent': 'HackCast-LIVE' }
+            });
+
+            console.log('GitHub API response status:', reposResponse.status);
+
+            if (reposResponse.ok) {
+              const repos = await reposResponse.json();
+              
+              console.log('Fetched repos count:', repos.length);
+              
+              // Convert GitHub repos to projects format
+              const projects = repos.map((repo: any) => ({
+                title: repo.name,
+                description: repo.description || '',
+                url: repo.html_url
+              }));
+
+              console.log('Converted projects:', projects);
+
+              if (projects.length > 0) {
+                updates.projects = projects;
+                console.log('Added projects to updates:', projects);
+              }
+            } else {
+              console.error('GitHub API failed:', reposResponse.status, reposResponse.statusText);
+            }
+          }
+        } catch (githubError) {
+          console.error('Error fetching GitHub repos:', githubError);
+        }
+        
+        toast.success("GitHub projects synced!", { id: 'github-sync' });
+      }
+
+      // Save all updates to database
+      console.log('All updates to save:', updates);
+      console.log('Updates keys:', Object.keys(updates));
+      
+      if (Object.keys(updates).length > 0) {
+        console.log('Updating user profile with:', updates);
+        const { error: updateError } = await supabase
+          .from('users')
+          .update(updates)
+          .eq('id', user!.id);
+
+        if (updateError) {
+          console.error('Database update error:', updateError);
+          throw updateError;
+        }
+
+        console.log('Profile updated successfully');
+        toast.success("Profile resynced successfully!");
+        await fetchFullProfile();
+      } else {
+        console.log('No updates to save');
+        toast.info("No new data to sync");
+      }
+    } catch (error) {
+      console.error('Error resyncing profiles:', error);
+      toast.error("Failed to resync profiles");
+    } finally {
+      setIsResyncing(false);
+    }
+  };
+
   if (loading) {
     return (
-      <div className="container max-w-6xl mx-auto p-6 space-y-6">
-        <Skeleton className="h-64 w-full" />
-        <Skeleton className="h-96 w-full" />
+      <div className="flex min-h-screen bg-background">
+        <Sidebar />
+        <main className="flex-1 p-8">
+          <Header />
+          <Skeleton className="h-64 w-full mb-8" />
+          <Skeleton className="h-96 w-full" />
+        </main>
       </div>
     );
   }
 
   if (!fullProfile) {
     return (
-      <div className="container max-w-6xl mx-auto p-6 space-y-6">
-        <Card className="p-6">
-          <h1 className="text-2xl font-bold mb-4">Profile Loading...</h1>
-          <p className="text-muted-foreground">Please wait while we load your profile data.</p>
-        </Card>
+      <div className="flex min-h-screen bg-background">
+        <Sidebar />
+        <main className="flex-1 p-8">
+          <Header />
+          <Card className="p-8 text-center">
+            <h1 className="text-2xl font-bold mb-4">Profile Loading...</h1>
+            <p className="text-muted-foreground">Please wait while we load your profile data.</p>
+          </Card>
+        </main>
       </div>
     );
   }
 
   return (
-    <div className="container max-w-7xl mx-auto p-4 md:p-6 space-y-6">
-      <h1 className="text-3xl font-bold">My Profile</h1>
+    <div className="flex min-h-screen bg-background">
+      <Sidebar />
+      <main className="flex-1 p-8">
+        <Header />
+        
+        <div className="container max-w-7xl mx-auto space-y-6">
+      <div className="flex items-center justify-between">
+        <h1 className="text-3xl font-bold">My Profile</h1>
+        {(fullProfile.linkedin_url || fullProfile.github_url) && (
+          <Button
+            onClick={resyncAllProfiles}
+            disabled={isResyncing}
+            variant="outline"
+          >
+            <RefreshCw className={`h-4 w-4 mr-2 ${isResyncing ? 'animate-spin' : ''}`} />
+            {isResyncing ? "Resyncing..." : "Resync All Profiles"}
+          </Button>
+        )}
+      </div>
       
       {/* Profile Card */}
       <Card className="p-6">
@@ -224,25 +369,140 @@ export default function MyProfile() {
               )}
             </div>
 
-            {/* Refetch LinkedIn Profile */}
-            {fullProfile.linkedin_url && (
+            {/* Import GitHub Profile */}
+            {!fullProfile.github_url && (
               <div className="pt-4 border-t">
-                <Button
-                  variant="default"
-                  size="sm"
-                  onClick={async () => {
-                    setIsImportingLinkedIn(true);
-                    await importLinkedInProfile(fullProfile.linkedin_url);
-                    setIsImportingLinkedIn(false);
-                  }}
-                  disabled={isImportingLinkedIn}
-                >
-                  <Linkedin className="h-4 w-4 mr-2" />
-                  {isImportingLinkedIn ? "Refetching..." : "Refetch LinkedIn Profile"}
-                </Button>
-                <p className="text-xs text-muted-foreground mt-2">
-                  Click to update your profile with the latest LinkedIn data
-                </p>
+                {!showGitHubImport ? (
+                  <>
+                    <Button
+                      variant="default"
+                      size="sm"
+                      onClick={() => setShowGitHubImport(true)}
+                    >
+                      <Github className="h-4 w-4 mr-2" />
+                      Import GitHub Profile
+                    </Button>
+                    <p className="text-xs text-muted-foreground mt-2">
+                      Import your repositories and technical activity from GitHub
+                    </p>
+                  </>
+                ) : (
+                  <div className="space-y-2">
+                    <Label htmlFor="github-username-input">GitHub Username</Label>
+                    <Input
+                      id="github-username-input"
+                      type="text"
+                      placeholder="your-username"
+                      value={githubUsernameInput}
+                      onChange={(e) => setGithubUsernameInput(e.target.value)}
+                    />
+                    <div className="flex gap-2">
+                      <Button
+                        variant="default"
+                        size="sm"
+                        onClick={async () => {
+                          if (!githubUsernameInput) {
+                            toast.error("Please enter a GitHub username");
+                            return;
+                          }
+                          try {
+                            // Save GitHub URL to profile
+                            const { error } = await supabase
+                              .from('users')
+                              .update({ github_url: `https://github.com/${githubUsernameInput}` })
+                              .eq('id', user!.id);
+                            
+                            if (error) throw error;
+                            
+                            toast.success("GitHub profile connected!");
+                            setShowGitHubImport(false);
+                            setGithubUsernameInput("");
+                            await fetchFullProfile();
+                          } catch (error) {
+                            console.error('Error connecting GitHub:', error);
+                            toast.error("Failed to connect GitHub profile");
+                          }
+                        }}
+                        disabled={!githubUsernameInput}
+                      >
+                        Connect
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => {
+                          setShowGitHubImport(false);
+                          setGithubUsernameInput("");
+                        }}
+                      >
+                        Cancel
+                      </Button>
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Import LinkedIn Profile */}
+            {!fullProfile.linkedin_url && (
+              <div className="pt-4 border-t">
+                {!showLinkedInImport ? (
+                  <>
+                    <Button
+                      variant="default"
+                      size="sm"
+                      onClick={() => setShowLinkedInImport(true)}
+                    >
+                      <Linkedin className="h-4 w-4 mr-2" />
+                      Import LinkedIn Profile
+                    </Button>
+                    <p className="text-xs text-muted-foreground mt-2">
+                      Import your experience, education, and skills from LinkedIn
+                    </p>
+                  </>
+                ) : (
+                  <div className="space-y-2">
+                    <Label htmlFor="linkedin-url-input">LinkedIn Profile URL</Label>
+                    <Input
+                      id="linkedin-url-input"
+                      type="url"
+                      placeholder="https://linkedin.com/in/your-profile"
+                      value={linkedinUrlInput}
+                      onChange={(e) => setLinkedinUrlInput(e.target.value)}
+                    />
+                    <div className="flex gap-2">
+                      <Button
+                        variant="default"
+                        size="sm"
+                        onClick={async () => {
+                          if (!linkedinUrlInput) {
+                            toast.error("Please enter a LinkedIn URL");
+                            return;
+                          }
+                          setIsImportingLinkedIn(true);
+                          try {
+                            await importLinkedInProfile(linkedinUrlInput);
+                          } finally {
+                            setIsImportingLinkedIn(false);
+                          }
+                        }}
+                        disabled={isImportingLinkedIn || !linkedinUrlInput}
+                      >
+                        {isImportingLinkedIn ? "Importing..." : "Import"}
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => {
+                          setShowLinkedInImport(false);
+                          setLinkedinUrlInput("");
+                        }}
+                      >
+                        Cancel
+                      </Button>
+                    </div>
+                  </div>
+                )}
               </div>
             )}
           </div>
@@ -365,6 +625,56 @@ export default function MyProfile() {
         </Card>
       )}
 
+      {/* Projects Section */}
+      {fullProfile.projects && Array.isArray(fullProfile.projects) && fullProfile.projects.length > 0 && (
+        <Card className="p-6 border-primary/20 bg-gradient-to-br from-background to-primary/5">
+          <h3 className="text-2xl font-bold mb-6 flex items-center gap-3">
+            <div className="h-8 w-1.5 bg-primary rounded-full" />
+            <span className="bg-primary text-background px-4 py-1 rounded">Projects</span>
+          </h3>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {fullProfile.projects.map((project: any, projectIndex: number) => (
+              <Card 
+                key={projectIndex} 
+                className="p-6 hover:border-primary transition-all duration-300 group cursor-pointer"
+                onClick={() => project.url && window.open(project.url, '_blank')}
+              >
+                <div className="flex items-start justify-between mb-3">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 bg-primary/10 rounded-lg flex items-center justify-center group-hover:bg-primary/20 transition-colors">
+                      <Code className="w-5 h-5 text-primary" />
+                    </div>
+                    <h5 className="font-bold text-lg text-foreground group-hover:text-primary transition-colors">
+                      {project.title || 'Untitled Project'}
+                    </h5>
+                  </div>
+                  {project.url && (
+                    <ExternalLink className="w-4 h-4 text-muted-foreground group-hover:text-primary transition-colors" />
+                  )}
+                </div>
+                {project.description && (
+                  <p className="text-sm text-muted-foreground line-clamp-3 mb-3">
+                    {project.description}
+                  </p>
+                )}
+                {project.url && (
+                  <a 
+                    href={project.url} 
+                    target="_blank" 
+                    rel="noopener noreferrer"
+                    className="text-sm text-primary hover:underline inline-flex items-center gap-1"
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    View Project
+                    <ExternalLink className="w-3 h-3" />
+                  </a>
+                )}
+              </Card>
+            ))}
+          </div>
+        </Card>
+      )}
+
       {/* Stats */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         <Card className="p-4 text-center">
@@ -388,6 +698,10 @@ export default function MyProfile() {
           <div className="text-sm text-muted-foreground">Accuracy Rate</div>
         </Card>
       </div>
+        </div>
+      </main>
     </div>
   );
 }
+
+export default MyProfile;

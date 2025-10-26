@@ -16,7 +16,7 @@ interface Hackathon {
   end_date: string;
   status: string;
   prize_pool: number;
-  total_participants: number;
+  total_participants?: number;
   description: string;
   website: string;
 }
@@ -32,13 +32,20 @@ const Hackathons = () => {
 
   const fetchHackathons = async () => {
     setLoading(true);
+    console.log('Fetching hackathons from Supabase...');
     const { data, error } = await supabase
       .from('hackathons')
       .select('*')
       .order('start_date', { ascending: false });
 
+    console.log('Hackathons data:', data);
+    console.log('Error:', error);
+
     if (data && !error) {
+      console.log(`Found ${data.length} hackathons`);
       setHackathons(data as Hackathon[]);
+    } else {
+      console.error('Failed to fetch hackathons:', error);
     }
     setLoading(false);
   };
@@ -53,6 +60,10 @@ const Hackathons = () => {
 
   const handleViewMarkets = (hackathonId: string) => {
     navigate(`/hackathons/${hackathonId}/markets`);
+  };
+
+  const handleViewTeams = (hackathonId: string) => {
+    navigate(`/hackathons/${hackathonId}/teams`);
   };
 
   return (
@@ -108,6 +119,7 @@ const Hackathons = () => {
                     hackathon={hackathon}
                     onViewBroadcast={handleViewBroadcast}
                     onViewMarkets={handleViewMarkets}
+                    onViewTeams={handleViewTeams}
                     isLive
                   />
                 ))}
@@ -135,6 +147,7 @@ const Hackathons = () => {
                     hackathon={hackathon}
                     onViewBroadcast={handleViewBroadcast}
                     onViewMarkets={handleViewMarkets}
+                    onViewTeams={handleViewTeams}
                   />
                 ))}
               </div>
@@ -161,6 +174,7 @@ const Hackathons = () => {
                     hackathon={hackathon}
                     onViewBroadcast={handleViewBroadcast}
                     onViewMarkets={handleViewMarkets}
+                    onViewTeams={handleViewTeams}
                   />
                 ))}
               </div>

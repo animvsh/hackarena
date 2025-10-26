@@ -26,7 +26,7 @@ export const TrendingTeams = ({ hackathonId }: TrendingTeamsProps) => {
       .on('postgres_changes', {
         event: 'UPDATE',
         schema: 'public',
-        table: 'teams'
+        table: 'hackathon_teams'
       }, fetchTrending)
       .subscribe();
 
@@ -38,7 +38,7 @@ export const TrendingTeams = ({ hackathonId }: TrendingTeamsProps) => {
   const fetchTrending = async () => {
     setLoading(true);
     let query = supabase
-      .from('teams')
+      .from('hackathon_teams')
       .select('id, name, logo_url, momentum_score, current_progress')
       .order('momentum_score', { ascending: false })
       .limit(5);

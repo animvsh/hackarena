@@ -2,9 +2,11 @@ import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
-import { Database, Users, Trophy, Target, Settings } from 'lucide-react';
+import { Database, Users, Trophy, Target, Settings, Award } from 'lucide-react';
 import { populateDatabase } from '@/lib/database-populator';
 import { createHackerStatsTables } from '@/lib/create-tables';
+import { populateWithRealDevpostHackathons } from '@/lib/devpost-populator';
+import { clearAndPopulateRealData } from '@/lib/clear-and-populate';
 
 const DatabasePopulator: React.FC = () => {
   const [isLoading, setIsLoading] = useState(false);
@@ -66,6 +68,35 @@ const DatabasePopulator: React.FC = () => {
     } catch (error) {
       console.error('Error populating database:', error);
       setStatus('❌ Error populating database. Check console for details.');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handlePopulateRealDevpost = async () => {
+    setIsLoading(true);
+    setProgress(0);
+    setStatus('Clearing old data and adding real Devpost hackathons...');
+
+    try {
+      const progressInterval = setInterval(() => {
+        setProgress(prev => {
+          if (prev >= 90) {
+            clearInterval(progressInterval);
+            return prev;
+          }
+          return prev + Math.random() * 10;
+        });
+      }, 500);
+
+      const result = await clearAndPopulateRealData();
+      
+      clearInterval(progressInterval);
+      setProgress(100);
+      setStatus(`✅ Successfully cleared old data and added ${result.created} real Devpost hackathons!`);
+    } catch (error) {
+      console.error('Error populating real Devpost:', error);
+      setStatus('❌ Error. Check console for details.');
     } finally {
       setIsLoading(false);
     }
@@ -182,6 +213,37 @@ const DatabasePopulator: React.FC = () => {
                 )}
 
                 {!isLoading && status && (
+                  <div className="p-4 bg-muted rounded-lg">
+                    <p className="text-sm">{status}</p>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+
+            {/* Add Real Devpost Hackathons */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center space-x-2">
+                  <Award className="h-5 w-5" />
+                  <span>Add Real Devpost Hackathons</span>
+                </CardTitle>
+                <CardDescription>
+                  Replace all existing data with real hackathons from TechCrunch Disrupt, Y Combinator, and ETHGlobal. 
+                  This will clear all old data and add 3 real hackathons with 7 teams and prizes.
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <Button 
+                  onClick={handlePopulateRealDevpost}
+                  disabled={isLoading}
+                  className="w-full"
+                  size="lg"
+                  variant="default"
+                >
+                  {isLoading ? 'Clearing & Adding...' : 'Replace with Real Devpost Hackathons'}
+                </Button>
+
+                {!isLoading && status && (status.includes('Devpost') || status.includes('hackathon')) && (
                   <div className="p-4 bg-muted rounded-lg">
                     <p className="text-sm">{status}</p>
                   </div>

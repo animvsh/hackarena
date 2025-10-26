@@ -12,15 +12,16 @@ interface HackathonCardProps {
     start_date: string;
     end_date: string;
     prize_pool: number;
-    total_participants: number;
+    total_participants?: number;
     description: string;
   };
   onViewBroadcast: (id: string) => void;
   onViewMarkets: (id: string) => void;
+  onViewTeams: (id: string) => void;
   isLive?: boolean;
 }
 
-export function HackathonCard({ hackathon, onViewBroadcast, onViewMarkets, isLive }: HackathonCardProps) {
+export function HackathonCard({ hackathon, onViewBroadcast, onViewMarkets, onViewTeams, isLive }: HackathonCardProps) {
   return (
     <Card className="p-6 hover:shadow-lg transition-all border-border/50">
       <div className="space-y-4">
@@ -63,7 +64,7 @@ export function HackathonCard({ hackathon, onViewBroadcast, onViewMarkets, isLiv
 
           <div className="flex items-center gap-2 text-muted-foreground">
             <Users className="w-4 h-4" />
-            <span>{hackathon.total_participants} Participants</span>
+            <span>{hackathon.total_participants || '0'} Participants</span>
           </div>
         </div>
 
@@ -86,7 +87,7 @@ export function HackathonCard({ hackathon, onViewBroadcast, onViewMarkets, isLiv
             Markets
           </Button>
           <Button
-            onClick={() => window.location.href = `/hackathons/${hackathon.id}/teams/new`}
+            onClick={() => onViewTeams(hackathon.id)}
             variant="outline"
             className="flex-1 gap-2"
           >

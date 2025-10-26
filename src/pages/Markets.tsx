@@ -18,7 +18,7 @@ interface Team {
   name: string;
   tagline: string;
   category: string;
-  logo_url: string;
+    logo_url: string;
   team_size: number;
   current_progress: number;
   momentum_score: number;
@@ -64,10 +64,18 @@ const Markets = () => {
         return;
       }
 
-      // Fetch teams for this hackathon
+      // Fetch teams for this hackathon with their stats from team_stats
       const { data: hackathonTeams, error: teamsError } = await supabase
         .from('hackathon_teams')
-        .select('*')
+      .select(`
+          *,
+          team_stats (
+            avg_overall_rating,
+            avg_technical_skill,
+            avg_hackathon_experience,
+            avg_innovation
+          )
+        `)
         .eq('hackathon_id', hackathonId);
 
       if (teamsError) {
@@ -77,8 +85,37 @@ const Markets = () => {
       }
 
       if (hackathonTeams && hackathonTeams.length > 0) {
-        // Generate random stats and betting odds for each team
-        const teamsWithStats = hackathonTeams.map(team => generateTeamStats(team));
+        // Use actual stats from database or fallback to random
+        const teamsWithStats = hackathonTeams.map(team => {
+          const stats = team.team_stats?.[0];
+          if (stats) {
+            // Use real stats from database
+            const overallRating = parseFloat(stats.avg_overall_rating) || 70;
+            const winProbability = Math.min(95, Math.max(5, overallRating));
+            const americanOdds = winProbability > 50 
+              ? Math.floor(-100 * winProbability / (100 - winProbability))
+              : Math.floor(100 * (100 - winProbability) / winProbability);
+            const decimalOdds = winProbability > 50 
+              ? 100 / winProbability 
+              : (100 - winProbability) / winProbability + 1;
+
+            return {
+              ...team,
+              overall_rating: overallRating,
+              technical_skill: parseFloat(stats.avg_technical_skill) || 70,
+              hackathon_experience: parseFloat(stats.avg_hackathon_experience) || 60,
+              innovation_score: parseFloat(stats.avg_innovation) || 70,
+              betting_odds: {
+                american_odds: americanOdds,
+                decimal_odds: Math.round(decimalOdds * 100) / 100,
+                win_probability: winProbability
+              }
+            };
+          } else {
+            // Fallback to random stats if no team_stats
+            return generateTeamStats(team);
+          }
+        });
         setTeams(teamsWithStats);
       }
     } catch (error) {

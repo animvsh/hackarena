@@ -47,7 +47,7 @@ interface TeamMember {
 }
 
 export default function TeamProfile() {
-  const { teamId } = useParams();
+  const { teamId, hackathonId } = useParams();
   const navigate = useNavigate();
   const [team, setTeam] = useState<Team | null>(null);
   const [members, setMembers] = useState<TeamMember[]>([]);
@@ -62,25 +62,72 @@ export default function TeamProfile() {
     const fetchTeamData = async () => {
       if (!teamId) return;
 
-      // Fetch team
+      // Fetch team from hackathon_teams
       const { data: teamData } = await supabase
-        .from('teams')
+        .from('hackathon_teams')
         .select('*')
         .eq('id', teamId)
         .single();
 
       if (teamData) {
-        setTeam(teamData);
+        // Map to expected format
+        setTeam({
+          id: teamData.id,
+          name: teamData.name,
+          tagline: teamData.tagline || '',
+          logo_url: teamData.logo_url || '',
+          category: typeof teamData.category === 'string' ? [teamData.category] : (teamData.category || []),
+          tech_stack: teamData.tech_stack || [],
+          github_repo: teamData.github_url || '',
+          devpost_url: teamData.devpost_url || '',
+          current_progress: teamData.current_progress || 0,
+          momentum_score: parseFloat(teamData.momentum_score || '0'),
+          team_size: teamData.team_size || 0,
+          status: 'active',
+        });
       }
 
-      // Fetch team members
+      // Fetch team members from hackathon_team_members
       const { data: membersData } = await supabase
-        .from('team_members')
-        .select('*, users(username, avatar_url)')
+        .from('hackathon_team_members')
+        .select(`
+          id,
+          role,
+          hacker_id,
+          hackers (
+            id,
+            name,
+            github_username,
+            avatar_url
+          )
+        `)
         .eq('team_id', teamId);
 
       if (membersData) {
-        setMembers(membersData);
+        // Fetch stats for each member
+        const membersWithStats = await Promise.all(membersData.map(async (m: any) => {
+          const { data: stats } = await supabase
+            .from('hacker_stats')
+            .select('overall_rating, technical_skill, hackathon_experience, innovation')
+            .eq('hacker_id', m.hacker_id)
+            .single();
+          
+          return {
+            id: m.id,
+            name: m.hackers?.name || 'Unknown',
+            role: m.role || 'Member',
+            github_username: m.hackers?.github_username || '',
+            github_url: m.hackers?.github_username ? `https://github.com/${m.hackers.github_username}` : undefined,
+            user_id: m.hackers?.id || '',
+            stats: stats,
+            users: {
+              username: m.hackers?.name || '',
+              avatar_url: m.hackers?.avatar_url || '',
+            }
+          };
+        }));
+        
+        setMembers(membersWithStats as any);
       }
 
       // Fetch market ID
@@ -99,6 +146,27 @@ export default function TeamProfile() {
     };
 
     fetchTeamData();
+
+    // Subscribe to real-time updates for hacker_stats
+    const statsChannel = supabase
+      .channel('hacker-stats-updates')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'hacker_stats',
+        },
+        () => {
+          // Refresh team data when stats update
+          fetchTeamData();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(statsChannel);
+    };
   }, [teamId]);
 
   const handleBet = (amount: number) => {
@@ -129,8 +197,14 @@ export default function TeamProfile() {
           <main className="flex-1 p-8">
             <Card className="p-8 text-center">
               <p className="text-muted-foreground">Team not found</p>
-              <Button onClick={() => navigate('/teams')} className="mt-4">
-                Back to Teams
+              <Button onClick={() => {
+                if (hackathonId) {
+                  navigate(`/hackathons/${hackathonId}/teams`);
+                } else {
+                  navigate('/hackathons');
+                }
+              }} className="mt-4">
+                Back to Hackathons
               </Button>
             </Card>
           </main>
@@ -322,13 +396,36 @@ export default function TeamProfile() {
                                   {(member.users?.username || member.name)[0].toUpperCase()}
                                 </AvatarFallback>
                               </Avatar>
-                              <div>
+                              <div className="flex-1">
                                 <p className="font-medium hover:text-primary transition-colors">
                                   {member.users?.username || member.name}
                                 </p>
                                 <p className="text-sm text-muted-foreground">{member.role}</p>
+                                {member.github_username && (
+                                  <a 
+                                    href={`https://github.com/${member.github_username}`}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="text-xs text-blue-500 hover:underline flex items-center gap-1 mt-1"
+                                  >
+                                    <Github className="w-3 h-3" />
+                                    {member.github_username}
+                                  </a>
+                                )}
                               </div>
                             </div>
+                            {member.stats && (
+                              <div className="mt-3 pt-3 border-t grid grid-cols-2 gap-2 text-xs">
+                                <div>
+                                  <div className="text-muted-foreground">Rating</div>
+                                  <div className="font-semibold">{member.stats.overall_rating?.toFixed(1) || 'N/A'}</div>
+                                </div>
+                                <div>
+                                  <div className="text-muted-foreground">Technical</div>
+                                  <div className="font-semibold">{member.stats.technical_skill || 'N/A'}</div>
+                                </div>
+                              </div>
+                            )}
                           </Card>
                         </UserHoverCard>
                       ))}

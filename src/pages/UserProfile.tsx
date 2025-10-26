@@ -73,15 +73,60 @@ export default function UserProfile() {
     const fetchUserData = async () => {
       if (!userId) return;
 
-      // Fetch user
-      const { data: userData } = await supabase
+      // Fetch user (check both users and hackers table)
+      const { data: userData, error: userError } = await supabase
         .from('users')
         .select('*')
         .eq('id', userId)
         .single();
 
-      if (userData) {
+      if (userData && !userError) {
         setUser(userData as User);
+      } else if (userError && userError.code === 'PGRST116') {
+        // User not found in users table, try hackers table
+        const { data: hackerData } = await supabase
+          .from('hackers')
+          .select('*')
+          .eq('id', userId)
+          .single();
+        
+        if (hackerData) {
+          // Fetch hacker stats
+          const { data: stats } = await supabase
+            .from('hacker_stats')
+            .select('*')
+            .eq('hacker_id', hackerData.id)
+            .single();
+          
+          // Map hacker data to user format - only use actual data from database
+          setUser({
+            id: hackerData.id,
+            username: hackerData.name || hackerData.github_username || 'Unknown',
+            email: null,
+            avatar_url: hackerData.avatar_url || null,
+            wallet_balance: stats?.market_value || 0,
+            xp: stats?.overall_rating || 0,
+            total_predictions: 0,
+            correct_predictions: 0,
+            bio: hackerData.bio || null,
+            headline: null,
+            location: hackerData.location || null,
+            linkedin_url: hackerData.linkedin_url || null,
+            github_url: hackerData.github_username ? `https://github.com/${hackerData.github_username}` : null,
+            portfolio_url: hackerData.website || null,
+            skills: stats ? [
+              { name: 'Technical Skill', level: stats.technical_skill },
+              { name: 'Innovation', level: stats.innovation },
+              { name: 'Hackathon Experience', level: stats.hackathon_experience },
+            ] : [],
+            experience: [],
+            education: [],
+            projects: [],
+            certifications: [],
+          });
+        } else {
+          console.error('User not found in users or hackers table');
+        }
       }
 
       // Check for shared teams
