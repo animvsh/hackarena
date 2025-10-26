@@ -1,7 +1,7 @@
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Calendar, MapPin, Trophy, Users, Radio } from "lucide-react";
+import { Calendar, MapPin, Trophy, Users, Radio, TrendingUp } from "lucide-react";
 import { format } from "date-fns";
 
 interface HackathonCardProps {
@@ -79,10 +79,19 @@ export function HackathonCard({ hackathon, onViewBroadcast, onViewMarkets, isLiv
           )}
           <Button
             onClick={() => onViewMarkets(hackathon.id)}
-            variant={isLive ? "outline" : "default"}
-            className="flex-1"
+            variant="outline"
+            className="flex-1 gap-2"
           >
-            View Markets
+            <TrendingUp className="w-4 h-4" />
+            Markets
+          </Button>
+          <Button
+            onClick={() => window.location.href = `/hackathons/${hackathon.id}/teams/new`}
+            variant="outline"
+            className="flex-1 gap-2"
+          >
+            <Users className="w-4 h-4" />
+            Teams
           </Button>
         </div>
       </div>

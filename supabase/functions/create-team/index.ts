@@ -13,6 +13,7 @@ interface CreateTeamRequest {
   stage: string;
   teamSize: number;
   userId: string;
+  hackathonId?: string;
   aiAnalysis?: any;
 }
 
@@ -33,6 +34,7 @@ serve(async (req) => {
       stage, 
       teamSize, 
       userId,
+      hackathonId,
       aiAnalysis 
     }: CreateTeamRequest = await req.json();
 
@@ -53,6 +55,7 @@ serve(async (req) => {
         team_type: aiAnalysis?.company_type || 'startup',
         owner_id: userId,
         invite_code: inviteCode,
+        hackathon_id: hackathonId || null,
         onboarding_completed: false,
       })
       .select()

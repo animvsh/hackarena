@@ -12,6 +12,8 @@ import Auth from "./pages/Auth";
 import Onboarding from "./pages/Onboarding";
 import Markets from "./pages/Markets";
 import Hackathons from "./pages/Hackathons";
+import HackathonTeams from "./pages/HackathonTeams";
+import HackathonTeamSetup from "./pages/HackathonTeamSetup";
 import Teams from "./pages/Teams";
 import TeamSettings from "./pages/TeamSettings";
 import Leaderboard from "./pages/Leaderboard";
@@ -60,6 +62,8 @@ const App = () => {
             <Route path="/hackathons" element={<Hackathons />} />
             <Route path="/hackathons/:hackathonId/markets" element={<Markets />} />
             <Route path="/hackathons/:hackathonId/broadcast" element={<BroadcastStream />} />
+            <Route path="/hackathons/:hackathonId/teams" element={<ProtectedRoute><HackathonTeams /></ProtectedRoute>} />
+            <Route path="/hackathons/:hackathonId/teams/new" element={<ProtectedRoute><HackathonTeamSetup /></ProtectedRoute>} />
             <Route path="/markets" element={<Markets />} />
             <Route path="/teams" element={<Teams />} />
             <Route path="/teams/:teamId" element={<ProtectedRoute><TeamProfile /></ProtectedRoute>} />
