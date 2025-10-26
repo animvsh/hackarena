@@ -11,6 +11,7 @@ import { toast } from 'sonner';
 
 interface TeamSetupProps {
   userId: string;
+  hackathonId?: string | null;
   onTeamCreated: (teamId: string, inviteCode: string) => void;
   onTeamJoined: (teamId: string) => void;
 }
@@ -30,7 +31,7 @@ interface AIAnalysis {
   reasoning: string;
 }
 
-export const TeamSetup = ({ userId, onTeamCreated, onTeamJoined }: TeamSetupProps) => {
+export const TeamSetup = ({ userId, hackathonId, onTeamCreated, onTeamJoined }: TeamSetupProps) => {
   const [mode, setMode] = useState<'choice' | 'create' | 'join'>('choice');
   const [loading, setLoading] = useState(false);
   const [analyzing, setAnalyzing] = useState(false);
@@ -98,6 +99,7 @@ export const TeamSetup = ({ userId, onTeamCreated, onTeamJoined }: TeamSetupProp
           stage,
           teamSize: 4,
           userId,
+          hackathonId,
           aiAnalysis,
         },
       });

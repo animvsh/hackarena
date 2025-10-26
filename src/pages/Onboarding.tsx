@@ -13,6 +13,7 @@ import { TeamSetup } from '@/components/onboarding/TeamSetup';
 import { InviteCodeDisplay } from '@/components/onboarding/InviteCodeDisplay';
 import { ProfileImport } from '@/components/onboarding/ProfileImport';
 import { ProfileForm } from '@/components/onboarding/ProfileForm';
+import { HackathonSelection } from '@/components/onboarding/HackathonSelection';
 
 const roleOptions = [
   { value: 'spectator', label: 'Spectator', icon: Users, description: 'Watch and predict outcomes' },
@@ -24,6 +25,7 @@ const roleOptions = [
 export default function Onboarding() {
   const [step, setStep] = useState(1);
   const [role, setRole] = useState('spectator');
+  const [selectedHackathonId, setSelectedHackathonId] = useState<string | null>(null);
   const [profileData, setProfileData] = useState<any>({
     username: '',
     bio: '',
@@ -48,11 +50,20 @@ export default function Onboarding() {
         .from('user_roles')
         .insert({ user_id: user.id, role: role as any });
       
-      // Go to profile import step
-      setStep(2.5);
+      // If hacker, go to hackathon selection first
+      if (role === 'hacker') {
+        setStep(2.3);
+      } else {
+        setStep(2.5);
+      }
     } catch (error) {
       toast.error('Failed to save role');
     }
+  };
+
+  const handleHackathonSelected = (hackathonId: string | null) => {
+    setSelectedHackathonId(hackathonId);
+    setStep(2.5);
   };
 
   const handleProfileImport = (data: any, source: string) => {
@@ -189,6 +200,19 @@ export default function Onboarding() {
     );
   }
 
+  if (step === 2.3 && role === 'hacker') {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background p-4">
+        <div className="w-full max-w-4xl">
+          <HackathonSelection
+            onSelected={handleHackathonSelected}
+            onBack={() => setStep(2)}
+          />
+        </div>
+      </div>
+    );
+  }
+
   if (step === 2.5) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background p-4">
@@ -207,6 +231,7 @@ export default function Onboarding() {
         <div className="w-full max-w-4xl">
           <TeamSetup
             userId={user.id}
+            hackathonId={selectedHackathonId}
             onTeamCreated={handleTeamCreated}
             onTeamJoined={handleTeamJoined}
           />
