@@ -251,7 +251,7 @@ export const ChatProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
-  const createRoom = async (name: string, description?: string, isPublic = true) => {
+  const createRoom = async (name: string, description?: string, isPublic = true): Promise<void> => {
     try {
       const { data, error } = await supabase
         .from('chat_rooms')
@@ -266,7 +266,6 @@ export const ChatProvider: React.FC<{ children: React.ReactNode }> = ({ children
       if (error) throw error;
       
       setRooms(prev => [...prev, data]);
-      return data;
     } catch (error) {
       console.error('Error creating room:', error);
       throw error;

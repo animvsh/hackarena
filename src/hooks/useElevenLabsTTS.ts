@@ -44,12 +44,12 @@ export function useElevenLabsTTS({ text, voiceId = 'EXAVITQu4vr4xnSDxMaL', isMut
       const { data: { session } } = await supabase.auth.getSession();
       
       const response = await fetch(
-        `${supabase.supabaseUrl}/functions/v1/text-to-speech`,
+        `https://jqdfjcpgevgajdljckur.supabase.co/functions/v1/text-to-speech`,
         {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
-            'Authorization': `Bearer ${session?.access_token || supabase.supabaseKey}`,
+            'Authorization': `Bearer ${session?.access_token || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpxZGZqY3BnZXZnYWpkbGpja3VyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjA5OTgzNjYsImV4cCI6MjA3NjU3NDM2Nn0.dt7VTK39V6mk18S5p3HYzEBlXSqktINOEoibV2nfjfg'}`,
           },
           body: JSON.stringify({
             text: textToSpeak,
