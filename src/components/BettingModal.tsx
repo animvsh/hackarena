@@ -87,8 +87,11 @@ export const BettingModal = ({
 
       if (error) throw error;
 
+      // Type assertion for RPC response
+      const result = data as any as { new_balance: number; prediction_id: string; success: boolean };
+      
       // Update local balance
-      setUserBalance(data.new_balance);
+      setUserBalance(result.new_balance);
 
       toast.success(`Bet placed! ${amount} HC on ${team.team_name}`);
       onBetPlaced();

@@ -15,8 +15,16 @@ export const ProtectedRoute = ({ children, requiredRole }: ProtectedRouteProps) 
   useEffect(() => {
     if (!loading && !user) {
       navigate('/auth');
+    } else if (
+      !loading && 
+      user && 
+      profile && 
+      profile.onboarding_completed === false && 
+      window.location.pathname !== '/onboarding'
+    ) {
+      navigate('/onboarding');
     }
-  }, [user, loading, navigate]);
+  }, [user, profile, loading, navigate]);
 
   if (loading) {
     return (

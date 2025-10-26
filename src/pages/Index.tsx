@@ -26,7 +26,7 @@ interface DashboardStats {
 }
 
 const Index = () => {
-  const { user } = useAuth();
+  const { user, profile } = useAuth();
   const { hackathons, selectedHackathon, selectHackathon, loading: hackathonsLoading } = useActiveBroadcasts();
   const [stats, setStats] = useState<DashboardStats>({
     activeTeams: 0,
@@ -38,6 +38,13 @@ const Index = () => {
   const [loading, setLoading] = useState(true);
   const [showLinkedInModal, setShowLinkedInModal] = useState(false);
   const [linkedinVerified, setLinkedinVerified] = useState<boolean | null>(null);
+
+  // Redirect to onboarding if not completed (safety check)
+  useEffect(() => {
+    if (profile && profile.onboarding_completed === false) {
+      window.location.href = '/onboarding';
+    }
+  }, [profile]);
 
   // Check LinkedIn verification status on mount
   useEffect(() => {

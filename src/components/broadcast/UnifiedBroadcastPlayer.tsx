@@ -76,6 +76,7 @@ export function UnifiedBroadcastPlayer() {
   const [controlsVisible, setControlsVisible] = useState(false);
   const [controlsTimeout, setControlsTimeout] = useState<NodeJS.Timeout | null>(null);
   const [previousHackathonName, setPreviousHackathonName] = useState<string | null>(null);
+  const [isMuted, setIsMuted] = useState(false);
 
   // Track hackathon changes for smooth transitions
   useEffect(() => {
@@ -133,6 +134,11 @@ export function UnifiedBroadcastPlayer() {
         document.exitFullscreen();
       }
     }
+  };
+
+  const handleToggleMute = () => {
+    setIsMuted(!isMuted);
+    console.log('Mute toggled:', !isMuted);
   };
 
   const handleMouseMove = () => {
@@ -422,8 +428,10 @@ export function UnifiedBroadcastPlayer() {
             isPlaying={isLive}
             isLive={isLive}
             progress={progressPercent}
+            isMuted={isMuted}
             onPlayPause={togglePlayPause}
             onFullscreen={handleFullscreen}
+            onToggleMute={handleToggleMute}
           />
         </div>
 
