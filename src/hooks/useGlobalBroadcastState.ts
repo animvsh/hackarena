@@ -13,7 +13,7 @@ interface GlobalBroadcastState {
   liveViewerCount: number;
 }
 
-export function useGlobalBroadcastState() {
+export function useGlobalBroadcastState(hackathonId?: string) {
   const [broadcastState, setBroadcastState] = useState<GlobalBroadcastState>({
     state: 'live',
     currentScene: 'anchor',
@@ -27,10 +27,13 @@ export function useGlobalBroadcastState() {
   useEffect(() => {
     // Fetch initial state
     const fetchInitialState = async () => {
-      const { data, error } = await supabase
-        .from('broadcast_state')
-        .select('*')
-        .single();
+      let query = supabase.from('broadcast_state').select('*');
+      
+      if (hackathonId) {
+        query = query.eq('hackathon_id', hackathonId);
+      }
+      
+      const { data, error } = await query.maybeSingle();
 
       if (data && !error) {
         setBroadcastState({
@@ -49,17 +52,18 @@ export function useGlobalBroadcastState() {
 
     // Subscribe to real-time updates
     const channel = supabase
-      .channel('broadcast-state-changes')
+      .channel(`broadcast-state-changes-${hackathonId || 'all'}`)
       .on(
         'postgres_changes',
         {
           event: '*',
           schema: 'public',
           table: 'broadcast_state',
+          filter: hackathonId ? `hackathon_id=eq.${hackathonId}` : undefined,
         },
         (payload) => {
           const newData = payload.new as any;
-          if (newData) {
+          if (newData && (!hackathonId || newData.hackathon_id === hackathonId)) {
             setBroadcastState({
               state: newData.state as BroadcastState,
               currentScene: newData.current_scene as BroadcastScene,
@@ -76,7 +80,7 @@ export function useGlobalBroadcastState() {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, []);
+  }, [hackathonId]);
 
   return {
     ...broadcastState,

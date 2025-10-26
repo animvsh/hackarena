@@ -7,10 +7,10 @@ import { TrendingTeams } from "@/components/TrendingTeams";
 import { RevenueDrivers } from "@/components/RevenueDrivers";
 import { LiveMarketChart } from "@/components/LiveMarketChart";
 import { LiveCommentaryTicker } from "@/components/LiveCommentaryTicker";
-import { EnhancedBroadcastVideoPlayer } from "@/components/broadcast/EnhancedBroadcastVideoPlayer";
+import { BroadcastCarousel } from "@/components/broadcast/BroadcastCarousel";
+import { HackathonInfoCard } from "@/components/HackathonInfoCard";
+import { useActiveBroadcasts } from "@/hooks/useActiveBroadcasts";
 import { Users, TrendingUp, Zap, Trophy, Radio, BarChart3 } from "lucide-react";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { Skeleton } from "@/components/ui/skeleton";
 
@@ -23,6 +23,7 @@ interface DashboardStats {
 }
 
 const Index = () => {
+  const { hackathons, selectedHackathon, selectHackathon, loading: hackathonsLoading } = useActiveBroadcasts();
   const [stats, setStats] = useState<DashboardStats>({
     activeTeams: 0,
     commitsPerHour: 0,
@@ -33,7 +34,9 @@ const Index = () => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetchDashboardStats();
+    if (selectedHackathon) {
+      fetchDashboardStats(selectedHackathon.id);
+    }
 
     // Subscribe to changes
     const channel = supabase
@@ -42,56 +45,75 @@ const Index = () => {
         event: '*',
         schema: 'public',
         table: 'teams'
-      }, fetchDashboardStats)
+      }, () => selectedHackathon && fetchDashboardStats(selectedHackathon.id))
       .on('postgres_changes', {
         event: '*',
         schema: 'public',
         table: 'predictions'
-      }, fetchDashboardStats)
+      }, () => selectedHackathon && fetchDashboardStats(selectedHackathon.id))
       .on('postgres_changes', {
         event: '*',
         schema: 'public',
         table: 'prediction_markets'
-      }, fetchDashboardStats)
+      }, () => selectedHackathon && fetchDashboardStats(selectedHackathon.id))
       .subscribe();
 
     return () => {
       supabase.removeChannel(channel);
     };
-  }, []);
+  }, [selectedHackathon]);
 
-  const fetchDashboardStats = async () => {
+  const fetchDashboardStats = async (hackathonId: string) => {
     setLoading(true);
 
-    // Active teams
+    // Active teams for this hackathon
     const { count: activeTeams } = await supabase
       .from('teams')
       .select('*', { count: 'exact', head: true })
-      .eq('status', 'active');
+      .eq('status', 'active')
+      .eq('hackathon_id', hackathonId);
 
-    // Calculate commits/hour from progress_updates
+    // Calculate commits/hour from progress_updates for teams in this hackathon
     const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000).toISOString();
+    const { data: hackathonTeams } = await supabase
+      .from('teams')
+      .select('id')
+      .eq('hackathon_id', hackathonId);
+    
+    const teamIds = hackathonTeams?.map(t => t.id) || [];
+    
     const { count: recentCommits } = await supabase
       .from('progress_updates')
       .select('*', { count: 'exact', head: true })
       .eq('type', 'commit')
+      .in('team_id', teamIds.length > 0 ? teamIds : [''])
       .gte('created_at', oneHourAgo);
 
-    // Markets open
+    // Markets open for this hackathon
     const { count: marketsOpen } = await supabase
       .from('prediction_markets')
       .select('*', { count: 'exact', head: true })
-      .eq('status', 'open');
+      .eq('status', 'open')
+      .eq('hackathon_id', hackathonId);
 
-    // Predictions made
+    // Predictions made on this hackathon's markets
+    const { data: hackathonMarkets } = await supabase
+      .from('prediction_markets')
+      .select('id')
+      .eq('hackathon_id', hackathonId);
+    
+    const marketIds = hackathonMarkets?.map(m => m.id) || [];
+
     const { count: predictionsMade } = await supabase
       .from('predictions')
-      .select('*', { count: 'exact', head: true });
+      .select('*', { count: 'exact', head: true })
+      .in('market_id', marketIds.length > 0 ? marketIds : ['']);
 
-    // Commentary events
+    // Commentary events for this hackathon
     const { count: commentaryEvents } = await supabase
       .from('commentary_feed')
-      .select('*', { count: 'exact', head: true });
+      .select('*', { count: 'exact', head: true })
+      .eq('hackathon_id', hackathonId);
 
     setStats({
       activeTeams: activeTeams || 0,
@@ -111,41 +133,38 @@ const Index = () => {
       <main className="flex-1 p-8">
         <Header />
 
-        {/* Live Broadcast - Hero Section */}
+        {/* Live Broadcast Carousel */}
         <div className="mb-8">
-          <div className="mb-4 flex items-center justify-between">
-            <div>
-              <h2 className="text-3xl font-bold mb-2 bg-gradient-to-r from-neon-yellow via-neon-blue to-neon-purple bg-clip-text text-transparent">
-                Live Broadcast
-              </h2>
-              <p className="text-muted-foreground text-sm">
-                Real-time AI commentary from the hackathon floor
-              </p>
-            </div>
-            <Button 
-              variant="outline" 
-              onClick={() => window.location.href = '/broadcast'}
-              className="gap-2"
-            >
-              Full Screen View
-            </Button>
+          <div className="mb-4">
+            <h2 className="text-3xl font-bold mb-2 bg-gradient-to-r from-neon-yellow via-neon-blue to-neon-purple bg-clip-text text-transparent">
+              Live Hackathon Broadcasts
+            </h2>
+            <p className="text-muted-foreground text-sm">
+              Real-time AI commentary from active hackathons
+            </p>
           </div>
-          <EnhancedBroadcastVideoPlayer />
+          
+          {hackathonsLoading ? (
+            <Skeleton className="h-[500px] rounded-2xl" />
+          ) : (
+            <BroadcastCarousel 
+              hackathons={hackathons} 
+              onHackathonChange={selectHackathon}
+            />
+          )}
         </div>
+
+        {/* Hackathon Info Card */}
+        {selectedHackathon && !hackathonsLoading && (
+          <div className="mb-8">
+            <HackathonInfoCard hackathon={selectedHackathon} />
+          </div>
+        )}
 
         {/* Live Statistics */}
         <div className="mb-6">
           <div className="flex items-center justify-between mb-6">
-            <h2 className="text-xl font-bold">Live Hackathon Metrics</h2>
-            <Select defaultValue="current">
-              <SelectTrigger className="w-[200px] bg-secondary border-border">
-                <SelectValue placeholder="Hackathon" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="current">Current Hackathon</SelectItem>
-                <SelectItem value="past">Past Events</SelectItem>
-              </SelectContent>
-            </Select>
+            <h2 className="text-xl font-bold">Live Metrics - {selectedHackathon?.name || 'Hackathon'}</h2>
           </div>
 
           {loading ? (
@@ -225,18 +244,20 @@ const Index = () => {
         </div>
 
         {/* Charts and Stats Grid */}
-        <div className="grid grid-cols-3 gap-6 mb-6">
-          <LiveMarketChart />
+        {selectedHackathon && (
+          <div className="grid grid-cols-3 gap-6 mb-6">
+            <LiveMarketChart hackathonId={selectedHackathon.id} />
 
-          <div className="space-y-6">
-            <UserWallet />
-            <TrendingTeams />
-            <RevenueDrivers />
+            <div className="space-y-6">
+              <UserWallet />
+              <TrendingTeams hackathonId={selectedHackathon.id} />
+              <RevenueDrivers />
+            </div>
           </div>
-        </div>
+        )}
 
         {/* Live Commentary Ticker */}
-        <LiveCommentaryTicker />
+        {selectedHackathon && <LiveCommentaryTicker hackathonId={selectedHackathon.id} />}
       </main>
     </div>
   );

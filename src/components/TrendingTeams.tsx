@@ -10,7 +10,11 @@ interface Team {
   current_progress: number;
 }
 
-export const TrendingTeams = () => {
+interface TrendingTeamsProps {
+  hackathonId?: string;
+}
+
+export const TrendingTeams = ({ hackathonId }: TrendingTeamsProps) => {
   const [teams, setTeams] = useState<Team[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -29,15 +33,21 @@ export const TrendingTeams = () => {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, []);
+  }, [hackathonId]);
 
   const fetchTrending = async () => {
     setLoading(true);
-    const { data } = await supabase
+    let query = supabase
       .from('teams')
       .select('id, name, logo_url, momentum_score, current_progress')
       .order('momentum_score', { ascending: false })
       .limit(5);
+    
+    if (hackathonId) {
+      query = query.eq('hackathon_id', hackathonId);
+    }
+    
+    const { data } = await query;
 
     if (data) {
       setTeams(data);

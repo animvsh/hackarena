@@ -3,7 +3,11 @@ import { ResponsiveContainer, LineChart, Line, XAxis, YAxis, CartesianGrid, Tool
 import { supabase } from "@/integrations/supabase/client";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
-export const LiveMarketChart = () => {
+interface LiveMarketChartProps {
+  hackathonId?: string;
+}
+
+export const LiveMarketChart = ({ hackathonId }: LiveMarketChartProps) => {
   const [teams, setTeams] = useState<any[]>([]);
   const [oddsHistory, setOddsHistory] = useState<any[]>([]);
   const [selectedTrack, setSelectedTrack] = useState<string>("all");
@@ -31,13 +35,19 @@ export const LiveMarketChart = () => {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [selectedTrack]);
+  }, [selectedTrack, hackathonId]);
 
   const fetchMarketData = async () => {
-    const { data: teamsData } = await supabase
+    let query = supabase
       .from('teams')
       .select('id, name')
       .limit(6);
+    
+    if (hackathonId) {
+      query = query.eq('hackathon_id', hackathonId);
+    }
+    
+    const { data: teamsData } = await query;
 
     if (teamsData) {
       setTeams(teamsData);
