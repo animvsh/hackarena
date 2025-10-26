@@ -3,17 +3,17 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Upload, Linkedin, Github, FileText } from "lucide-react";
+import { Linkedin } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { ResumeUploader } from "./ResumeUploader";
 import { ProfilePreview } from "./ProfilePreview";
 
 interface ProfileData {
   name?: string;
   email?: string;
   bio?: string;
+  headline?: string;
+  location?: string;
   skills?: Array<{ name: string; level: string }>;
   experience?: Array<{
     title: string;
@@ -21,15 +21,28 @@ interface ProfileData {
     startDate: string;
     endDate?: string;
     description: string;
+    location?: string;
+    employment_type?: string;
   }>;
   education?: Array<{
     degree: string;
     institution: string;
     year: string;
+    start_year?: string;
+    gpa?: string;
+    field?: string;
   }>;
   linkedin_url?: string;
   github_url?: string;
   portfolio_url?: string;
+  years_of_experience?: number;
+  certifications?: string[];
+  languages?: string[];
+  interests?: string[];
+  volunteer_experience?: any[];
+  publications?: any[];
+  projects?: any[];
+  awards?: any[];
 }
 
 interface ProfileImportProps {
@@ -39,9 +52,7 @@ interface ProfileImportProps {
 export const ProfileImport = ({ onComplete }: ProfileImportProps) => {
   const [loading, setLoading] = useState(false);
   const [profileData, setProfileData] = useState<ProfileData | null>(null);
-  const [githubUsername, setGithubUsername] = useState("");
   const [linkedinUrl, setLinkedinUrl] = useState("");
-  const [isImporting, setIsImporting] = useState(false);
 
   // Handle OAuth callback
   useEffect(() => {
@@ -293,54 +304,6 @@ export const ProfileImport = ({ onComplete }: ProfileImportProps) => {
     }
   };
 
-  const handleResumeUpload = async (file: File) => {
-    setLoading(true);
-    try {
-      const formData = new FormData();
-      formData.append('file', file);
-
-      const { data, error } = await supabase.functions.invoke('parse-resume', {
-        body: formData,
-      });
-
-      if (error) throw error;
-
-      setProfileData(data.profile);
-      toast.success("Resume parsed successfully!");
-    } catch (error) {
-      console.error('Error parsing resume:', error);
-      toast.error("Failed to parse resume. Please try manual entry.");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleGithubImport = async () => {
-    if (!githubUsername) {
-      toast.error("Please enter a GitHub username");
-      return;
-    }
-
-    setLoading(true);
-    try {
-      const response = await fetch(`https://api.github.com/users/${githubUsername}`);
-      const data = await response.json();
-
-      setProfileData({
-        name: data.name || githubUsername,
-        bio: data.bio || "",
-        github_url: data.html_url,
-        portfolio_url: data.blog || "",
-      });
-
-      toast.success("GitHub profile imported!");
-    } catch (error) {
-      console.error('Error fetching GitHub profile:', error);
-      toast.error("Failed to import GitHub profile");
-    } finally {
-      setLoading(false);
-    }
-  };
 
   const handleConfirm = (source: string) => {
     if (profileData) {
@@ -371,107 +334,44 @@ export const ProfileImport = ({ onComplete }: ProfileImportProps) => {
         </p>
       </div>
 
-      <Tabs defaultValue="linkedin" className="w-full">
-        <TabsList className="grid w-full grid-cols-3">
-          <TabsTrigger value="resume" disabled>Resume</TabsTrigger>
-          <TabsTrigger value="linkedin">LinkedIn</TabsTrigger>
-          <TabsTrigger value="github" disabled>GitHub</TabsTrigger>
-        </TabsList>
+      <Card className="p-6 space-y-4 border-primary/20 bg-primary/5">
+        <div className="flex items-center gap-3 mb-4">
+          <div className="p-3 rounded-lg bg-primary/10">
+            <Linkedin className="w-6 h-6 text-primary" />
+          </div>
+          <div>
+            <h3 className="font-semibold text-primary">Connect with LinkedIn</h3>
+            <p className="text-sm text-muted-foreground">
+              Enter your LinkedIn profile URL and connect your account
+            </p>
+          </div>
+        </div>
 
-        <TabsContent value="resume" className="space-y-4">
-          <Card className="p-6">
-            <ResumeUploader onUpload={handleResumeUpload} loading={loading} />
-          </Card>
-        </TabsContent>
+        <div className="space-y-2">
+          <Label htmlFor="linkedin-url">LinkedIn Profile URL *</Label>
+          <Input
+            id="linkedin-url"
+            placeholder="https://www.linkedin.com/in/your-username"
+            value={linkedinUrl}
+            onChange={(e) => setLinkedinUrl(e.target.value)}
+            disabled={loading}
+            className="border-primary/30 focus:border-primary"
+          />
+          <p className="text-xs text-muted-foreground">
+            Make sure your LinkedIn profile is public so we can access your information
+          </p>
+        </div>
 
-        <TabsContent value="linkedin" className="space-y-4">
-          <Card className="p-6 space-y-4 border-primary/20 bg-primary/5">
-            <div className="flex items-center gap-3 mb-4">
-              <div className="p-3 rounded-lg bg-primary/10">
-                <Linkedin className="w-6 h-6 text-primary" />
-              </div>
-              <div>
-                <h3 className="font-semibold text-primary">Connect with LinkedIn</h3>
-                <p className="text-sm text-muted-foreground">
-                  Enter your LinkedIn profile URL and connect your account
-                </p>
-              </div>
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="linkedin-url">LinkedIn Profile URL *</Label>
-              <Input
-                id="linkedin-url"
-                placeholder="https://www.linkedin.com/in/your-username"
-                value={linkedinUrl}
-                onChange={(e) => setLinkedinUrl(e.target.value)}
-                disabled={loading}
-                className="border-primary/30 focus:border-primary"
-              />
-              <p className="text-xs text-muted-foreground">
-                Make sure your LinkedIn profile is public so we can access your information
-              </p>
-            </div>
-
-            <Button
-              onClick={handleLinkedinContinue}
-              disabled={loading || !linkedinUrl}
-              className="w-full bg-[#0A66C2] hover:bg-[#0A66C2]/90 text-white"
-              size="lg"
-            >
-              <Linkedin className="w-5 h-5 mr-2" />
-              {loading ? "Connecting..." : "Continue with LinkedIn"}
-            </Button>
-
-            <div className="bg-blue-50 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-800 rounded-lg p-3 space-y-2">
-              <p className="text-xs font-medium text-blue-900 dark:text-blue-100">
-                <strong>What happens next:</strong>
-              </p>
-              <ul className="text-xs text-blue-800 dark:text-blue-200 space-y-1 ml-4 list-disc">
-                <li>You'll be redirected to LinkedIn to sign in</li>
-                <li>After signing in, you'll be redirected back here</li>
-                <li>We'll scrape your profile information using Clado API</li>
-                <li>All data will be added to your Experience section</li>
-              </ul>
-            </div>
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="github" className="space-y-4">
-          <Card className="p-6 space-y-4">
-            <div className="flex items-center gap-3 mb-4">
-              <div className="p-3 rounded-lg bg-primary/10">
-                <Github className="w-6 h-6 text-primary" />
-              </div>
-              <div>
-                <h3 className="font-semibold">Import from GitHub</h3>
-                <p className="text-sm text-muted-foreground">
-                  Enter your GitHub username
-                </p>
-              </div>
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="github">GitHub Username</Label>
-              <Input
-                id="github"
-                placeholder="yourusername"
-                value={githubUsername}
-                onChange={(e) => setGithubUsername(e.target.value)}
-              />
-            </div>
-
-            <Button
-              onClick={handleGithubImport}
-              disabled={loading || !githubUsername}
-              className="w-full"
-            >
-              {loading ? "Importing..." : "Import from GitHub"}
-            </Button>
-          </Card>
-        </TabsContent>
-
-      </Tabs>
+        <Button
+          onClick={handleLinkedinContinue}
+          disabled={loading || !linkedinUrl}
+          className="w-full bg-[#0A66C2] hover:bg-[#0A66C2]/90 text-white"
+          size="lg"
+        >
+          <Linkedin className="w-5 h-5 mr-2" />
+          {loading ? "Connecting..." : "Continue with LinkedIn"}
+        </Button>
+      </Card>
     </div>
   );
 };

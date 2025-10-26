@@ -58,6 +58,7 @@ export default function MyProfile() {
       });
 
       console.log('Clado API response:', response);
+      console.log('Full response data:', JSON.stringify(response.data, null, 2));
 
       if (response.error) {
         console.error('Clado API error:', response.error);
@@ -67,6 +68,7 @@ export default function MyProfile() {
 
       if (response.data?.profile) {
         console.log('Profile data received from Clado:', response.data.profile);
+        console.log('Profile data as JSON:', JSON.stringify(response.data.profile, null, 2));
         
         // Check if we got meaningful data
         const profileData = response.data.profile;
@@ -80,82 +82,21 @@ export default function MyProfile() {
         if (hasMeaningfulData) {
           console.log('Updating profile with LinkedIn data');
           
-          // Format all scraped data into the experience field
-          let experienceText = '';
+          // Update profile with structured data
+          const updateData: any = {};
           
-          // Add bio/summary
-          if (profileData.bio) {
-            experienceText += `**About Me:**\n${profileData.bio}\n\n`;
-          }
+          if (profileData.bio) updateData.bio = profileData.bio;
+          if (profileData.headline) updateData.headline = profileData.headline;
+          if (profileData.location) updateData.location = profileData.location;
+          if (profileData.linkedin_url) updateData.linkedin_url = profileData.linkedin_url;
+          if (profileData.portfolio_url) updateData.portfolio_url = profileData.portfolio_url;
+          if (profileData.skills && profileData.skills.length > 0) updateData.skills = profileData.skills;
+          if (profileData.experience && profileData.experience.length > 0) updateData.experience = profileData.experience;
+          if (profileData.education && profileData.education.length > 0) updateData.education = profileData.education;
+          if (profileData.years_of_experience) updateData.years_of_experience = profileData.years_of_experience;
+          if (profileData.certifications && profileData.certifications.length > 0) updateData.certifications = profileData.certifications;
           
-          // Add headline
-          if (profileData.headline) {
-            experienceText += `**Professional Headline:**\n${profileData.headline}\n\n`;
-          }
-          
-          // Add location
-          if (profileData.location) {
-            experienceText += `**Location:**\n${profileData.location}\n\n`;
-          }
-          
-          // Add work experience
-          if (profileData.experience && profileData.experience.length > 0) {
-            experienceText += `**Work Experience:**\n`;
-            profileData.experience.forEach((exp: any, index: number) => {
-              experienceText += `${index + 1}. **${exp.title}** at ${exp.company}\n`;
-              if (exp.startDate) experienceText += `   Period: ${exp.startDate} - ${exp.endDate || 'Present'}\n`;
-              if (exp.description) experienceText += `   Description: ${exp.description}\n`;
-              experienceText += `\n`;
-            });
-          }
-          
-          // Add education
-          if (profileData.education && profileData.education.length > 0) {
-            experienceText += `**Education:**\n`;
-            profileData.education.forEach((edu: any, index: number) => {
-              experienceText += `${index + 1}. **${edu.degree}** from ${edu.institution}\n`;
-              if (edu.year) experienceText += `   Year: ${edu.year}\n`;
-              experienceText += `\n`;
-            });
-          }
-          
-          // Add skills
-          if (profileData.skills && profileData.skills.length > 0) {
-            experienceText += `**Skills:**\n${profileData.skills.map((s: any) => s.name || s).join(', ')}\n\n`;
-          }
-          
-          // Add certifications
-          if (profileData.certifications && profileData.certifications.length > 0) {
-            experienceText += `**Certifications:**\n`;
-            profileData.certifications.forEach((cert: any, index: number) => {
-              experienceText += `${index + 1}. ${cert}\n`;
-            });
-            experienceText += `\n`;
-          }
-          
-          // Add years of experience
-          if (profileData.years_of_experience) {
-            experienceText += `**Years of Experience:** ${profileData.years_of_experience}\n\n`;
-          }
-          
-          // Add portfolio URL
-          if (profileData.portfolio_url) {
-            experienceText += `**Portfolio:** ${profileData.portfolio_url}\n\n`;
-          }
-          
-          // Update profile with formatted experience
-          const updateData: any = {
-            bio: profileData.bio || '',
-            headline: profileData.headline || '',
-            location: profileData.location || '',
-            linkedin_url: linkedinUrl,
-            portfolio_url: profileData.portfolio_url || '',
-            experience: experienceText.trim(),
-            years_of_experience: profileData.years_of_experience || 0,
-            certifications: profileData.certifications || []
-          };
-          
-          console.log('Updating profile with data:', updateData);
+          console.log('Updating profile with structured data:', updateData);
           
           const { error: updateError } = await supabase
             .from('users')
@@ -166,7 +107,7 @@ export default function MyProfile() {
             console.error('Error updating profile:', updateError);
             toast.error("Failed to save profile data");
           } else {
-            console.log('Profile updated successfully');
+            console.log('Profile updated successfully with structured data');
             toast.success("LinkedIn profile imported successfully!");
             
             // Refresh profile data
@@ -282,6 +223,28 @@ export default function MyProfile() {
                 </Button>
               )}
             </div>
+
+            {/* Refetch LinkedIn Profile */}
+            {fullProfile.linkedin_url && (
+              <div className="pt-4 border-t">
+                <Button
+                  variant="default"
+                  size="sm"
+                  onClick={async () => {
+                    setIsImportingLinkedIn(true);
+                    await importLinkedInProfile(fullProfile.linkedin_url);
+                    setIsImportingLinkedIn(false);
+                  }}
+                  disabled={isImportingLinkedIn}
+                >
+                  <Linkedin className="h-4 w-4 mr-2" />
+                  {isImportingLinkedIn ? "Refetching..." : "Refetch LinkedIn Profile"}
+                </Button>
+                <p className="text-xs text-muted-foreground mt-2">
+                  Click to update your profile with the latest LinkedIn data
+                </p>
+              </div>
+            )}
           </div>
         </div>
       </Card>
@@ -301,19 +264,92 @@ export default function MyProfile() {
             <div className="h-1 w-8 bg-primary rounded" />
             Experience
           </h3>
-          <div className="space-y-4">
-            {fullProfile.experience.split('\n\n').map((section: string, sectionIndex: number) => {
-              const cleanSection = section.trim();
-              if (!cleanSection) return null;
-              
-              return (
-                <div key={sectionIndex} className="p-4 bg-muted/30 rounded-lg">
-                  <div className="text-muted-foreground leading-relaxed whitespace-pre-wrap">
-                    {cleanSection}
-                  </div>
+          <div className="space-y-6">
+            {/* Work Experience */}
+            {Array.isArray(fullProfile.experience) && fullProfile.experience.length > 0 && (
+              <div className="space-y-4">
+                <h4 className="font-semibold text-primary mb-4 flex items-center gap-2">
+                  <Award className="h-4 w-4" />
+                  Work Experience
+                </h4>
+                <div className="space-y-4">
+                  {fullProfile.experience.map((exp: any, expIndex: number) => (
+                    <div key={expIndex} className="p-4 border-l-4 border-primary/50 hover:border-primary bg-muted/30 hover:bg-muted/50 rounded-r-lg transition-all">
+                      <h5 className="font-bold text-lg group-hover:text-primary transition-colors">{exp.title || 'Position'}</h5>
+                      <p className="text-sm font-medium text-muted-foreground mt-1">{exp.company || 'Company'}</p>
+                      {(exp.startDate || exp.endDate) && (
+                        <p className="text-xs text-muted-foreground mt-1">
+                          {exp.startDate} - {exp.endDate || 'Present'}
+                        </p>
+                      )}
+                      {exp.description && (
+                        <p className="text-sm mt-3 leading-relaxed text-muted-foreground">
+                          {exp.description}
+                        </p>
+                      )}
+                    </div>
+                  ))}
                 </div>
-              );
-            })}
+              </div>
+            )}
+            
+            {/* Education */}
+            {Array.isArray(fullProfile.education) && fullProfile.education.length > 0 && (
+              <div className="space-y-4">
+                <h4 className="font-semibold text-primary mb-4 flex items-center gap-2">
+                  <Trophy className="h-4 w-4" />
+                  Education
+                </h4>
+                <div className="space-y-4">
+                  {fullProfile.education.map((edu: any, eduIndex: number) => (
+                    <div key={eduIndex} className="p-4 border-l-4 border-primary/50 hover:border-primary bg-muted/30 hover:bg-muted/50 rounded-r-lg transition-all">
+                      <h5 className="font-bold text-lg group-hover:text-primary transition-colors">{edu.degree || 'Degree'}</h5>
+                      <p className="text-sm font-medium text-muted-foreground mt-1">{edu.institution || 'Institution'}</p>
+                      {edu.year && (
+                        <p className="text-xs text-muted-foreground mt-1">
+                          {edu.year}
+                        </p>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+            
+            {/* Skills */}
+            {Array.isArray(fullProfile.skills) && fullProfile.skills.length > 0 && (
+              <div className="p-4 bg-muted/30 rounded-lg">
+                <h4 className="font-semibold text-primary mb-3 flex items-center gap-2">
+                  <Target className="h-4 w-4" />
+                  Skills
+                </h4>
+                <div className="flex flex-wrap gap-2">
+                  {fullProfile.skills.map((skill: any, skillIndex: number) => (
+                    <Badge key={skillIndex} variant="secondary" className="px-3 py-1 text-sm">
+                      {typeof skill === 'string' ? skill : skill.name || skill.skill || skill}
+                    </Badge>
+                  ))}
+                </div>
+              </div>
+            )}
+            
+            {/* Fallback for string experience data */}
+            {typeof fullProfile.experience === 'string' && (
+              <div className="space-y-4">
+                {fullProfile.experience.split('\n\n').map((section: string, sectionIndex: number) => {
+                  const cleanSection = section.trim();
+                  if (!cleanSection) return null;
+                  
+                  return (
+                    <div key={sectionIndex} className="p-4 bg-muted/30 rounded-lg">
+                      <div className="text-muted-foreground leading-relaxed whitespace-pre-wrap">
+                        {cleanSection}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
           </div>
         </Card>
       )}
