@@ -21,13 +21,14 @@ import { CameraEffects } from './effects/CameraEffects';
 import { EventAnimations } from './effects/EventAnimations';
 import { ProductionEffects } from './effects/ProductionEffects';
 import { VideoPlayerControls } from './VideoPlayerControls';
+import { BroadcastPausedOverlay } from './BroadcastPausedOverlay';
 import { useUnifiedSegmentManager } from '@/hooks/useUnifiedSegmentManager';
 import { useGlobalBroadcastState } from '@/hooks/useGlobalBroadcastState';
 import { useViewerPresence } from '@/hooks/useViewerPresence';
 import { selectPersonalityForScene } from '@/types/broadcastPersonality';
 import type { BroadcastScene } from '@/types/broadcast';
 import { useToast } from '@/hooks/use-toast';
-import { Radio } from 'lucide-react';
+import { Radio, Play, Pause } from 'lucide-react';
 
 export function UnifiedBroadcastPlayer() {
   const { toast } = useToast();
@@ -59,6 +60,10 @@ export function UnifiedBroadcastPlayer() {
     state: broadcastState,
     currentScene: globalScene,
     isLoading: stateLoading,
+    isPaused,
+    pausedAt,
+    isMasterUser,
+    togglePause,
   } = useGlobalBroadcastState();
 
   // Track viewer presence
@@ -151,7 +156,7 @@ export function UnifiedBroadcastPlayer() {
     togglePlayPause();
   };
 
-  // Keyboard shortcuts
+  // Keyboard shortcuts (including master user pause control)
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       const target = e.target as HTMLElement;
@@ -159,7 +164,16 @@ export function UnifiedBroadcastPlayer() {
         return;
       }
 
-      if (e.code === 'Space') {
+      // Master user can pause/unpause with 'P' key
+      if (e.code === 'KeyP' && isMasterUser) {
+        e.preventDefault();
+        togglePause();
+        toast({
+          title: isPaused ? "🎬 Broadcast Resumed" : "⏸️ Broadcast Paused",
+          description: isPaused ? "Broadcast is now playing for all viewers" : "Broadcast is now paused for all viewers",
+          duration: 3000,
+        });
+      } else if (e.code === 'Space') {
         e.preventDefault();
         togglePlayPause();
       } else if (e.code === 'KeyF') {
@@ -169,7 +183,7 @@ export function UnifiedBroadcastPlayer() {
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [broadcastState]);
+  }, [broadcastState, isMasterUser, isPaused, togglePause, toast]);
 
   if (stateLoading) {
     return (
@@ -195,9 +209,16 @@ export function UnifiedBroadcastPlayer() {
           <CommercialBreak duration={30} onComplete={() => {}} />
         )}
 
+        {/* Broadcast Paused Overlay (highest priority - shows above everything) */}
+        <AnimatePresence>
+          {isPaused && (
+            <BroadcastPausedOverlay pausedAt={pausedAt} />
+          )}
+        </AnimatePresence>
+
         {/* Hackathon switching animation */}
         <AnimatePresence>
-          {isHackathonSwitching && (
+          {isHackathonSwitching && !isPaused && (
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
@@ -405,6 +426,43 @@ export function UnifiedBroadcastPlayer() {
             onFullscreen={handleFullscreen}
           />
         </div>
+
+        {/* Master User Controls (hidden from non-master users) */}
+        {isMasterUser && (
+          <div className="absolute top-20 left-4 z-[250] opacity-70 hover:opacity-100 transition-opacity">
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                togglePause();
+                toast({
+                  title: isPaused ? "🎬 Broadcast Resumed" : "⏸️ Broadcast Paused",
+                  description: isPaused ? "Broadcast is now playing for all viewers" : "Broadcast is now paused for all viewers",
+                  duration: 3000,
+                });
+              }}
+              className={`px-4 py-2 rounded-lg text-sm font-bold backdrop-blur-sm flex items-center gap-2 ${
+                isPaused
+                  ? 'bg-green-600/90 hover:bg-green-700 text-white'
+                  : 'bg-red-600/90 hover:bg-red-700 text-white'
+              }`}
+            >
+              {isPaused ? (
+                <>
+                  <Play className="w-4 h-4" fill="currentColor" />
+                  Resume Broadcast
+                </>
+              ) : (
+                <>
+                  <Pause className="w-4 h-4" />
+                  Pause Broadcast
+                </>
+              )}
+            </button>
+            <p className="text-xs text-white/60 mt-1 ml-1">
+              Master Control • Press 'P' to toggle
+            </p>
+          </div>
+        )}
 
         {/* Dev tools */}
         {import.meta.env.DEV && (
