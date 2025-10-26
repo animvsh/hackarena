@@ -1,13 +1,15 @@
 import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { Sidebar } from "@/components/Sidebar";
 import { Header } from "@/components/Header";
 import { TeamCard } from "@/components/TeamCard";
-import { TeamDetailModal } from "@/components/TeamDetailModal";
 import { supabase } from "@/integrations/supabase/client";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Search, Users2 } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { UserHoverCard } from "@/components/profile/UserHoverCard";
 
 interface Team {
   id: string;
@@ -25,9 +27,9 @@ interface Team {
 }
 
 const Teams = () => {
+  const navigate = useNavigate();
   const [teams, setTeams] = useState<Team[]>([]);
   const [filteredTeams, setFilteredTeams] = useState<Team[]>([]);
-  const [selectedTeam, setSelectedTeam] = useState<Team | null>(null);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   const [sortBy, setSortBy] = useState("momentum");
@@ -166,18 +168,12 @@ const Teams = () => {
               <TeamCard
                 key={team.id}
                 team={team}
-                onClick={() => setSelectedTeam(team)}
+                onClick={() => navigate(`/teams/${team.id}`)}
               />
             ))}
           </div>
         )}
       </main>
-
-      <TeamDetailModal
-        open={!!selectedTeam}
-        onOpenChange={(open) => !open && setSelectedTeam(null)}
-        team={selectedTeam}
-      />
     </div>
   );
 };

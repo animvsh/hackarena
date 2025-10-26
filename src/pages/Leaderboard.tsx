@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { Sidebar } from "@/components/Sidebar";
 import { Header } from "@/components/Header";
 import { supabase } from "@/integrations/supabase/client";
@@ -7,6 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Trophy, TrendingUp, Coins, Users, Crown } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
+import { UserHoverCard } from "@/components/profile/UserHoverCard";
 
 interface TeamRanking {
   id: string;
@@ -28,6 +30,7 @@ interface UserRanking {
 }
 
 const Leaderboard = () => {
+  const navigate = useNavigate();
   const [teamsByProgress, setTeamsByProgress] = useState<TeamRanking[]>([]);
   const [teamsByMomentum, setTeamsByMomentum] = useState<TeamRanking[]>([]);
   const [topPredictors, setTopPredictors] = useState<UserRanking[]>([]);
@@ -136,11 +139,12 @@ const Leaderboard = () => {
                 {teamsByProgress.map((team, index) => (
                   <div
                     key={team.id}
-                    className={`flex items-center gap-4 p-4 rounded-lg transition-colors ${
+                    className={`flex items-center gap-4 p-4 rounded-lg transition-colors cursor-pointer hover:bg-muted ${
                       index < 3
                         ? 'bg-gradient-to-r from-yellow-500/10 to-transparent'
                         : 'bg-background'
                     }`}
+                    onClick={() => navigate(`/teams/${team.id}`)}
                   >
                     <div className="text-2xl font-bold w-12 text-center">
                       {getMedalIcon(index + 1)}
@@ -179,11 +183,12 @@ const Leaderboard = () => {
                 {teamsByMomentum.map((team, index) => (
                   <div
                     key={team.id}
-                    className={`flex items-center gap-4 p-4 rounded-lg transition-colors ${
+                    className={`flex items-center gap-4 p-4 rounded-lg transition-colors cursor-pointer hover:bg-muted ${
                       index < 3
                         ? 'bg-gradient-to-r from-red-500/10 to-transparent'
                         : 'bg-background'
                     }`}
+                    onClick={() => navigate(`/teams/${team.id}`)}
                   >
                     <div className="text-2xl font-bold w-12 text-center">
                       {getMedalIcon(index + 1)}
@@ -220,44 +225,53 @@ const Leaderboard = () => {
             <Card className="p-6">
               <div className="space-y-3">
                 {topPredictors.map((user, index) => (
-                  <div
+                  <UserHoverCard
                     key={user.id}
-                    className={`flex items-center gap-4 p-4 rounded-lg transition-colors ${
-                      index < 3
-                        ? 'bg-gradient-to-r from-purple-500/10 to-transparent'
-                        : 'bg-background'
-                    }`}
+                    userId={user.id}
+                    username={user.username}
+                    avatarUrl={user.avatar_url}
+                    xp={user.xp}
+                    totalPredictions={user.total_predictions}
+                    correctPredictions={user.correct_predictions}
                   >
-                    <div className="text-2xl font-bold w-12 text-center">
-                      {index === 0 ? (
-                        <Crown className="w-8 h-8 text-yellow-500 mx-auto" />
-                      ) : (
-                        getMedalIcon(index + 1)
-                      )}
-                    </div>
-                    <img
-                      src={user.avatar_url || `https://api.dicebear.com/7.x/avataaars/svg?seed=${user.username}`}
-                      alt={user.username}
-                      className="w-12 h-12 rounded-full"
-                    />
-                    <div className="flex-1">
-                      <p className="font-semibold">{user.username}</p>
-                      <div className="flex gap-3 mt-1 text-xs text-muted-foreground">
-                        <span>{user.total_predictions} predictions</span>
-                        <span>•</span>
-                        <span>{getAccuracyRate(user)}% accurate</span>
+                    <div
+                      className={`flex items-center gap-4 p-4 rounded-lg transition-colors cursor-pointer hover:bg-muted ${
+                        index < 3
+                          ? 'bg-gradient-to-r from-purple-500/10 to-transparent'
+                          : 'bg-background'
+                      }`}
+                    >
+                      <div className="text-2xl font-bold w-12 text-center">
+                        {index === 0 ? (
+                          <Crown className="w-8 h-8 text-yellow-500 mx-auto" />
+                        ) : (
+                          getMedalIcon(index + 1)
+                        )}
+                      </div>
+                      <img
+                        src={user.avatar_url || `https://api.dicebear.com/7.x/avataaars/svg?seed=${user.username}`}
+                        alt={user.username}
+                        className="w-12 h-12 rounded-full border-2 border-primary/20"
+                      />
+                      <div className="flex-1">
+                        <p className="font-semibold hover:text-primary transition-colors">{user.username}</p>
+                        <div className="flex gap-3 mt-1 text-xs text-muted-foreground">
+                          <span>{user.total_predictions} predictions</span>
+                          <span>•</span>
+                          <span>{getAccuracyRate(user)}% accurate</span>
+                        </div>
+                      </div>
+                      <div className="text-right">
+                        <p className="text-2xl font-bold text-purple-500">
+                          {user.xp.toLocaleString()}
+                        </p>
+                        <p className="text-xs text-muted-foreground">XP</p>
+                        <p className="text-sm text-muted-foreground mt-1">
+                          {user.wallet_balance} HC
+                        </p>
                       </div>
                     </div>
-                    <div className="text-right">
-                      <p className="text-2xl font-bold text-purple-500">
-                        {user.xp.toLocaleString()}
-                      </p>
-                      <p className="text-xs text-muted-foreground">XP</p>
-                      <p className="text-sm text-muted-foreground mt-1">
-                        {user.wallet_balance} HC
-                      </p>
-                    </div>
-                  </div>
+                  </UserHoverCard>
                 ))}
               </div>
             </Card>

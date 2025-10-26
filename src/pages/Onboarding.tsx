@@ -6,10 +6,14 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { Users, Trophy, Briefcase, Award, Coins } from 'lucide-react';
+import { TeamSetup } from '@/components/onboarding/TeamSetup';
+import { InviteCodeDisplay } from '@/components/onboarding/InviteCodeDisplay';
+import { ProfileImport } from '@/components/onboarding/ProfileImport';
+import { ProfileForm } from '@/components/onboarding/ProfileForm';
+import { HackathonSelection } from '@/components/onboarding/HackathonSelection';
 
 const roleOptions = [
   { value: 'spectator', label: 'Spectator', icon: Users, description: 'Watch and predict outcomes' },
@@ -21,11 +25,20 @@ const roleOptions = [
 export default function Onboarding() {
   const [step, setStep] = useState(1);
   const [role, setRole] = useState('spectator');
-  const [profileData, setProfileData] = useState({
+  const [selectedHackathonId, setSelectedHackathonId] = useState<string | null>(null);
+  const [profileData, setProfileData] = useState<any>({
     username: '',
     bio: '',
-    githubUsername: ''
+    skills: [],
+    experience: [],
+    education: [],
+    linkedin_url: '',
+    github_url: '',
+    portfolio_url: '',
   });
+  const [profileSource, setProfileSource] = useState('manual');
+  const [teamId, setTeamId] = useState<string>('');
+  const [inviteCode, setInviteCode] = useState<string>('');
   const { user, profile } = useAuth();
   const navigate = useNavigate();
 
@@ -37,10 +50,26 @@ export default function Onboarding() {
         .from('user_roles')
         .insert({ user_id: user.id, role: role as any });
       
-      setStep(3);
+      // If hacker, go to hackathon selection first
+      if (role === 'hacker') {
+        setStep(2.3);
+      } else {
+        setStep(2.5);
+      }
     } catch (error) {
       toast.error('Failed to save role');
     }
+  };
+
+  const handleHackathonSelected = (hackathonId: string | null) => {
+    setSelectedHackathonId(hackathonId);
+    setStep(2.5);
+  };
+
+  const handleProfileImport = (data: any, source: string) => {
+    setProfileData({ ...profileData, ...data });
+    setProfileSource(source);
+    setStep(3); // Go to profile completion
   };
 
   const handleProfileSubmit = async () => {
@@ -50,11 +79,25 @@ export default function Onboarding() {
       await supabase
         .from('users')
         .update({
-          username: profileData.username || profile?.username
+          username: profileData.username || profile?.username,
+          bio: profileData.bio,
+          skills: profileData.skills,
+          experience: profileData.experience,
+          education: profileData.education,
+          linkedin_url: profileData.linkedin_url,
+          github_url: profileData.github_url,
+          portfolio_url: profileData.portfolio_url,
+          profile_generated_by: profileSource,
+          onboarding_completed: true,
         })
         .eq('id', user.id);
       
-      setStep(4);
+      // If hacker role, go to team setup, otherwise complete
+      if (role === 'hacker') {
+        setStep(3.5);
+      } else {
+        setStep(4);
+      }
     } catch (error) {
       toast.error('Failed to save profile');
     }
@@ -63,6 +106,16 @@ export default function Onboarding() {
   const handleComplete = () => {
     toast.success('Welcome to HackCast LIVE! 🎉');
     navigate('/');
+  };
+
+  const handleTeamCreated = (createdTeamId: string, code: string) => {
+    setTeamId(createdTeamId);
+    setInviteCode(code);
+    setStep(4);
+  };
+
+  const handleTeamJoined = () => {
+    setStep(4);
   };
 
   if (step === 1) {
@@ -147,41 +200,70 @@ export default function Onboarding() {
     );
   }
 
+  if (step === 2.3 && role === 'hacker') {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background p-4">
+        <div className="w-full max-w-4xl">
+          <HackathonSelection
+            onSelected={handleHackathonSelected}
+            onBack={() => setStep(2)}
+          />
+        </div>
+      </div>
+    );
+  }
+
+  if (step === 2.5) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background p-4">
+        <div className="w-full max-w-2xl">
+          <ProfileImport
+            onComplete={handleProfileImport}
+          />
+        </div>
+      </div>
+    );
+  }
+
+  if (step === 3.5 && role === 'hacker' && user) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background p-4">
+        <div className="w-full max-w-4xl">
+          <TeamSetup
+            userId={user.id}
+            hackathonId={selectedHackathonId}
+            onTeamCreated={handleTeamCreated}
+            onTeamJoined={handleTeamJoined}
+          />
+        </div>
+      </div>
+    );
+  }
+
   if (step === 3) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background p-4">
-        <Card className="w-full max-w-2xl">
-          <CardHeader>
-            <CardTitle>Complete Your Profile</CardTitle>
-            <CardDescription>Tell us a bit about yourself (optional)</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-6">
-            <div className="space-y-2">
-              <Label htmlFor="username">Display Name</Label>
-              <Input
-                id="username"
-                placeholder={profile?.username || 'Your username'}
-                value={profileData.username}
-                onChange={(e) => setProfileData({ ...profileData, username: e.target.value })}
-              />
-            </div>
-            {role === 'hacker' && (
-              <div className="space-y-2">
-                <Label htmlFor="github">GitHub Username</Label>
-                <Input
-                  id="github"
-                  placeholder="octocat"
-                  value={profileData.githubUsername}
-                  onChange={(e) => setProfileData({ ...profileData, githubUsername: e.target.value })}
-                />
-              </div>
-            )}
-            <div className="flex gap-4">
-              <Button variant="outline" onClick={() => setStep(2)}>Back</Button>
-              <Button onClick={handleProfileSubmit} className="flex-1">Continue</Button>
-            </div>
-          </CardContent>
-        </Card>
+        <div className="w-full max-w-2xl">
+          <ProfileForm
+            initialData={profileData}
+            onSubmit={handleProfileSubmit}
+            onBack={() => setStep(2.5)}
+          />
+        </div>
+      </div>
+    );
+  }
+
+  if (step === 4 && inviteCode) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background p-4">
+        <div className="w-full max-w-2xl">
+          <InviteCodeDisplay
+            inviteCode={inviteCode}
+            teamName={profileData.username || 'Your Team'}
+            onContinue={handleComplete}
+          />
+        </div>
       </div>
     );
   }
@@ -193,7 +275,9 @@ export default function Onboarding() {
           <Coins className="h-16 w-16 text-primary mx-auto mb-4" />
           <CardTitle className="text-3xl">You're All Set! 🎉</CardTitle>
           <CardDescription className="text-lg mt-2">
-            Start with 1,000 HackCoins
+            {role === 'hacker' 
+              ? 'Your join request has been sent. You\'ll be notified when approved!'
+              : 'Start with 1,000 HackCoins'}
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">

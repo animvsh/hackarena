@@ -1,7 +1,9 @@
 import { useEffect, useState } from "react";
+import { useParams } from "react-router-dom";
 import { Sidebar } from "@/components/Sidebar";
 import { Header } from "@/components/Header";
 import { MarketCard } from "@/components/MarketCard";
+import { HackathonHeader } from "@/components/HackathonHeader";
 import { supabase } from "@/integrations/supabase/client";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -22,6 +24,7 @@ interface Market {
 }
 
 const Markets = () => {
+  const { hackathonId } = useParams<{ hackathonId: string }>();
   const [markets, setMarkets] = useState<Market[]>([]);
   const [filteredMarkets, setFilteredMarkets] = useState<Market[]>([]);
   const [loading, setLoading] = useState(true);
@@ -58,7 +61,7 @@ const Markets = () => {
 
   const fetchMarkets = async () => {
     setLoading(true);
-    const { data, error } = await supabase
+    let query = supabase
       .from('prediction_markets')
       .select(`
         id,
@@ -71,8 +74,13 @@ const Markets = () => {
           name,
           logo_url
         )
-      `)
-      .order('prize_amount', { ascending: false });
+      `);
+    
+    if (hackathonId) {
+      query = query.eq('hackathon_id', hackathonId);
+    }
+    
+    const { data, error } = await query.order('prize_amount', { ascending: false });
 
     if (data && !error) {
       setMarkets(data as Market[]);
@@ -105,6 +113,8 @@ const Markets = () => {
 
       <main className="flex-1 p-8">
         <Header />
+        
+        {hackathonId && <HackathonHeader hackathonId={hackathonId} />}
 
         {/* Page Header */}
         <div className="mb-8">

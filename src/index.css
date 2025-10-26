@@ -8,22 +8,22 @@ All colors MUST be HSL.
 
 @layer base {
   :root {
-    --background: 0 0% 10%;
+    --background: 0 0% 4%;
     --foreground: 0 0% 98%;
 
-    --card: 0 0% 14%;
+    --card: 0 0% 6%;
     --card-foreground: 0 0% 98%;
 
-    --popover: 0 0% 14%;
+    --popover: 0 0% 6%;
     --popover-foreground: 0 0% 98%;
 
     --primary: 75 95% 60%;
     --primary-foreground: 0 0% 10%;
 
-    --secondary: 240 5% 18%;
+    --secondary: 240 5% 8%;
     --secondary-foreground: 0 0% 98%;
 
-    --muted: 0 0% 20%;
+    --muted: 0 0% 12%;
     --muted-foreground: 0 0% 60%;
 
     --accent: 75 95% 60%;
@@ -32,11 +32,11 @@ All colors MUST be HSL.
     --destructive: 0 84% 60%;
     --destructive-foreground: 0 0% 98%;
 
-    --border: 0 0% 20%;
-    --input: 0 0% 20%;
+    --border: 0 0% 15%;
+    --input: 0 0% 12%;
     --ring: 75 95% 60%;
 
-    --radius: 1rem;
+    --radius: 1.25rem;
 
     --chart-1: 270 80% 65%;
     --chart-2: 280 70% 60%;
@@ -56,6 +56,20 @@ All colors MUST be HSL.
     --neon-blue: 199 89% 48%;
     --neon-purple: 270 80% 65%;
     --neon-pink: 330 85% 65%;
+    
+    /* Premium effects */
+    --glow-sm: 0 0 10px;
+    --glow-md: 0 0 20px;
+    --glow-lg: 0 0 40px;
+    --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    
+    /* Broadcast News Colors */
+    --broadcast-blue: 217 91% 60%;
+    --broadcast-blue-dark: 224 76% 48%;
+    --desk-brown: 16 25% 38%;
+    --desk-brown-dark: 16 25% 25%;
+    --paper: 0 0% 98%;
+    --metallic-silver: 220 9% 46%;
   }
 }
 
@@ -65,6 +79,163 @@ All colors MUST be HSL.
   }
 
   body {
-    @apply bg-background text-foreground;
+    @apply bg-background text-foreground font-sans antialiased;
+  }
+}
+
+@layer components {
+  /* Glassmorphism utilities */
+  .glass {
+    background: rgba(255, 255, 255, 0.03);
+    backdrop-filter: blur(20px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+  }
+  
+  .glass-strong {
+    background: rgba(255, 255, 255, 0.05);
+    backdrop-filter: blur(30px);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+  }
+  
+  /* Glow effects */
+  .glow-primary {
+    box-shadow: 0 0 20px hsl(var(--primary) / 0.5);
+  }
+  
+  .glow-neon-blue {
+    box-shadow: 0 0 20px hsl(var(--neon-blue) / 0.5);
+  }
+  
+  .glow-neon-purple {
+    box-shadow: 0 0 20px hsl(var(--neon-purple) / 0.5);
+  }
+  
+  /* Hover effects */
+  .hover-lift {
+    transition: var(--transition-smooth);
+  }
+  
+  .hover-lift:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 12px 24px rgba(0, 0, 0, 0.3);
+  }
+  
+  .hover-glow:hover {
+    box-shadow: 0 0 30px hsl(var(--primary) / 0.6);
+  }
+  
+  /* Shimmer effect */
+  .shimmer {
+    background: linear-gradient(
+      90deg,
+      hsl(var(--muted)) 0%,
+      hsl(var(--muted) / 0.5) 50%,
+      hsl(var(--muted)) 100%
+    );
+    background-size: 200% 100%;
+    animation: shimmer 1.5s ease-in-out infinite;
+  }
+  
+  /* Gradient text */
+  .gradient-text {
+    background: linear-gradient(
+      135deg,
+      hsl(var(--primary)),
+      hsl(var(--neon-blue)),
+      hsl(var(--neon-purple))
+    );
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+}
+
+@layer utilities {
+  @keyframes scroll {
+    0% {
+      transform: translateX(0);
+    }
+    100% {
+      transform: translateX(-33.333%);
+    }
+  }
+
+  .animate-scroll {
+    animation: scroll 30s linear infinite;
+  }
+
+  /* Radial gradient for spotlight effect */
+  .bg-gradient-radial {
+    background: radial-gradient(circle at center, var(--tw-gradient-stops));
+  }
+
+  /* Number flip animation for odds changes */
+  @keyframes number-flip {
+    0%, 100% { transform: rotateX(0deg); }
+    50% { transform: rotateX(180deg); }
+  }
+
+  .animate-number-flip {
+    animation: number-flip 0.6s ease-in-out;
+  }
+
+  /* Glow pulse for live indicators */
+  @keyframes glow-pulse {
+    0%, 100% {
+      box-shadow: 0 0 5px currentColor, 0 0 10px currentColor;
+    }
+    50% {
+      box-shadow: 0 0 10px currentColor, 0 0 20px currentColor, 0 0 30px currentColor;
+    }
+  }
+
+  .animate-glow-pulse {
+    animation: glow-pulse 2s ease-in-out infinite;
+  }
+
+  /* Ticker scroll animation */
+  @keyframes ticker-scroll {
+    0% { transform: translateX(100%); }
+    100% { transform: translateX(-100%); }
+  }
+
+  .animate-ticker-scroll {
+    animation: ticker-scroll 30s linear infinite;
+  }
+
+  /* Intense glow pulse for dramatic moments */
+  @keyframes glow-pulse-intense {
+    0%, 100% { box-shadow: 0 0 20px rgba(139, 92, 246, 0.5); }
+    50% { box-shadow: 0 0 40px rgba(139, 92, 246, 0.9); }
+  }
+
+  .animate-glow-intense {
+    animation: glow-pulse-intense 2s ease-in-out infinite;
+  }
+
+  /* Camera shake effect */
+  @keyframes camera-shake {
+    0%, 100% { transform: translate(0, 0) rotate(0deg); }
+    25% { transform: translate(-2px, 2px) rotate(-0.5deg); }
+    75% { transform: translate(2px, -2px) rotate(0.5deg); }
+  }
+
+  .animate-camera-shake {
+    animation: camera-shake 0.5s ease-in-out;
+  }
+  
+  /* Shimmer animation for loading states */
+  @keyframes shimmer {
+    0% {
+      background-position: 200% 0;
+    }
+    100% {
+      background-position: -200% 0;
+    }
+  }
+  
+  /* Tabular numbers */
+  .tabular-nums {
+    font-variant-numeric: tabular-nums;
   }
 }

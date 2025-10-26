@@ -5,9 +5,22 @@ import { supabase } from "@/integrations/supabase/client";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Wallet, TrendingUp, Trophy, History } from "lucide-react";
+import { Wallet, TrendingUp, Trophy, History, Plus } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { formatDistanceToNow } from "date-fns";
+import { useNavigate } from "react-router-dom";
+import { Button } from "@/components/ui/button";
+import { 
+  Dialog, 
+  DialogContent, 
+  DialogDescription, 
+  DialogHeader, 
+  DialogTitle, 
+  DialogTrigger 
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { useToast } from "@/hooks/use-toast";
 
 interface User {
   id: string;
@@ -16,6 +29,7 @@ interface User {
   xp: number;
   total_predictions: number;
   correct_predictions: number;
+  xrp_destination_tag?: string;
 }
 
 interface Prediction {
@@ -35,9 +49,17 @@ interface Prediction {
 }
 
 const WalletPage = () => {
+  const navigate = useNavigate();
+  const { toast } = useToast();
   const [user, setUser] = useState<User | null>(null);
   const [predictions, setPredictions] = useState<Prediction[]>([]);
   const [loading, setLoading] = useState(true);
+  const [addMoneyOpen, setAddMoneyOpen] = useState(false);
+  const [xrpAmount, setXrpAmount] = useState("");
+  
+  // Company XRP wallet address (you'll need to generate this)
+  const COMPANY_XRP_WALLET = "rw2ciyaNshpHe7bCHo4bRWq6pqqynnWKQg";
+  const XRP_TO_HACKCOIN_RATE = 100; // 1 XRP = 100 HackCoins
 
   useEffect(() => {
     fetchWalletData();
@@ -69,7 +91,7 @@ const WalletPage = () => {
         .limit(20);
 
       if (predictionsData) {
-        setPredictions(predictionsData as any);
+        setPredictions(predictionsData as Prediction[]);
       }
     }
 
@@ -90,6 +112,31 @@ const WalletPage = () => {
       default:
         return 'bg-yellow-500/20 text-yellow-500';
     }
+  };
+
+  const handleAddMoney = () => {
+    const amount = parseFloat(xrpAmount);
+    
+    if (!amount || amount <= 0) {
+      toast({
+        title: "Invalid Amount",
+        description: "Please enter a valid XRP amount",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Generate payment instructions
+    const hackcoinsToReceive = Math.floor(amount * XRP_TO_HACKCOIN_RATE);
+    
+    toast({
+      title: "✅ Payment Instructions Ready",
+      description: `Send ${amount} XRP to ${COMPANY_XRP_WALLET} with destination tag ${user?.xrp_destination_tag}. You will receive ${hackcoinsToReceive} HackCoins once confirmed (usually < 60 seconds).`,
+      duration: 15000,
+    });
+    
+    setAddMoneyOpen(false);
+    setXrpAmount("");
   };
 
   if (loading) {
@@ -113,9 +160,73 @@ const WalletPage = () => {
 
         {/* Page Header */}
         <div className="mb-8">
-          <div className="flex items-center gap-2 mb-2">
-            <Wallet className="w-8 h-8 text-primary" />
-            <h1 className="text-3xl font-bold">My Wallet</h1>
+          <div className="flex items-center justify-between mb-2">
+            <div className="flex items-center gap-2">
+              <Wallet className="w-8 h-8 text-primary" />
+              <h1 className="text-3xl font-bold">My Wallet</h1>
+            </div>
+            <Dialog open={addMoneyOpen} onOpenChange={setAddMoneyOpen}>
+              <DialogTrigger asChild>
+                <Button className="gap-2">
+                  <Plus className="w-4 h-4" />
+                  Add Money (XRP)
+                </Button>
+              </DialogTrigger>
+              <DialogContent>
+                <DialogHeader>
+                  <DialogTitle>Add Money with XRP</DialogTitle>
+                  <DialogDescription>
+                    Send XRP to receive HackCoins. Rate: 1 XRP = {XRP_TO_HACKCOIN_RATE} HC
+                  </DialogDescription>
+                </DialogHeader>
+                <div className="space-y-4 py-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="xrp-amount">XRP Amount</Label>
+                    <Input
+                      id="xrp-amount"
+                      type="number"
+                      placeholder="10"
+                      value={xrpAmount}
+                      onChange={(e) => setXrpAmount(e.target.value)}
+                      min="0"
+                      step="0.1"
+                    />
+                    {xrpAmount && parseFloat(xrpAmount) > 0 && (
+                      <p className="text-sm text-muted-foreground">
+                        You will receive: <strong>{Math.floor(parseFloat(xrpAmount) * XRP_TO_HACKCOIN_RATE)} HackCoins</strong>
+                      </p>
+                    )}
+                  </div>
+                  <div className="space-y-3 rounded-lg bg-muted p-4">
+                    <div>
+                      <Label className="text-xs font-semibold">1. Send XRP To:</Label>
+                      <p className="text-xs font-mono break-all mt-1 bg-background p-2 rounded">
+                        {COMPANY_XRP_WALLET}
+                      </p>
+                    </div>
+                    
+                    <div className="border-t border-border pt-3">
+                      <Label className="text-xs font-semibold text-orange-600 dark:text-orange-400">
+                        ⚠️ 2. IMPORTANT - Include Destination Tag:
+                      </Label>
+                      <p className="text-lg font-bold font-mono mt-1 bg-background p-3 rounded text-center border-2 border-orange-500">
+                        {user?.xrp_destination_tag || "Loading..."}
+                      </p>
+                      <p className="text-xs text-muted-foreground mt-2">
+                        <strong>This is YOUR unique tag.</strong> Without it, we won't be able to identify your payment and credit your account!
+                      </p>
+                    </div>
+
+                    <p className="text-xs text-muted-foreground pt-2 border-t border-border">
+                      💡 Your HackCoins will be credited automatically within 60 seconds after the XRP Ledger confirms your transaction.
+                    </p>
+                  </div>
+                  <Button onClick={handleAddMoney} className="w-full">
+                    Generate Payment Instructions
+                  </Button>
+                </div>
+              </DialogContent>
+            </Dialog>
           </div>
           <p className="text-muted-foreground">
             Manage your HackCoins and track prediction performance
@@ -185,7 +296,8 @@ const WalletPage = () => {
                   {predictions.map((prediction) => (
                     <div
                       key={prediction.id}
-                      className="flex items-center justify-between p-4 bg-background rounded-lg"
+                      className="flex items-center justify-between p-4 bg-background rounded-lg cursor-pointer hover:bg-accent transition-colors"
+                      onClick={() => navigate(`/bets/${prediction.id}`)}
                     >
                       <div className="flex items-center gap-4 flex-1">
                         <img
@@ -248,7 +360,8 @@ const WalletPage = () => {
                     .map((prediction) => (
                       <div
                         key={prediction.id}
-                        className="flex items-center justify-between p-4 bg-background rounded-lg"
+                        className="flex items-center justify-between p-4 bg-background rounded-lg cursor-pointer hover:bg-accent transition-colors"
+                        onClick={() => navigate(`/bets/${prediction.id}`)}
                       >
                         <div className="flex items-center gap-4">
                           <img
@@ -285,7 +398,8 @@ const WalletPage = () => {
                     .map((prediction) => (
                       <div
                         key={prediction.id}
-                        className="flex items-center justify-between p-4 bg-background rounded-lg"
+                        className="flex items-center justify-between p-4 bg-background rounded-lg cursor-pointer hover:bg-accent transition-colors"
+                        onClick={() => navigate(`/bets/${prediction.id}`)}
                       >
                         <div className="flex items-center gap-4">
                           <img
@@ -329,7 +443,8 @@ const WalletPage = () => {
                     .map((prediction) => (
                       <div
                         key={prediction.id}
-                        className="flex items-center justify-between p-4 bg-background rounded-lg"
+                        className="flex items-center justify-between p-4 bg-background rounded-lg cursor-pointer hover:bg-accent transition-colors"
+                        onClick={() => navigate(`/bets/${prediction.id}`)}
                       >
                         <div className="flex items-center gap-4">
                           <img

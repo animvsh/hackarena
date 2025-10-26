@@ -1,1 +1,34 @@
 project_id = "jqdfjcpgevgajdljckur"
+
+[functions.analyze-team-profile]
+verify_jwt = false
+
+[functions.create-team]
+verify_jwt = true
+
+[functions.join-team]
+verify_jwt = true
+
+[functions.manage-join-request]
+verify_jwt = true
+
+[functions.generate-broadcast-commentary]
+verify_jwt = false
+
+[functions.generate-broadcast-content]
+verify_jwt = false
+
+[functions.parse-resume]
+verify_jwt = false
+
+[functions.invite-team-member]
+verify_jwt = true
+
+[functions.respond-to-team-invite]
+verify_jwt = true
+
+[functions.import-linkedin-profile]
+verify_jwt = false
+
+[functions.simulate-live-updates]
+verify_jwt = false

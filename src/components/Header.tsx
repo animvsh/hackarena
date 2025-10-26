@@ -1,9 +1,11 @@
-import { Search, Bell, User, Wallet, Settings, LogOut } from "lucide-react";
+import { Search, Bell, User, Wallet, Settings, LogOut, Pencil } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
 import { useAuth } from "@/contexts/AuthContext";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
+import { NotificationCenter } from "./NotificationCenter";
+import { UserSearch } from "@/components/search/UserSearch";
 
 export const Header = () => {
   const { user, profile, signOut } = useAuth();
@@ -18,8 +20,8 @@ export const Header = () => {
     <header className="flex items-center justify-between mb-8">
       <div>
         <div className="flex items-center gap-3 mb-1">
-          <h1 className="text-3xl font-bold">HackCast LIVE</h1>
-          <div className="flex items-center gap-2 px-3 py-1 bg-destructive/10 rounded-full">
+          <h1 className="text-3xl font-bold gradient-text">HackCast LIVE</h1>
+          <div className="flex items-center gap-2 px-3 py-1 bg-destructive/10 rounded-full glass">
             <div className="w-2 h-2 bg-destructive rounded-full animate-pulse"></div>
             <span className="text-xs font-bold text-destructive">BROADCASTING</span>
           </div>
@@ -28,13 +30,9 @@ export const Header = () => {
       </div>
 
       <div className="flex items-center gap-4">
-        <button className="w-10 h-10 rounded-xl bg-secondary hover:bg-secondary/80 flex items-center justify-center transition-colors">
-          <Search className="w-5 h-5" />
-        </button>
-        <button className="w-10 h-10 rounded-xl bg-secondary hover:bg-secondary/80 flex items-center justify-center transition-colors relative">
-          <Bell className="w-5 h-5" />
-          <span className="absolute top-2 right-2 w-2 h-2 bg-destructive rounded-full"></span>
-        </button>
+        <UserSearch />
+        
+        {user && <NotificationCenter />}
         
         {user && profile ? (
           <DropdownMenu>
@@ -44,7 +42,8 @@ export const Header = () => {
                   <p className="text-sm font-semibold">{profile.username}</p>
                   <p className="text-xs text-muted-foreground capitalize">{profile.roles[0] || 'User'}</p>
                 </div>
-                <Avatar className="w-10 h-10">
+                <Avatar className="w-10 h-10 border-2 border-primary/20">
+                  <AvatarImage src={profile.avatar_url || undefined} />
                   <AvatarFallback className="bg-primary text-primary-foreground">
                     {profile.username.substring(0, 2).toUpperCase()}
                   </AvatarFallback>
@@ -52,6 +51,14 @@ export const Header = () => {
               </button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-48">
+              <DropdownMenuItem onClick={() => navigate('/profile')}>
+                <User className="mr-2 h-4 w-4" />
+                My Profile
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => navigate('/profile/edit')}>
+                <Pencil className="mr-2 h-4 w-4" />
+                Edit Profile
+              </DropdownMenuItem>
               <DropdownMenuItem onClick={() => navigate('/wallet')}>
                 <Wallet className="mr-2 h-4 w-4" />
                 Wallet

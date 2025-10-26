@@ -9,7 +9,11 @@ interface Commentary {
   created_at: string;
 }
 
-export const LiveCommentaryTicker = () => {
+interface LiveCommentaryTickerProps {
+  hackathonId?: string;
+}
+
+export const LiveCommentaryTicker = ({ hackathonId }: LiveCommentaryTickerProps) => {
   const [commentary, setCommentary] = useState<Commentary[]>([]);
 
   useEffect(() => {
@@ -22,21 +26,30 @@ export const LiveCommentaryTicker = () => {
         schema: 'public',
         table: 'commentary_feed'
       }, (payload) => {
-        setCommentary(prev => [payload.new as Commentary, ...prev].slice(0, 20));
+        const newComment = payload.new as Commentary & { hackathon_id?: string };
+        if (!hackathonId || newComment.hackathon_id === hackathonId) {
+          setCommentary(prev => [payload.new as Commentary, ...prev].slice(0, 20));
+        }
       })
       .subscribe();
 
     return () => {
       supabase.removeChannel(channel);
     };
-  }, []);
+  }, [hackathonId]);
 
   const fetchCommentary = async () => {
-    const { data } = await supabase
+    let query = supabase
       .from('commentary_feed')
       .select('*')
       .order('created_at', { ascending: false })
       .limit(20);
+    
+    if (hackathonId) {
+      query = query.eq('hackathon_id', hackathonId);
+    }
+    
+    const { data } = await query;
     
     if (data) {
       setCommentary(data);
