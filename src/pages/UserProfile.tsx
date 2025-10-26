@@ -13,11 +13,12 @@ import { StatsCard } from '@/components/profile/StatsCard';
 import { UserBettingHistory } from '@/components/profile/UserBettingHistory';
 import { InviteToTeamModal } from '@/components/profile/InviteToTeamModal';
 import { UserTeamsSection } from '@/components/profile/UserTeamsSection';
-import { ArrowLeft, Wallet, Trophy, TrendingUp, Target, UserPlus, MapPin, Linkedin, Github, Globe, Mail, Briefcase, GraduationCap, Award, Lock } from 'lucide-react';
+import { ArrowLeft, Wallet, Trophy, TrendingUp, Target, UserPlus, MapPin, Linkedin, Github, Globe, Mail, Briefcase, GraduationCap, Award, Lock, Loader2 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useTeamMemberships } from '@/hooks/useTeamMemberships';
 import { useProfileViews } from '@/hooks/useProfileViews';
 import { checkSharedTeams, canViewSection } from '@/lib/privacyHelpers';
+import { toast } from 'sonner';
 
 interface User {
   id: string;
@@ -53,6 +54,7 @@ interface TeamMembership {
 }
 
 export default function UserProfile() {
+  console.log('=== UserProfile component rendered ===');
   const { userId } = useParams();
   const navigate = useNavigate();
   const { user: currentUser } = useAuth();
@@ -60,10 +62,12 @@ export default function UserProfile() {
   const [loading, setLoading] = useState(true);
   const [inviteModalOpen, setInviteModalOpen] = useState(false);
   const [hasSharedTeam, setHasSharedTeam] = useState(false);
+  const [isImportingLinkedIn, setIsImportingLinkedIn] = useState(false);
   const { memberships: teamMemberships } = useTeamMemberships(userId);
   const { trackView } = useProfileViews(userId);
 
   const isOwnProfile = currentUser?.id === userId;
+  console.log('=== UserProfile state ===', { userId, currentUser: currentUser?.id, isOwnProfile, hasUser: !!user });
 
   useEffect(() => {
     const fetchUserData = async () => {
@@ -96,6 +100,107 @@ export default function UserProfile() {
 
     fetchUserData();
   }, [userId, currentUser, trackView]);
+
+  // Check if we just connected LinkedIn and need to import profile data
+  useEffect(() => {
+    const checkAndImportLinkedIn = async () => {
+      console.log('Checking LinkedIn import...', { currentUser, isOwnProfile, hasUser: !!user });
+      
+      if (!currentUser || !isOwnProfile || !user) {
+        console.log('Skipping LinkedIn check - not own profile, no current user, or user data not loaded');
+        return;
+      }
+
+      try {
+        // Check if LinkedIn is connected but profile is not populated
+        const { data: { user: authUser } } = await supabase.auth.getUser();
+        console.log('Auth user:', authUser);
+        
+        const linkedInIdentity = authUser?.identities?.find(
+          identity => identity.provider === 'linkedin_oidc' || identity.provider === 'linkedin'
+        );
+        
+        console.log('LinkedIn identity:', linkedInIdentity);
+        console.log('Profile data:', { bio: user?.bio, experience: user?.experience?.length });
+
+        // If LinkedIn is connected but we have no profile data yet
+        if (linkedInIdentity && (!user?.bio || !user?.experience || user?.experience?.length === 0)) {
+          console.log('LinkedIn connected but profile not populated - starting import');
+          setIsImportingLinkedIn(true);
+          
+          // Try to get LinkedIn URL from metadata
+          const linkedinUrl = authUser?.user_metadata?.sub || 
+                             authUser?.user_metadata?.issuer || 
+                             authUser?.user_metadata?.profile_url;
+          
+          console.log('LinkedIn URL from metadata:', linkedinUrl);
+
+          if (linkedinUrl && linkedinUrl.includes('linkedin.com')) {
+            console.log('Calling Clado API with URL:', linkedinUrl);
+            
+            // Call Clado API to scrape LinkedIn profile
+            const { data, error } = await supabase.functions.invoke('import-linkedin-profile', {
+              body: { linkedinUrl },
+            });
+
+            console.log('Clado API response:', { data, error });
+
+            if (error) {
+              console.error('Clado API error:', error);
+              toast.error("Failed to import LinkedIn profile: " + (error.message || 'Unknown error'));
+            } else if (data?.profile) {
+              console.log('Profile data received from Clado:', data.profile);
+              // Update user profile with scraped data
+              const { error: updateError } = await supabase
+                .from('users')
+                .update({
+                  name: data.profile.name,
+                  bio: data.profile.bio,
+                  headline: data.profile.headline,
+                  location: data.profile.location,
+                  linkedin_url: linkedinUrl,
+                  portfolio_url: data.profile.portfolio_url,
+                  skills: data.profile.skills,
+                  experience: data.profile.experience,
+                  education: data.profile.education,
+                  years_of_experience: data.profile.years_of_experience,
+                  certifications: data.profile.certifications,
+                })
+                .eq('id', currentUser.id);
+
+              if (updateError) {
+                console.error('Error updating profile:', updateError);
+                toast.error("Failed to save profile data");
+              } else {
+                console.log('Profile updated successfully with LinkedIn data');
+                toast.success("LinkedIn profile imported successfully!");
+                
+                // Refresh user data
+                const { data: updatedUser } = await supabase
+                  .from('users')
+                  .select('*')
+                  .eq('id', currentUser.id)
+                  .single();
+                
+                if (updatedUser) {
+                  setUser(updatedUser as User);
+                }
+              }
+            }
+          } else {
+            toast.error("Could not extract LinkedIn profile URL");
+          }
+          
+          setIsImportingLinkedIn(false);
+        }
+      } catch (error) {
+        console.error('Error checking LinkedIn import:', error);
+        setIsImportingLinkedIn(false);
+      }
+    };
+
+    checkAndImportLinkedIn();
+  }, [currentUser, isOwnProfile, user?.id, user?.bio, user?.experience]);
 
   const accuracyRate = user && user.total_predictions > 0
     ? ((user.correct_predictions / user.total_predictions) * 100).toFixed(1)
@@ -149,6 +254,21 @@ export default function UserProfile() {
             <span>/</span>
             <span className="text-foreground">{user.username}</span>
           </div>
+
+          {/* Importing LinkedIn Data Banner */}
+          {isImportingLinkedIn && (
+            <Card className="p-4 mb-6 bg-primary/10 border-primary/20">
+              <div className="flex items-center gap-3">
+                <Loader2 className="w-5 h-5 text-primary animate-spin" />
+                <div>
+                  <p className="font-medium text-primary">Importing LinkedIn Profile...</p>
+                  <p className="text-sm text-muted-foreground">
+                    We're populating your profile with information from your LinkedIn account
+                  </p>
+                </div>
+              </div>
+            </Card>
+          )}
 
           {/* Header Section */}
           <Card className="p-8 mb-8">
@@ -262,16 +382,30 @@ export default function UserProfile() {
                 <TabsContent value="overview" className="space-y-6">
                   {/* Bio Section */}
                   {canViewSection(user.privacy_settings, 'bio', hasSharedTeam, isOwnProfile) ? (
-                    user.bio && (
+                    isImportingLinkedIn ? (
+                      <Card className="p-6">
+                        <h3 className="font-semibold mb-4 flex items-center gap-2">
+                          <div className="h-1 w-8 bg-primary rounded" />
+                          About
+                        </h3>
+                        <div className="space-y-3">
+                          <Skeleton className="h-4 w-full" />
+                          <Skeleton className="h-4 w-full" />
+                          <Skeleton className="h-4 w-3/4" />
+                        </div>
+                      </Card>
+                    ) : (
+                      user.bio && (
                       <Card className="p-6">
                         <h3 className="font-semibold mb-4 flex items-center gap-2">
                           <div className="h-1 w-8 bg-primary rounded" />
                           About
                         </h3>
                         <p className="text-muted-foreground leading-relaxed whitespace-pre-wrap">
-                          {user.bio}
-                        </p>
-                      </Card>
+                                                  {user.bio}
+                      </p>
+                    </Card>
+                    )
                     )
                   ) : (
                     <Card className="p-6 text-center">
@@ -356,7 +490,19 @@ export default function UserProfile() {
                 <TabsContent value="professional" className="space-y-6">
                   {/* Work Experience */}
                   {canViewSection(user.privacy_settings, 'experience', hasSharedTeam, isOwnProfile) ? (
-                    user.experience && user.experience.length > 0 && (
+                    isImportingLinkedIn ? (
+                      <Card className="p-6">
+                        <div className="flex items-center gap-3 mb-6">
+                          <Briefcase className="h-5 w-5 text-primary" />
+                          <h3 className="font-semibold">Work Experience</h3>
+                        </div>
+                        <div className="space-y-4">
+                          <Skeleton className="h-32 w-full" />
+                          <Skeleton className="h-32 w-full" />
+                        </div>
+                      </Card>
+                    ) : (
+                      user.experience && user.experience.length > 0 && (
                       <Card className="p-6">
                         <h3 className="font-semibold mb-6 flex items-center gap-2">
                           <Briefcase className="h-5 w-5 text-primary" />
@@ -385,6 +531,7 @@ export default function UserProfile() {
                           ))}
                         </div>
                       </Card>
+                      )
                     )
                   ) : (
                     <Card className="p-6 text-center">

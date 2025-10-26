@@ -10,9 +10,20 @@ serve(async (req) => {
     return new Response(null, { headers: corsHeaders });
   }
 
-  try {
-    const { linkedinUrl, linkedinId } = await req.json();
+  console.log('=== EDGE FUNCTION CALLED ===');
+  console.log('Request method:', req.method);
+  console.log('Request URL:', req.url);
+  console.log('Timestamp:', new Date().toISOString());
 
+  try {
+    const { linkedinUrl } = await req.json();
+    console.log('Request body received:', { linkedinUrl });
+    console.log('LinkedIn URL validation:', {
+      hasUrl: !!linkedinUrl,
+      urlType: typeof linkedinUrl,
+      urlLength: linkedinUrl?.length || 0
+    });
+    
     if (!linkedinUrl) {
       return new Response(
         JSON.stringify({ error: 'LinkedIn URL is required' }),
@@ -21,6 +32,12 @@ serve(async (req) => {
     }
 
     const CLADO_API_KEY = Deno.env.get('CLADO_API_KEY');
+    console.log('CLADO_API_KEY check:', {
+      hasKey: !!CLADO_API_KEY,
+      keyLength: CLADO_API_KEY?.length || 0,
+      keyPrefix: CLADO_API_KEY?.substring(0, 10) + '...' || 'none'
+    });
+    
     if (!CLADO_API_KEY) {
       console.error('CLADO_API_KEY not configured');
       return new Response(
@@ -29,77 +46,116 @@ serve(async (req) => {
       );
     }
 
-    // Log whether this is an OAuth flow or regular URL import
-    if (linkedinId) {
-      console.log('LinkedIn OAuth import with ID:', linkedinId);
-    } else {
-      console.log('LinkedIn URL-based import');
-    }
-
-    // Call Clado API to enrich LinkedIn profile
-    const cladoResponse = await fetch(
-      `https://search.clado.ai/api/enrich/linkedin?linkedin_url=${encodeURIComponent(linkedinUrl)}`,
+    // Scrape the LinkedIn profile
+    console.log('=== CLADO SCRAPE API CALL ===');
+    console.log('Scraping LinkedIn URL:', linkedinUrl);
+    console.log('Clado API endpoint:', `https://search.clado.ai/api/enrich/scrape?linkedin_url=${encodeURIComponent(linkedinUrl)}`);
+    console.log('Request headers:', {
+      'Authorization': `Bearer ${CLADO_API_KEY.substring(0, 10)}...`,
+      'Content-Type': 'application/json'
+    });
+    
+    const scrapeResponse = await fetch(
+      `https://search.clado.ai/api/enrich/scrape?linkedin_url=${encodeURIComponent(linkedinUrl)}`,
       {
+        method: 'GET',
         headers: {
           'Authorization': `Bearer ${CLADO_API_KEY}`,
-          'Content-Type': 'application/json',
         },
+        signal: AbortSignal.timeout(30000) // 30 second timeout
       }
     );
 
-    if (!cladoResponse.ok) {
-      const errorText = await cladoResponse.text();
-      console.error('Clado API error:', cladoResponse.status, errorText);
+    console.log('Scrape API response received:', {
+      status: scrapeResponse.status,
+      statusText: scrapeResponse.statusText,
+      headers: Object.fromEntries(scrapeResponse.headers.entries()),
+      ok: scrapeResponse.ok
+    });
+    
+    if (!scrapeResponse.ok) {
+      const errorText = await scrapeResponse.text();
+      console.error('Clado scrape API error:', scrapeResponse.status, errorText);
       
-      if (cladoResponse.status === 404) {
+      if (scrapeResponse.status === 404) {
         return new Response(
-          JSON.stringify({ error: 'LinkedIn profile not found' }),
+          JSON.stringify({ error: 'LinkedIn profile not found or private', details: errorText }),
           { status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
         );
       }
       
       return new Response(
-        JSON.stringify({ error: 'Failed to fetch LinkedIn profile' }),
+        JSON.stringify({ error: 'Failed to scrape LinkedIn profile', status: scrapeResponse.status, details: errorText }),
         { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
-    const cladoData = await cladoResponse.json();
-    console.log('Clado API response received');
+    const cladoData = await scrapeResponse.json();
+    console.log('Clado scrape API response received:');
+    console.log('Raw response data:', JSON.stringify(cladoData, null, 2));
+    console.log('Response data analysis:', {
+      hasData: !!cladoData,
+      dataKeys: Object.keys(cladoData || {}),
+      hasFullName: !!cladoData?.full_name,
+      hasBio: !!cladoData?.summary || !!cladoData?.bio,
+      hasExperience: !!cladoData?.experiences || !!cladoData?.experience,
+      experienceCount: (cladoData?.experiences || cladoData?.experience || []).length,
+      hasEducation: !!cladoData?.education,
+      educationCount: (cladoData?.education || []).length,
+      hasSkills: !!cladoData?.skills,
+      skillsCount: (cladoData?.skills || []).length
+    });
 
     // Transform Clado response to our ProfileData format
     const profileData = {
-      name: cladoData.full_name || cladoData.name || '',
+      name: cladoData.full_name || cladoData.name || (cladoData.first_name && cladoData.last_name ? cladoData.first_name + ' ' + cladoData.last_name : '') || '',
       email: cladoData.email || '',
-      bio: cladoData.summary || cladoData.bio || '',
-      headline: cladoData.headline || '',
-      location: cladoData.location || '',
+      bio: cladoData.summary || cladoData.bio || cladoData.about || cladoData.description || '',
+      headline: cladoData.headline || cladoData.title || cladoData.job_title || '',
+      location: cladoData.location || (cladoData.city && cladoData.country ? cladoData.city + ', ' + cladoData.country : '') || '',
       linkedin_url: linkedinUrl,
       portfolio_url: cladoData.website || '',
       
-      skills: (cladoData.skills || []).map((skill: any) => ({
-        name: typeof skill === 'string' ? skill : skill.name,
-        level: skill.level || 'intermediate'
+      skills: (cladoData.skills || cladoData.skill_list || []).map((skill: any) => ({
+        name: typeof skill === 'string' ? skill : (skill.name || skill.skill || skill),
+        level: skill.level || skill.proficiency || 'intermediate'
       })),
       
-      experience: (cladoData.experiences || cladoData.experience || []).map((exp: any) => ({
-        title: exp.title || exp.position || '',
-        company: exp.company || exp.company_name || '',
-        startDate: exp.start_date || exp.started_on || '',
-        endDate: exp.end_date || exp.ended_on || null,
-        description: exp.description || ''
+      experience: (cladoData.experiences || cladoData.experience || cladoData.work_experience || []).map((exp: any) => ({
+        title: exp.title || exp.position || exp.job_title || exp.role || '',
+        company: exp.company || exp.company_name || exp.organization || exp.employer || '',
+        startDate: exp.start_date || exp.started_on || exp.start_time || exp.from || '',
+        endDate: exp.end_date || exp.ended_on || exp.end_time || exp.to || (exp.current ? 'Present' : null),
+        description: exp.description || exp.summary || exp.details || exp.responsibilities || ''
       })),
       
-      education: (cladoData.education || []).map((edu: any) => ({
-        degree: edu.degree || edu.degree_name || '',
-        institution: edu.school || edu.institution || '',
-        year: edu.end_date || edu.year || ''
+      education: (cladoData.education || cladoData.educations || cladoData.academic_background || []).map((edu: any) => ({
+        degree: edu.degree || edu.degree_name || edu.qualification || edu.field_of_study || '',
+        institution: edu.school || edu.institution || edu.university || edu.college || edu.organization || '',
+        year: edu.end_date || edu.year || edu.graduation_year || edu.completion_date || ''
       })),
       
-      years_of_experience: cladoData.years_of_experience || 0,
-      certifications: cladoData.certifications || []
+      years_of_experience: cladoData.years_of_experience || cladoData.total_experience || cladoData.experience_years || 0,
+      certifications: cladoData.certifications || cladoData.certificates || cladoData.credentials || []
     };
 
+    console.log('=== TRANSFORMED PROFILE DATA ===');
+    console.log('Final profile data:', JSON.stringify(profileData, null, 2));
+    console.log('Profile data summary:', {
+      hasName: !!profileData.name,
+      hasEmail: !!profileData.email,
+      hasBio: !!profileData.bio,
+      hasHeadline: !!profileData.headline,
+      hasLocation: !!profileData.location,
+      hasLinkedinUrl: !!profileData.linkedin_url,
+      hasPortfolioUrl: !!profileData.portfolio_url,
+      skillsCount: profileData.skills?.length || 0,
+      experienceCount: profileData.experience?.length || 0,
+      educationCount: profileData.education?.length || 0,
+      yearsOfExperience: profileData.years_of_experience,
+      certificationsCount: profileData.certifications?.length || 0
+    });
+    
     return new Response(
       JSON.stringify({ profile: profileData }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }

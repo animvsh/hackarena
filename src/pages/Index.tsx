@@ -16,6 +16,8 @@ import { useAuth } from "@/contexts/AuthContext";
 import { Users, TrendingUp, Zap, Trophy, Radio, BarChart3 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useAuth } from "@/contexts/AuthContext";
+import { toast } from "sonner";
 
 interface DashboardStats {
   activeTeams: number;
@@ -28,6 +30,7 @@ interface DashboardStats {
 const Index = () => {
   const { user } = useAuth();
   const { hackathons, selectedHackathon, selectHackathon, loading: hackathonsLoading } = useActiveBroadcasts();
+  const { user } = useAuth();
   const [stats, setStats] = useState<DashboardStats>({
     activeTeams: 0,
     commitsPerHour: 0,
@@ -74,6 +77,124 @@ const Index = () => {
     }
     setShowLinkedInModal(open);
   };
+
+  // Handle LinkedIn OAuth callback and Clado API call
+  useEffect(() => {
+    const handleLinkedInCallback = async () => {
+      // Check for LinkedIn OAuth callback
+      const urlParams = new URLSearchParams(window.location.search);
+      const code = urlParams.get('code');
+      const provider = urlParams.get('provider');
+      
+      console.log('=== LINKEDIN OAUTH DEBUG ===');
+      console.log('Current URL:', window.location.href);
+      console.log('URL search params:', window.location.search);
+      console.log('Code:', code);
+      console.log('Provider:', provider);
+      console.log('User exists:', !!user);
+      console.log('User ID:', user?.id);
+      console.log('===========================');
+      
+      // If there's a code and provider in URL, process the callback
+      if (code && provider === 'linkedin_oidc' && user) {
+        console.log('LinkedIn OAuth callback detected on home page');
+        
+        try {
+          // Get current user with fresh session
+          const { data: { user: currentUser }, error: getUserError } = await supabase.auth.getUser();
+          
+          if (getUserError || !currentUser) {
+            console.error('Error getting user:', getUserError);
+            return;
+          }
+          
+          console.log('Current user:', currentUser);
+          console.log('User identities:', currentUser.identities);
+          
+          // Find LinkedIn identity
+          const linkedInIdentity = currentUser.identities?.find(
+            identity => identity.provider === 'linkedin_oidc' || identity.provider === 'linkedin'
+          );
+          
+          if (!linkedInIdentity) {
+            console.log('No LinkedIn identity found');
+            window.history.replaceState({}, document.title, '/');
+            return;
+          }
+          
+          console.log('LinkedIn identity found:', linkedInIdentity);
+          
+          // Get LinkedIn profile URL from identity data
+          const linkedinUrl = currentUser.user_metadata?.sub || 
+                             currentUser.user_metadata?.issuer || 
+                             currentUser.user_metadata?.profile_url;
+          
+          console.log('LinkedIn URL from metadata:', linkedinUrl);
+          
+          // Get user data for Clado API
+          const firstName = currentUser.user_metadata?.given_name;
+          const lastName = currentUser.user_metadata?.family_name;
+          const email = currentUser.user_metadata?.email;
+          
+          console.log('User data for Clado:', { firstName, lastName, email });
+          
+          // Call the Edge Function to import LinkedIn profile using email lookup
+          console.log('Calling Clado API to import LinkedIn profile...');
+          
+          const { data, error } = await supabase.functions.invoke('import-linkedin-profile', {
+            body: { 
+              linkedinUrl: linkedinUrl,
+              firstName: firstName,
+              lastName: lastName,
+              email: email
+            },
+          });
+          
+          if (error) {
+            console.error('Clado API error:', error);
+            toast.error("Failed to import LinkedIn profile");
+          } else if (data?.profile) {
+              console.log('Profile data from Clado:', data.profile);
+              
+              // Update user profile with scraped data
+              const { error: updateError } = await supabase
+                .from('users')
+                .update({
+                  name: data.profile.name,
+                  bio: data.profile.bio,
+                  headline: data.profile.headline,
+                  location: data.profile.location,
+                  linkedin_url: linkedinUrl,
+                  portfolio_url: data.profile.portfolio_url,
+                  skills: data.profile.skills,
+                  experience: data.profile.experience,
+                  education: data.profile.education,
+                  years_of_experience: data.profile.years_of_experience,
+                  certifications: data.profile.certifications,
+                })
+                .eq('id', user.id);
+              
+              if (updateError) {
+                console.error('Error updating profile:', updateError);
+                toast.error("Failed to save profile data");
+              } else {
+                console.log('Profile updated successfully with LinkedIn data');
+                toast.success("LinkedIn profile imported successfully!");
+              }
+            }
+          
+          // Clean up URL parameters
+          window.history.replaceState({}, document.title, '/');
+        } catch (error) {
+          console.error('Error handling LinkedIn callback:', error);
+          toast.error("Failed to process LinkedIn connection");
+          window.history.replaceState({}, document.title, '/');
+        }
+      }
+    };
+    
+    handleLinkedInCallback();
+  }, [user]);
 
   useEffect(() => {
     if (selectedHackathon) {
