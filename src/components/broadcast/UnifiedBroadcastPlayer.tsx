@@ -33,6 +33,17 @@ import { Radio, Play, Pause } from 'lucide-react';
 export function UnifiedBroadcastPlayer() {
   const { toast } = useToast();
 
+  // Global broadcast state (synchronized across all users)
+  const {
+    state: broadcastState,
+    currentScene: globalScene,
+    isLoading: stateLoading,
+    isPaused,
+    pausedAt,
+    isMasterUser,
+    togglePause,
+  } = useGlobalBroadcastState();
+
   // Unified segment manager for multi-hackathon broadcasts
   const {
     currentScene,
@@ -53,18 +64,7 @@ export function UnifiedBroadcastPlayer() {
     allHackathons,
     hackathonScores,
     injectBreakingNews
-  } = useUnifiedSegmentManager();
-
-  // Global broadcast state (synchronized across all users)
-  const {
-    state: broadcastState,
-    currentScene: globalScene,
-    isLoading: stateLoading,
-    isPaused,
-    pausedAt,
-    isMasterUser,
-    togglePause,
-  } = useGlobalBroadcastState();
+  } = useUnifiedSegmentManager(isPaused);
 
   // Track viewer presence
   useViewerPresence();

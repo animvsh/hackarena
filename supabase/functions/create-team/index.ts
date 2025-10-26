@@ -8,13 +8,14 @@ interface CreateTeamRequest {
   teamName: string;
   tagline: string;
   projectDescription: string;
-  industryTags: string[];
-  techStack: string[];
-  stage: string;
-  teamSize: number;
+  industryTags?: string[];
+  techStack?: string[];
+  stage?: string;
+  teamSize?: number;
   userId: string;
   hackathonId?: string;
   aiAnalysis?: any;
+  githubRepo?: string;
 }
 
 serve(async (req) => {
@@ -25,17 +26,18 @@ serve(async (req) => {
   try {
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
     
-    const { 
-      teamName, 
-      tagline, 
-      projectDescription, 
-      industryTags, 
-      techStack, 
-      stage, 
-      teamSize, 
+    const {
+      teamName,
+      tagline,
+      projectDescription,
+      industryTags,
+      techStack,
+      stage,
+      teamSize,
       userId,
       hackathonId,
-      aiAnalysis 
+      aiAnalysis,
+      githubRepo
     }: CreateTeamRequest = await req.json();
 
     // Generate unique invite code
@@ -48,20 +50,32 @@ serve(async (req) => {
       .insert({
         name: teamName,
         tagline: tagline,
-        category: industryTags,
-        tech_stack: techStack,
-        team_size: teamSize,
+        category: industryTags || [],
+        tech_stack: techStack || [],
+        team_size: teamSize || 4,
         status: 'active',
         team_type: aiAnalysis?.company_type || 'startup',
         owner_id: userId,
         invite_code: inviteCode,
         hackathon_id: hackathonId || null,
+        github_repo: githubRepo || null,
         onboarding_completed: false,
       })
       .select()
       .single();
 
     if (teamError) throw teamError;
+
+    // Create team member record (owner)
+    const { error: memberError } = await supabase
+      .from('team_members')
+      .insert({
+        team_id: team.id,
+        user_id: userId,
+        role: 'owner',
+      });
+
+    if (memberError) console.error('Team member creation error:', memberError);
 
     // Create team permissions (owner)
     const { error: permError } = await supabase

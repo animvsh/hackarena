@@ -15,6 +15,7 @@ import { calculateProfileCompleteness } from '@/lib/profileCompleteness';
 import { Progress } from '@/components/ui/progress';
 import { PrivacySettings } from '@/components/profile/PrivacySettings';
 import { LinkedInSyncButton } from '@/components/profile/LinkedInSyncButton';
+import { HackathonParticipation } from '@/components/profile/HackathonParticipation';
 
 export default function ProfileEdit() {
   const { user } = useAuth();
@@ -686,6 +687,9 @@ export default function ProfileEdit() {
           )}
         </div>
       </Card>
+
+      {/* Hackathon Participation */}
+      <HackathonParticipation userId={user!.id} />
 
       {/* Privacy Settings */}
       <PrivacySettings
