@@ -4,7 +4,10 @@ import { useToast } from '@/hooks/use-toast';
 
 interface ImportResult {
   hackathon: any;
+  tracks: any[];
   markets: any[];
+  participants: number;
+  submissions: number;
   message: string;
 }
 

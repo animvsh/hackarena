@@ -122,13 +122,34 @@ export const DevpostImportModal = ({ open, onOpenChange, onSuccess }: DevpostImp
           )}
 
           {result && (
-            <div className="flex items-start gap-2 p-3 bg-success/10 border border-success/20 rounded-lg">
-              <CheckCircle2 className="w-5 h-5 text-success mt-0.5" />
-              <div>
-                <p className="text-sm font-medium text-success">Import Successful!</p>
-                <p className="text-sm text-success/80">
-                  Created "{result.hackathon?.name}" with {result.markets?.length || 0} prediction markets
-                </p>
+            <div className="rounded-lg border border-green-500/20 bg-green-500/10 p-4">
+              <div className="flex items-start gap-3">
+                <CheckCircle2 className="h-5 w-5 text-green-500 flex-shrink-0 mt-0.5" />
+                <div className="flex-1 space-y-2 text-sm">
+                  <h4 className="font-semibold text-green-500 mb-2">Import Successful!</h4>
+                  <p className="text-muted-foreground"><strong>Hackathon:</strong> {result.hackathon?.name}</p>
+                  <p className="text-muted-foreground"><strong>Tracks Imported:</strong> {result.tracks?.length || 0}</p>
+                  {result.participants > 0 && (
+                    <p className="text-muted-foreground"><strong>Participants:</strong> {result.participants.toLocaleString()}</p>
+                  )}
+                  {result.submissions > 0 && (
+                    <p className="text-muted-foreground"><strong>Submissions:</strong> {result.submissions.toLocaleString()}</p>
+                  )}
+                  <p className="text-muted-foreground"><strong>Total Prize Pool:</strong> ${result.hackathon?.prize_pool?.toLocaleString()}</p>
+                  {result.tracks && result.tracks.length > 0 && (
+                    <div className="mt-3">
+                      <p className="font-medium text-foreground mb-1">Tracks:</p>
+                      <ul className="list-disc list-inside space-y-0.5 ml-2 text-muted-foreground">
+                        {result.tracks.slice(0, 5).map((track: any, idx: number) => (
+                          <li key={idx}>{track.category}</li>
+                        ))}
+                        {result.tracks.length > 5 && (
+                          <li className="text-muted-foreground/70">+{result.tracks.length - 5} more...</li>
+                        )}
+                      </ul>
+                    </div>
+                  )}
+                </div>
               </div>
             </div>
           )}
