@@ -76,6 +76,9 @@ export default function Onboarding() {
     if (!user) return;
     
     try {
+      // Only mark onboarding complete if not a hacker (hackers need team setup first)
+      const shouldComplete = role !== 'hacker';
+      
       await supabase
         .from('users')
         .update({
@@ -88,7 +91,7 @@ export default function Onboarding() {
           github_url: profileData.github_url,
           portfolio_url: profileData.portfolio_url,
           profile_generated_by: profileSource,
-          onboarding_completed: true,
+          onboarding_completed: shouldComplete,
         })
         .eq('id', user.id);
       
@@ -103,7 +106,15 @@ export default function Onboarding() {
     }
   };
 
-  const handleComplete = () => {
+  const handleComplete = async () => {
+    if (!user) return;
+    
+    // Mark onboarding as complete
+    await supabase
+      .from('users')
+      .update({ onboarding_completed: true })
+      .eq('id', user.id);
+    
     toast.success('Welcome to HackCast LIVE! 🎉');
     navigate('/');
   };
@@ -254,50 +265,53 @@ export default function Onboarding() {
     );
   }
 
-  if (step === 4 && inviteCode) {
+  if (step === 4) {
+    if (inviteCode) {
+      return (
+        <div className="min-h-screen flex items-center justify-center bg-background p-4">
+          <div className="w-full max-w-2xl">
+            <InviteCodeDisplay
+              inviteCode={inviteCode}
+              teamName={profileData.username || 'Your Team'}
+              onContinue={handleComplete}
+            />
+          </div>
+        </div>
+      );
+    }
+    
+    // Completion screen for non-team creators
     return (
       <div className="min-h-screen flex items-center justify-center bg-background p-4">
-        <div className="w-full max-w-2xl">
-          <InviteCodeDisplay
-            inviteCode={inviteCode}
-            teamName={profileData.username || 'Your Team'}
-            onContinue={handleComplete}
-          />
-        </div>
+        <Card className="w-full max-w-2xl">
+          <CardHeader className="text-center">
+            <Coins className="h-16 w-16 text-primary mx-auto mb-4" />
+            <CardTitle className="text-3xl">You're All Set! 🎉</CardTitle>
+            <CardDescription className="text-lg mt-2">
+              {role === 'hacker' 
+                ? 'Your join request has been sent. You\'ll be notified when approved!'
+                : 'Start with 1,000 HackCoins'}
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-6">
+            <div className="bg-primary/10 rounded-lg p-6 text-center">
+              <p className="text-4xl font-bold text-primary mb-2">1,000 HC</p>
+              <p className="text-muted-foreground">Your starting balance</p>
+            </div>
+            <div className="space-y-3">
+              <h3 className="font-semibold">How to earn more:</h3>
+              <ul className="space-y-2 text-sm text-muted-foreground">
+                <li>✓ Make accurate predictions on team outcomes</li>
+                <li>✓ Bet on trending teams early</li>
+                <li>✓ Win big in prediction markets</li>
+              </ul>
+            </div>
+            <Button onClick={handleComplete} className="w-full" size="lg">
+              Start Exploring
+            </Button>
+          </CardContent>
+        </Card>
       </div>
     );
   }
-
-  return (
-    <div className="min-h-screen flex items-center justify-center bg-background p-4">
-      <Card className="w-full max-w-2xl">
-        <CardHeader className="text-center">
-          <Coins className="h-16 w-16 text-primary mx-auto mb-4" />
-          <CardTitle className="text-3xl">You're All Set! 🎉</CardTitle>
-          <CardDescription className="text-lg mt-2">
-            {role === 'hacker' 
-              ? 'Your join request has been sent. You\'ll be notified when approved!'
-              : 'Start with 1,000 HackCoins'}
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-6">
-          <div className="bg-primary/10 rounded-lg p-6 text-center">
-            <p className="text-4xl font-bold text-primary mb-2">1,000 HC</p>
-            <p className="text-muted-foreground">Your starting balance</p>
-          </div>
-          <div className="space-y-3">
-            <h3 className="font-semibold">How to earn more:</h3>
-            <ul className="space-y-2 text-sm text-muted-foreground">
-              <li>✓ Make accurate predictions on team outcomes</li>
-              <li>✓ Bet on trending teams early</li>
-              <li>✓ Win big in prediction markets</li>
-            </ul>
-          </div>
-          <Button onClick={handleComplete} className="w-full" size="lg">
-            Start Exploring
-          </Button>
-        </CardContent>
-      </Card>
-    </div>
-  );
 }
