@@ -1,317 +1,309 @@
-import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { useAuth } from '@/contexts/AuthContext';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
-import { Label } from '@/components/ui/label';
-import { Input } from '@/components/ui/input';
-import { supabase } from '@/integrations/supabase/client';
-import { toast } from 'sonner';
-import { Users, Trophy, Briefcase, Award, Coins } from 'lucide-react';
-import { TeamSetup } from '@/components/onboarding/TeamSetup';
-import { InviteCodeDisplay } from '@/components/onboarding/InviteCodeDisplay';
-import { ProfileImport } from '@/components/onboarding/ProfileImport';
-import { ProfileForm } from '@/components/onboarding/ProfileForm';
-import { HackathonSelection } from '@/components/onboarding/HackathonSelection';
+import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/AuthContext";
+import { useToast } from "@/hooks/use-toast";
+import { OnboardingContainer } from "@/components/onboarding/OnboardingContainer";
+import { Step01Welcome } from "@/components/onboarding/steps/Step01Welcome";
+import { Step02Name } from "@/components/onboarding/steps/Step02Name";
+import { Step03Role } from "@/components/onboarding/steps/Step03Role";
+import { Step04Hackathon } from "@/components/onboarding/steps/Step04Hackathon";
+import { Step05Bio } from "@/components/onboarding/steps/Step05Bio";
+import { Step06Skills } from "@/components/onboarding/steps/Step06Skills";
+import { Step07SocialLinks } from "@/components/onboarding/steps/Step07SocialLinks";
+import { Step08TeamChoice } from "@/components/onboarding/steps/Step08TeamChoice";
+import { Step09TeamCreate } from "@/components/onboarding/steps/Step09TeamCreate";
+import { Step10TeamJoin } from "@/components/onboarding/steps/Step10TeamJoin";
+import { Step11Completion } from "@/components/onboarding/steps/Step11Completion";
 
-const roleOptions = [
-  { value: 'spectator', label: 'Spectator', icon: Users, description: 'Watch and predict outcomes' },
-  { value: 'hacker', label: 'Hacker', icon: Trophy, description: 'Join or create teams' },
-  { value: 'sponsor', label: 'Sponsor', icon: Briefcase, description: 'View analytics (requires approval)' },
-  { value: 'judge', label: 'Judge', icon: Award, description: 'Evaluate projects (requires approval)' }
-];
+interface FormData {
+  name: string;
+  role: 'spectator' | 'hacker' | 'sponsor' | 'judge';
+  hackathonId: string | null;
+  bio: string;
+  skills: string[];
+  linkedin_url: string;
+  github_url: string;
+  portfolio_url: string;
+  teamChoice: 'create' | 'join' | '';
+  teamId: string | null;
+  inviteCode: string | null;
+  teamName: string | null;
+}
 
-export default function Onboarding() {
-  const [step, setStep] = useState(1);
-  const [role, setRole] = useState('spectator');
-  const [selectedHackathonId, setSelectedHackathonId] = useState<string | null>(null);
-  const [profileData, setProfileData] = useState<any>({
-    username: '',
+const Onboarding = () => {
+  const { user } = useAuth();
+  const navigate = useNavigate();
+  const { toast } = useToast();
+  
+  const [currentStep, setCurrentStep] = useState(0);
+  const [formData, setFormData] = useState<FormData>({
+    name: '',
+    role: 'spectator',
+    hackathonId: null,
     bio: '',
     skills: [],
-    experience: [],
-    education: [],
     linkedin_url: '',
     github_url: '',
     portfolio_url: '',
+    teamChoice: '',
+    teamId: null,
+    inviteCode: null,
+    teamName: null,
   });
-  const [profileSource, setProfileSource] = useState('manual');
-  const [teamId, setTeamId] = useState<string>('');
-  const [inviteCode, setInviteCode] = useState<string>('');
-  const { user, profile } = useAuth();
-  const navigate = useNavigate();
 
-  const handleRoleSubmit = async () => {
-    if (!user) return;
-    
-    try {
-      await supabase
-        .from('user_roles')
-        .insert({ user_id: user.id, role: role as any });
-      
-      // If hacker, go to hackathon selection first
-      if (role === 'hacker') {
-        setStep(2.3);
-      } else {
-        setStep(2.5);
+  // Load saved progress
+  useEffect(() => {
+    const saved = localStorage.getItem('onboarding_progress');
+    if (saved) {
+      try {
+        const { step, data, timestamp } = JSON.parse(saved);
+        // Resume if less than 1 hour old
+        if (Date.now() - timestamp < 3600000) {
+          setCurrentStep(step);
+          setFormData(data);
+        } else {
+          localStorage.removeItem('onboarding_progress');
+        }
+      } catch (error) {
+        console.error('Error loading saved progress:', error);
       }
-    } catch (error) {
-      toast.error('Failed to save role');
     }
-  };
+  }, []);
 
-  const handleHackathonSelected = (hackathonId: string | null) => {
-    setSelectedHackathonId(hackathonId);
-    setStep(2.5);
-  };
-
-  const handleProfileImport = (data: any, source: string) => {
-    setProfileData({ ...profileData, ...data });
-    setProfileSource(source);
-    setStep(3); // Go to profile completion
-  };
-
-  const handleProfileSubmit = async () => {
-    if (!user) return;
-    
-    try {
-      // Only mark onboarding complete if not a hacker (hackers need team setup first)
-      const shouldComplete = role !== 'hacker';
-      
-      await supabase
-        .from('users')
-        .update({
-          username: profileData.username || profile?.username,
-          bio: profileData.bio,
-          skills: profileData.skills,
-          experience: profileData.experience,
-          education: profileData.education,
-          linkedin_url: profileData.linkedin_url,
-          github_url: profileData.github_url,
-          portfolio_url: profileData.portfolio_url,
-          profile_generated_by: profileSource,
-          onboarding_completed: shouldComplete,
-        })
-        .eq('id', user.id);
-      
-      // If hacker role, go to team setup, otherwise complete
-      if (role === 'hacker') {
-        setStep(3.5);
-      } else {
-        setStep(4);
-      }
-    } catch (error) {
-      toast.error('Failed to save profile');
+  // Save progress
+  useEffect(() => {
+    if (currentStep > 0) {
+      localStorage.setItem('onboarding_progress', JSON.stringify({
+        step: currentStep,
+        data: formData,
+        timestamp: Date.now(),
+      }));
     }
+  }, [currentStep, formData]);
+
+  const updateFormData = <K extends keyof FormData>(key: K, value: FormData[K]) => {
+    setFormData(prev => ({ ...prev, [key]: value }));
+  };
+
+  const handleNext = () => {
+    setCurrentStep(prev => prev + 1);
+  };
+
+  const handleBack = () => {
+    setCurrentStep(prev => Math.max(0, prev - 1));
   };
 
   const handleComplete = async () => {
     if (!user) return;
+
+    try {
+      // Update users table
+      const { error: updateError } = await supabase
+        .from('users')
+        .update({
+          username: formData.name,
+          bio: formData.bio,
+          skills: formData.skills,
+          linkedin_url: formData.linkedin_url || null,
+          github_url: formData.github_url || null,
+          portfolio_url: formData.portfolio_url || null,
+          onboarding_completed: true,
+        })
+        .eq('id', user.id);
+
+      if (updateError) throw updateError;
+      
+      // Insert user role
+      const { error: roleError } = await supabase
+        .from('user_roles')
+        .insert({ user_id: user.id, role: formData.role });
+      
+      if (roleError && !roleError.message.includes('duplicate')) {
+        console.error('Role insert error:', roleError);
+      }
+
+      // Clear saved progress
+      localStorage.removeItem('onboarding_progress');
+
+      // Navigate to home
+      navigate('/');
+      
+      toast({
+        title: 'Welcome to HackArena!',
+        description: `You've received 1,000 HackCoins to get started.`,
+      });
+    } catch (error: any) {
+      console.error('Error completing onboarding:', error);
+      toast({
+        title: 'Error saving profile',
+        description: error.message || 'Please try again',
+        variant: 'destructive',
+      });
+    }
+  };
+
+  // Calculate total steps dynamically
+  const getTotalSteps = () => {
+    let total = 8; // Welcome, Name, Role, Bio, Skills, Social Links, Completion
     
-    // Mark onboarding as complete
-    await supabase
-      .from('users')
-      .update({ onboarding_completed: true })
-      .eq('id', user.id);
-    
-    toast.success('Welcome to HackCast LIVE! 🎉');
-    navigate('/');
-  };
-
-  const handleTeamCreated = (createdTeamId: string, code: string) => {
-    setTeamId(createdTeamId);
-    setInviteCode(code);
-    setStep(4);
-  };
-
-  const handleTeamJoined = () => {
-    setStep(4);
-  };
-
-  if (step === 1) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-background p-4">
-        <Card className="w-full max-w-2xl">
-          <CardHeader className="text-center">
-            <div className="flex items-center justify-center gap-2 mb-4">
-              <h1 className="text-3xl font-bold text-primary">HackCast LIVE</h1>
-              <div className="flex items-center gap-2 px-3 py-1 bg-destructive/10 rounded-full">
-                <div className="w-2 h-2 bg-destructive rounded-full animate-pulse"></div>
-                <span className="text-xs font-bold text-destructive">BROADCASTING</span>
-              </div>
-            </div>
-            <CardTitle className="text-3xl">Welcome! 🚀</CardTitle>
-            <CardDescription className="text-lg mt-2">
-              The world's first AI-powered hackathon prediction market
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-6">
-            <div className="space-y-4">
-              <p className="text-muted-foreground">
-                Predict team outcomes, earn HackCoins, and experience real-time AI commentary as hackers build amazing projects.
-              </p>
-              <div className="grid grid-cols-3 gap-4 text-center">
-                <div className="p-4 bg-secondary rounded-lg">
-                  <p className="text-2xl font-bold text-primary">Live</p>
-                  <p className="text-sm text-muted-foreground">Markets</p>
-                </div>
-                <div className="p-4 bg-secondary rounded-lg">
-                  <p className="text-2xl font-bold text-primary">AI</p>
-                  <p className="text-sm text-muted-foreground">Commentary</p>
-                </div>
-                <div className="p-4 bg-secondary rounded-lg">
-                  <p className="text-2xl font-bold text-primary">Real</p>
-                  <p className="text-sm text-muted-foreground">Rewards</p>
-                </div>
-              </div>
-            </div>
-            <Button onClick={() => setStep(2)} className="w-full" size="lg">
-              Get Started
-            </Button>
-          </CardContent>
-        </Card>
-      </div>
-    );
-  }
-
-  if (step === 2) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-background p-4">
-        <Card className="w-full max-w-2xl">
-          <CardHeader>
-            <CardTitle>Choose Your Role</CardTitle>
-            <CardDescription>Select how you'd like to participate</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-6">
-            <RadioGroup value={role} onValueChange={setRole}>
-              {roleOptions.map((option) => {
-                const Icon = option.icon;
-                return (
-                  <div key={option.value} className="flex items-center space-x-3 p-4 border rounded-lg hover:bg-secondary cursor-pointer">
-                    <RadioGroupItem value={option.value} id={option.value} />
-                    <Label htmlFor={option.value} className="flex items-center gap-3 cursor-pointer flex-1">
-                      <Icon className="h-6 w-6 text-primary" />
-                      <div className="flex-1">
-                        <p className="font-semibold">{option.label}</p>
-                        <p className="text-sm text-muted-foreground">{option.description}</p>
-                      </div>
-                    </Label>
-                  </div>
-                );
-              })}
-            </RadioGroup>
-            <div className="flex gap-4">
-              <Button variant="outline" onClick={() => setStep(1)}>Back</Button>
-              <Button onClick={handleRoleSubmit} className="flex-1">Continue</Button>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-    );
-  }
-
-  if (step === 2.3 && role === 'hacker') {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-background p-4">
-        <div className="w-full max-w-4xl">
-          <HackathonSelection
-            onSelected={handleHackathonSelected}
-            onBack={() => setStep(2)}
-          />
-        </div>
-      </div>
-    );
-  }
-
-  if (step === 2.5) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-background p-4">
-        <div className="w-full max-w-2xl">
-          <ProfileImport
-            onComplete={handleProfileImport}
-          />
-        </div>
-      </div>
-    );
-  }
-
-  if (step === 3.5 && role === 'hacker' && user) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-background p-4">
-        <div className="w-full max-w-4xl">
-          <TeamSetup
-            userId={user.id}
-            hackathonId={selectedHackathonId}
-            onTeamCreated={handleTeamCreated}
-            onTeamJoined={handleTeamJoined}
-          />
-        </div>
-      </div>
-    );
-  }
-
-  if (step === 3) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-background p-4">
-        <div className="w-full max-w-2xl">
-          <ProfileForm
-            initialData={profileData}
-            onSubmit={handleProfileSubmit}
-            onBack={() => setStep(2.5)}
-          />
-        </div>
-      </div>
-    );
-  }
-
-  if (step === 4) {
-    if (inviteCode) {
-      return (
-        <div className="min-h-screen flex items-center justify-center bg-background p-4">
-          <div className="w-full max-w-2xl">
-            <InviteCodeDisplay
-              inviteCode={inviteCode}
-              teamName={profileData.username || 'Your Team'}
-              onContinue={handleComplete}
-            />
-          </div>
-        </div>
-      );
+    if (formData.role === 'hacker') {
+      total += 1; // Hackathon selection
+      if (formData.teamChoice === 'create') total += 1; // Team creation
+      if (formData.teamChoice === 'join') total += 1; // Team join
+      if (formData.teamChoice !== '') total += 1; // Team choice screen
     }
     
-    // Completion screen for non-team creators
+    return total;
+  };
+
+  // Render current step
+  const renderStep = () => {
+    // Step 0: Welcome
+    if (currentStep === 0) {
+      return <Step01Welcome onStart={handleNext} />;
+    }
+
+    // Step 1: Name
+    if (currentStep === 1) {
+      return (
+        <Step02Name
+          value={formData.name}
+          onChange={(value) => updateFormData('name', value)}
+          onNext={handleNext}
+          onBack={handleBack}
+        />
+      );
+    }
+
+    // Step 2: Role
+    if (currentStep === 2) {
+      return (
+        <Step03Role
+          value={formData.role}
+          onChange={(value) => updateFormData('role', value as any)}
+          onNext={handleNext}
+          onBack={handleBack}
+        />
+      );
+    }
+
+    // Step 3: Hackathon (conditional - hackers only)
+    if (currentStep === 3 && formData.role === 'hacker') {
+      return (
+        <Step04Hackathon
+          value={formData.hackathonId}
+          onChange={(value) => updateFormData('hackathonId', value)}
+          onNext={handleNext}
+          onBack={handleBack}
+        />
+      );
+    }
+
+    // Adjust step index for non-hackers
+    const adjustedStep = formData.role === 'hacker' ? currentStep : currentStep + 1;
+
+    // Step 4: Bio
+    if (adjustedStep === 4) {
+      return (
+        <Step05Bio
+          value={formData.bio}
+          onChange={(value) => updateFormData('bio', value)}
+          onNext={handleNext}
+          onBack={handleBack}
+        />
+      );
+    }
+
+    // Step 5: Skills
+    if (adjustedStep === 5) {
+      return (
+        <Step06Skills
+          value={formData.skills}
+          onChange={(value) => updateFormData('skills', value)}
+          onNext={handleNext}
+          onBack={handleBack}
+        />
+      );
+    }
+
+    // Step 6: Social Links
+    if (adjustedStep === 6) {
+      return (
+        <Step07SocialLinks
+          linkedinUrl={formData.linkedin_url}
+          githubUrl={formData.github_url}
+          portfolioUrl={formData.portfolio_url}
+          onChange={(field, value) => updateFormData(field, value)}
+          onNext={handleNext}
+          onBack={handleBack}
+        />
+      );
+    }
+
+    // Step 7: Team Choice (conditional - hackers only)
+    if (adjustedStep === 7 && formData.role === 'hacker') {
+      return (
+        <Step08TeamChoice
+          value={formData.teamChoice}
+          onChange={(value) => updateFormData('teamChoice', value)}
+          onNext={handleNext}
+          onBack={handleBack}
+        />
+      );
+    }
+
+    // Step 8: Team Create (conditional)
+    if (adjustedStep === 8 && formData.role === 'hacker' && formData.teamChoice === 'create') {
+      return (
+        <Step09TeamCreate
+          userId={user?.id || ''}
+          hackathonId={formData.hackathonId}
+          onTeamCreated={(teamId, inviteCode) => {
+            updateFormData('teamId', teamId);
+            updateFormData('inviteCode', inviteCode);
+            handleNext();
+          }}
+          onBack={handleBack}
+        />
+      );
+    }
+
+    // Step 8: Team Join (conditional)
+    if (adjustedStep === 8 && formData.role === 'hacker' && formData.teamChoice === 'join') {
+      return (
+        <Step10TeamJoin
+          userId={user?.id || ''}
+          onTeamJoined={(teamId) => {
+            updateFormData('teamId', teamId);
+            handleNext();
+          }}
+          onBack={handleBack}
+        />
+      );
+    }
+
+    // Final Step: Completion
     return (
-      <div className="min-h-screen flex items-center justify-center bg-background p-4">
-        <Card className="w-full max-w-2xl">
-          <CardHeader className="text-center">
-            <Coins className="h-16 w-16 text-primary mx-auto mb-4" />
-            <CardTitle className="text-3xl">You're All Set! 🎉</CardTitle>
-            <CardDescription className="text-lg mt-2">
-              {role === 'hacker' 
-                ? 'Your join request has been sent. You\'ll be notified when approved!'
-                : 'Start with 1,000 HackCoins'}
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-6">
-            <div className="bg-primary/10 rounded-lg p-6 text-center">
-              <p className="text-4xl font-bold text-primary mb-2">1,000 HC</p>
-              <p className="text-muted-foreground">Your starting balance</p>
-            </div>
-            <div className="space-y-3">
-              <h3 className="font-semibold">How to earn more:</h3>
-              <ul className="space-y-2 text-sm text-muted-foreground">
-                <li>✓ Make accurate predictions on team outcomes</li>
-                <li>✓ Bet on trending teams early</li>
-                <li>✓ Win big in prediction markets</li>
-              </ul>
-            </div>
-            <Button onClick={handleComplete} className="w-full" size="lg">
-              Start Exploring
-            </Button>
-          </CardContent>
-        </Card>
-      </div>
+      <Step11Completion
+        userName={formData.name}
+        inviteCode={formData.inviteCode || undefined}
+        teamName={formData.teamName || undefined}
+        onComplete={handleComplete}
+      />
     );
-  }
-}
+  };
+
+  return (
+    <OnboardingContainer
+      currentStep={currentStep}
+      totalSteps={getTotalSteps()}
+      onNext={handleNext}
+      onBack={handleBack}
+    >
+      {renderStep()}
+    </OnboardingContainer>
+  );
+};
+
+export default Onboarding;
