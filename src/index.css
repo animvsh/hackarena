@@ -8,68 +8,65 @@ All colors MUST be HSL.
 
 @layer base {
   :root {
-    --background: 0 0% 4%;
+    /* HackArena - Dark Trading Platform Theme */
+    --background: 215 25% 10%;
     --foreground: 0 0% 98%;
 
-    --card: 0 0% 6%;
+    --card: 215 20% 14%;
     --card-foreground: 0 0% 98%;
 
-    --popover: 0 0% 6%;
+    --popover: 215 25% 12%;
     --popover-foreground: 0 0% 98%;
 
-    --primary: 75 95% 60%;
-    --primary-foreground: 0 0% 10%;
+    --primary: 160 84% 39%;
+    --primary-foreground: 0 0% 100%;
 
-    --secondary: 240 5% 8%;
+    --secondary: 215 20% 18%;
     --secondary-foreground: 0 0% 98%;
 
-    --muted: 0 0% 12%;
-    --muted-foreground: 0 0% 60%;
+    --muted: 215 15% 20%;
+    --muted-foreground: 0 0% 65%;
 
-    --accent: 75 95% 60%;
-    --accent-foreground: 0 0% 10%;
+    --accent: 160 84% 39%;
+    --accent-foreground: 0 0% 100%;
 
-    --destructive: 0 84% 60%;
+    --destructive: 0 72% 51%;
     --destructive-foreground: 0 0% 98%;
 
-    --border: 0 0% 15%;
-    --input: 0 0% 12%;
-    --ring: 75 95% 60%;
+    --border: 215 15% 25%;
+    --input: 215 20% 16%;
+    --ring: 160 84% 39%;
 
-    --radius: 1.25rem;
+    --radius: 0.5rem;
 
-    --chart-1: 270 80% 65%;
-    --chart-2: 280 70% 60%;
-    --chart-3: 175 70% 55%;
-    --chart-4: 340 75% 55%;
-    --chart-5: 45 85% 60%;
+    --chart-1: 160 84% 39%;
+    --chart-2: 0 72% 51%;
+    --chart-3: 45 93% 47%;
+    --chart-4: 199 89% 48%;
+    --chart-5: 270 80% 65%;
 
-    --success: 142 76% 36%;
-    --success-foreground: 0 0% 98%;
+    --success: 160 84% 39%;
+    --success-foreground: 0 0% 100%;
 
     --info: 199 89% 48%;
     --info-foreground: 0 0% 98%;
 
-    --warning: 38 92% 50%;
-
-    --neon-yellow: 75 95% 60%;
-    --neon-blue: 199 89% 48%;
-    --neon-purple: 270 80% 65%;
-    --neon-pink: 330 85% 65%;
+    --warning: 45 93% 47%;
+    
+    /* Trading Platform Colors */
+    --neon-green: 160 84% 39%;
+    --neon-red: 0 72% 51%;
+    --neon-yellow: 45 93% 47%;
+    --slate-darker: 215 25% 8%;
+    --slate-dark: 215 25% 10%;
+    --slate-medium: 215 20% 14%;
+    --slate-light: 215 15% 20%;
     
     /* Premium effects */
     --glow-sm: 0 0 10px;
     --glow-md: 0 0 20px;
     --glow-lg: 0 0 40px;
     --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    
-    /* Broadcast News Colors */
-    --broadcast-blue: 217 91% 60%;
-    --broadcast-blue-dark: 224 76% 48%;
-    --desk-brown: 16 25% 38%;
-    --desk-brown-dark: 16 25% 25%;
-    --paper: 0 0% 98%;
-    --metallic-silver: 220 9% 46%;
   }
 }
 

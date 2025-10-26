@@ -59,10 +59,15 @@ export default {
           DEFAULT: "hsl(var(--warning))",
         },
         neon: {
+          green: "hsl(var(--neon-green))",
+          red: "hsl(var(--neon-red))",
           yellow: "hsl(var(--neon-yellow))",
-          blue: "hsl(var(--neon-blue))",
-          purple: "hsl(var(--neon-purple))",
-          pink: "hsl(var(--neon-pink))",
+        },
+        slate: {
+          darker: "hsl(var(--slate-darker))",
+          dark: "hsl(var(--slate-dark))",
+          medium: "hsl(var(--slate-medium))",
+          light: "hsl(var(--slate-light))",
         },
         chart: {
           "1": "hsl(var(--chart-1))",

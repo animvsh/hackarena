@@ -1,7 +1,6 @@
 import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
-import { Sidebar } from "@/components/Sidebar";
-import { Header } from "@/components/Header";
+import { AppLayout } from "@/components/AppLayout";
 import { MarketCard } from "@/components/MarketCard";
 import { HackathonHeader } from "@/components/HackathonHeader";
 import { supabase } from "@/integrations/supabase/client";
@@ -108,11 +107,8 @@ const Markets = () => {
   };
 
   return (
-    <div className="flex min-h-screen bg-background">
-      <Sidebar />
-
-      <main className="flex-1 p-8">
-        <Header />
+    <AppLayout>
+      <div className="p-6 space-y-6">
         
         {hackathonId && <HackathonHeader hackathonId={hackathonId} />}
 
@@ -182,8 +178,8 @@ const Markets = () => {
             ))}
           </div>
         )}
-      </main>
-    </div>
+      </div>
+    </AppLayout>
   );
 };
 

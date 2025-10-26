@@ -1,6 +1,5 @@
 import { useEffect, useState } from "react";
-import { Sidebar } from "@/components/Sidebar";
-import { Header } from "@/components/Header";
+import { AppLayout } from "@/components/AppLayout";
 import { StatCard } from "@/components/StatCard";
 import { UserWallet } from "@/components/UserWallet";
 import { TrendingTeams } from "@/components/TrendingTeams";
@@ -176,25 +175,27 @@ const Index = () => {
   };
 
   return (
-    <div className="flex min-h-screen bg-background">
-      <Sidebar />
-
-      <main className="flex-1 p-8">
-        <Header />
+    <AppLayout>
+      <div className="p-6 space-y-6">
+        {/* Header */}
+        <div>
+          <h1 className="text-3xl font-bold text-foreground">Dashboard</h1>
+          <p className="text-muted-foreground mt-1">Track live hackathon action and market trends</p>
+        </div>
 
         {/* Unified Live Broadcast */}
-        <div className="mb-8">
+        <div>
           <div className="mb-4">
-            <h2 className="text-3xl font-bold mb-2 bg-gradient-to-r from-neon-yellow via-neon-blue to-neon-purple bg-clip-text text-transparent">
-              Unified Hackathon Broadcast
+            <h2 className="text-2xl font-bold mb-2">
+              Live Broadcast
             </h2>
             <p className="text-muted-foreground text-sm">
-              Real-time AI commentary covering all active hackathons - automatically switching based on breaking events
+              Real-time AI commentary covering all active hackathons
             </p>
           </div>
 
           {hackathonsLoading ? (
-            <Skeleton className="h-[500px] rounded-2xl" />
+            <Skeleton className="h-[500px] rounded-xl" />
           ) : (
             <UnifiedBroadcastPlayer />
           )}
@@ -202,15 +203,13 @@ const Index = () => {
 
         {/* Hackathon Info Card */}
         {selectedHackathon && !hackathonsLoading && (
-          <div className="mb-8">
-            <HackathonInfoCard hackathon={selectedHackathon} />
-          </div>
+          <HackathonInfoCard hackathon={selectedHackathon} />
         )}
 
         {/* Live Statistics */}
-        <div className="mb-6">
-          <div className="flex items-center justify-between mb-6">
-            <h2 className="text-xl font-bold">Live Metrics - {selectedHackathon?.name || 'Hackathon'}</h2>
+        <div>
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-2xl font-bold">Live Metrics</h2>
           </div>
 
           {loading ? (
@@ -228,26 +227,26 @@ const Index = () => {
             </div>
           ) : (
             <>
-              <div className="grid grid-cols-3 gap-4 mb-6">
+              <div className="grid grid-cols-3 gap-4 mb-4">
                 <StatCard
                   icon={Users}
                   label="Active Teams"
                   value={stats.activeTeams.toString()}
                   trend={15}
-                  iconColor="neon-purple"
+                  iconColor="neon-green"
                 />
                 <StatCard
                   icon={TrendingUp}
                   label="Commits / Hour"
                   value={stats.commitsPerHour.toString()}
                   trend={8}
-                  iconColor="neon-blue"
+                  iconColor="neon-green"
                 />
                 <StatCard
                   icon={Zap}
                   label="Markets Open"
                   value={stats.marketsOpen.toString()}
-                  iconColor="neon-pink"
+                  iconColor="neon-yellow"
                 />
               </div>
 
@@ -291,10 +290,10 @@ const Index = () => {
 
         {/* Charts and Stats Grid */}
         {selectedHackathon && (
-          <div className="grid grid-cols-3 gap-6 mb-6">
+          <div className="grid grid-cols-3 gap-4">
             <LiveMarketChart hackathonId={selectedHackathon.id} />
 
-            <div className="space-y-6">
+            <div className="space-y-4">
               <UserWallet />
               <TrendingTeams hackathonId={selectedHackathon.id} />
               <RevenueDrivers />
@@ -304,7 +303,7 @@ const Index = () => {
 
         {/* Live Commentary Ticker */}
         {selectedHackathon && <LiveCommentaryTicker hackathonId={selectedHackathon.id} />}
-      </main>
+      </div>
 
       {/* Simulation Controller (Dev Mode Only) */}
       {import.meta.env.DEV && selectedHackathon && (
@@ -316,7 +315,7 @@ const Index = () => {
         open={showLinkedInModal}
         onOpenChange={handleLinkedInModalClose}
       />
-    </div>
+    </AppLayout>
   );
 };
 

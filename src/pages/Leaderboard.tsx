@@ -1,7 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Sidebar } from "@/components/Sidebar";
-import { Header } from "@/components/Header";
+import { AppLayout } from "@/components/AppLayout";
 import { supabase } from "@/integrations/supabase/client";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -87,27 +86,21 @@ const Leaderboard = () => {
 
   if (loading) {
     return (
-      <div className="flex min-h-screen bg-background">
-        <Sidebar />
-        <main className="flex-1 p-8">
-          <Header />
+      <AppLayout>
+        <div className="p-6">
           <Skeleton className="h-96 w-full" />
-        </main>
-      </div>
+        </div>
+      </AppLayout>
     );
   }
 
   return (
-    <div className="flex min-h-screen bg-background">
-      <Sidebar />
-
-      <main className="flex-1 p-8">
-        <Header />
-
+    <AppLayout>
+      <div className="p-6 space-y-6">
         {/* Page Header */}
-        <div className="mb-8">
+        <div>
           <div className="flex items-center gap-2 mb-2">
-            <Trophy className="w-8 h-8 text-primary" />
+            <Trophy className="w-8 h-8 text-neon-green" />
             <h1 className="text-3xl font-bold">Leaderboard</h1>
           </div>
           <p className="text-muted-foreground">
@@ -277,8 +270,8 @@ const Leaderboard = () => {
             </Card>
           </TabsContent>
         </Tabs>
-      </main>
-    </div>
+      </div>
+    </AppLayout>
   );
 };
 
