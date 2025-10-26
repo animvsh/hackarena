@@ -64,11 +64,11 @@ export const Step09TeamCreate: React.FC<Step09TeamCreateProps> = ({
       try {
         const { data, error } = await supabase.functions.invoke('create-team', {
           body: {
-            name: formData.name,
+            teamName: formData.name,
             tagline: formData.tagline,
-            description: formData.description,
-            hackathon_id: hackathonId,
-            creator_id: userId,
+            projectDescription: formData.description,
+            hackathonId: hackathonId,
+            userId: userId,
           },
         });
 

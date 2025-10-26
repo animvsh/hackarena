@@ -37,12 +37,7 @@ export const EnhancedChatWidget: React.FC = () => {
   const { user, profile, loading: authLoading } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
-
-  // Don't show chat widget on onboarding page
-  if (location.pathname === '/onboarding') {
-    return null;
-  }
-
+  
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [messageInput, setMessageInput] = useState('');
   const [isOpen, setIsOpen] = useState(false);
@@ -374,7 +369,10 @@ export const EnhancedChatWidget: React.FC = () => {
     inputRef.current?.focus();
   };
 
-
+  // Don't show chat widget on onboarding page (check after all hooks)
+  if (location.pathname === '/onboarding') {
+    return null;
+  }
 
   if (!isOpen) {
     return (

@@ -58,6 +58,27 @@ Deno.serve(async (req) => {
     const hackathonData = await parseDevpostWithAI(html, lovableApiKey);
     console.log('Parsed hackathon data:', hackathonData);
 
+    // Fetch projects/submissions if available
+    try {
+      const projectsUrl = devpostUrl.replace(/\/$/, '') + '/project-gallery';
+      const projectsResponse = await fetch(projectsUrl, {
+        headers: {
+          'User-Agent': 'Mozilla/5.0 (compatible; HackArenaBot/1.0)',
+        },
+      });
+
+      if (projectsResponse.ok) {
+        const projectsHtml = await projectsResponse.text();
+        const projects = await parseDevpostProjects(projectsHtml, lovableApiKey);
+        if (projects && projects.length > 0) {
+          hackathonData.teams = projects;
+          console.log(`Found ${projects.length} projects from project gallery`);
+        }
+      }
+    } catch (error) {
+      console.error('Error fetching project gallery:', error);
+    }
+
     // Insert hackathon into database
     const { data: hackathon, error: hackathonError } = await supabase
       .from('hackathons')
@@ -134,15 +155,91 @@ Deno.serve(async (req) => {
 
     console.log(`Successfully imported hackathon with ${tracks.length} tracks and ${markets.length} markets`);
 
+    // Insert teams and team members if available
+    const teams = [];
+    if (hackathonData.teams && Array.isArray(hackathonData.teams)) {
+      for (const teamData of hackathonData.teams) {
+        try {
+          // Insert team
+          const { data: team, error: teamError } = await supabase
+            .from('hackathon_teams')
+            .insert({
+              hackathon_id: hackathon.id,
+              name: teamData.name || 'Unnamed Team',
+              tagline: teamData.description || null,
+              category: teamData.category || null,
+              devpost_url: teamData.devpost_url || null,
+              team_size: teamData.members?.length || 0,
+            })
+            .select()
+            .single();
+
+          if (teamError) {
+            console.error('Error inserting team:', teamError);
+            continue;
+          }
+
+          teams.push(team);
+          console.log('Created team:', team.id, teamData.name);
+
+          // Insert team members
+          if (teamData.members && Array.isArray(teamData.members)) {
+            for (const memberUsername of teamData.members) {
+              // Try to find or create hacker
+              let { data: hacker } = await supabase
+                .from('hackers')
+                .select('id')
+                .eq('github_username', memberUsername)
+                .single();
+
+              // If hacker doesn't exist, create one
+              if (!hacker) {
+                const { data: newHacker, error: hackerError } = await supabase
+                  .from('hackers')
+                  .insert({
+                    github_username: memberUsername,
+                    name: memberUsername,
+                    bio: 'Imported from Devpost',
+                  })
+                  .select()
+                  .single();
+
+                if (!hackerError && newHacker) {
+                  hacker = newHacker;
+                  console.log('Created hacker:', hacker.id, memberUsername);
+                }
+              }
+
+              // Insert team member if hacker exists
+              if (hacker) {
+                await supabase
+                  .from('hackathon_team_members')
+                  .insert({
+                    team_id: team.id,
+                    hacker_id: hacker.id,
+                    role: 'Member',
+                  });
+              }
+            }
+          }
+        } catch (error) {
+          console.error('Error processing team:', error);
+        }
+      }
+    }
+
+    console.log(`Successfully imported hackathon with ${tracks.length} tracks, ${markets.length} markets, and ${teams.length} teams`);
+
     return new Response(
       JSON.stringify({
         success: true,
         hackathon,
         tracks,
         markets,
+        teams,
         participants: hackathonData.participants,
         submissions: hackathonData.submissions,
-        message: `Successfully imported "${hackathon.name}" with ${tracks.length} tracks${hackathonData.participants > 0 ? ` and ${hackathonData.participants} participants` : ''}`,
+        message: `Successfully imported "${hackathon.name}" with ${tracks.length} tracks${hackathonData.participants > 0 ? ` and ${hackathonData.participants} participants` : ''}${teams.length > 0 ? ` and ${teams.length} teams` : ''}`,
       }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
@@ -179,8 +276,14 @@ async function parseDevpostWithAI(html: string, apiKey: string): Promise<any> {
    - name: Track name (e.g., "Best Use of OpenAI API", "Best Overall")
    - amount: Prize amount for this track (distribute prize pool across tracks)
    - description: Brief description if available
+10. teams: Array of participating teams/projects with:
+   - name: Team/project name
+   - description: Brief project description or tagline
+   - members: Array of team member usernames (GitHub usernames if available)
+   - devpost_url: Devpost project URL if available
+   - category: Project category/track
 
-If you can't find tracks, create 5 generic ones: "Track 1", "Track 2", etc., each with equal portions of the prize pool.
+If you can't find tracks, create 5 generic ones. For teams, extract as many as possible from project links/submissions.
 
 HTML:
 ${cleanHtml}
@@ -264,7 +367,69 @@ function fallbackParse(html: string): any {
       { name: 'Track 4 - Design', amount: prizePerTrack, description: null },
       { name: 'Track 5 - Technical', amount: prizePerTrack, description: null },
     ],
+    teams: [], // No teams in fallback parsing
   };
+}
+
+async function parseDevpostProjects(html: string, apiKey: string): Promise<any[]> {
+  // Clean HTML to reduce token count
+  const cleanHtml = html
+    .replace(/<script[^>]*>.*?<\/script>/gis, '')
+    .replace(/<style[^>]*>.*?<\/style>/gis, '')
+    .replace(/<!--.*?-->/gs, '')
+    .substring(0, 20000); // Limit to first 20k chars for project listings
+
+  const prompt = `Parse this Devpost project gallery HTML and extract all projects/teams as a JSON array. For each project, extract:
+
+{
+  "name": "Project/Team name",
+  "description": "Brief project description or tagline",
+  "members": ["github_username1", "github_username2"],
+  "devpost_url": "full devpost project URL",
+  "category": "project category or track"
+}
+
+Extract as many projects as you can find. Look for project listings, team names, member links, descriptions.
+
+HTML:
+${cleanHtml}
+
+Return ONLY valid JSON array, no markdown formatting.`;
+
+  try {
+    const response = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${apiKey}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        model: 'google/gemini-2.5-flash',
+        messages: [
+          { role: 'system', content: 'You are a precise HTML parser. Return only valid JSON array.' },
+          { role: 'user', content: prompt }
+        ],
+        temperature: 0.1,
+      }),
+    });
+
+    if (!response.ok) {
+      console.error('AI API error:', response.status);
+      return [];
+    }
+
+    const data = await response.json();
+    const content = data.choices[0].message.content.trim();
+    
+    // Remove markdown code blocks if present
+    const jsonStr = content.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
+    const parsed = JSON.parse(jsonStr);
+
+    return Array.isArray(parsed) ? parsed : [];
+  } catch (error) {
+    console.error('AI parsing error for projects:', error);
+    return [];
+  }
 }
 
 function determineStatus(startDate: string, endDate: string): string {

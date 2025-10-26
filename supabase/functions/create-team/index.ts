@@ -143,8 +143,8 @@ serve(async (req) => {
     // No need to create a separate record in team_invite_codes
 
     return new Response(JSON.stringify({ 
-      team,
-      inviteCode,
+      team_id: team.id,
+      invite_code: inviteCode,
     }), {
       headers: { 
         'Content-Type': 'application/json',
