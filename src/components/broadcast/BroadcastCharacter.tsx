@@ -2,17 +2,19 @@ import { useState, useEffect } from 'react';
 import anchorLeftImg from '@/assets/news-anchor-left.png';
 import anchorRightImg from '@/assets/news-anchor-right.png';
 import { MouthAnimation } from './MouthAnimation';
+import { useElevenLabsTTS } from '@/hooks/useElevenLabsTTS';
 
 interface BroadcastCharacterProps {
   narrative: string;
   isLive: boolean;
   isSpeaking?: boolean;
   activeAnchor?: 'left' | 'right';
+  isMuted?: boolean;
 }
 
 type CharacterState = 'idle' | 'speaking' | 'excited';
 
-export function BroadcastCharacter({ narrative, isLive, isSpeaking = false, activeAnchor = 'left' }: BroadcastCharacterProps) {
+export function BroadcastCharacter({ narrative, isLive, isSpeaking = false, activeAnchor = 'left', isMuted = false }: BroadcastCharacterProps) {
   const [displayedText, setDisplayedText] = useState('');
   const [isTyping, setIsTyping] = useState(false);
   const [characterState, setCharacterState] = useState<CharacterState>('idle');
@@ -21,6 +23,26 @@ export function BroadcastCharacter({ narrative, isLive, isSpeaking = false, acti
   const [mouthOpen, setMouthOpen] = useState(false);
   const [headTilt, setHeadTilt] = useState(0);
   const [shoulderMove, setShoulderMove] = useState(0);
+
+  // Voice IDs for each anchor
+  const voiceId = activeAnchor === 'left' 
+    ? 'EXAVITQu4vr4xnSDxMaL' // Sarah - Professional Female Voice
+    : '21m00Tcm4TlvDq8ikWAM'; // Marcus - Professional Male Voice
+
+  // ElevenLabs TTS integration
+  const { isLoading: ttsLoading, error: ttsError } = useElevenLabsTTS({
+    text: narrative,
+    voiceId,
+    isMuted,
+    enabled: isLive && isSpeaking,
+  });
+
+  // Log TTS errors in console for debugging
+  useEffect(() => {
+    if (ttsError) {
+      console.warn('TTS Error:', ttsError);
+    }
+  }, [ttsError]);
 
   // Smooth text reveal effect - updates when narrative changes
   useEffect(() => {
@@ -206,7 +228,11 @@ export function BroadcastCharacter({ narrative, isLive, isSpeaking = false, acti
       {displayedText && (
         <div className="absolute bottom-24 md:bottom-28 lg:bottom-32 left-1/2 transform -translate-x-1/2 max-w-4xl w-full px-4 z-50 animate-in fade-in slide-in-from-bottom-4 duration-500">
           <div className="bg-gradient-to-r from-card/98 to-card/95 backdrop-blur-md border-2 border-primary/40 rounded-xl shadow-2xl overflow-hidden">
-            <div className="h-1 bg-gradient-to-r from-primary via-primary/60 to-transparent" />
+            <div className={`h-1 ${
+              !isMuted && ttsLoading 
+                ? 'bg-gradient-to-r from-primary via-primary/60 to-primary animate-pulse' 
+                : 'bg-gradient-to-r from-primary via-primary/60 to-transparent'
+            }`} />
             
             <div className="p-4 md:p-5">
               <div className="flex items-center justify-between mb-3 pb-2 border-b border-primary/20">
@@ -219,6 +245,15 @@ export function BroadcastCharacter({ narrative, isLive, isSpeaking = false, acti
                   <span className="text-xs text-muted-foreground uppercase tracking-wide">
                     {anchorTitle}
                   </span>
+                  {!isMuted && (
+                    <>
+                      <span className="text-xs text-muted-foreground">•</span>
+                      <span className="text-xs text-primary font-bold flex items-center gap-1">
+                        <span className="w-1.5 h-1.5 bg-primary rounded-full animate-pulse" />
+                        AI VOICE
+                      </span>
+                    </>
+                  )}
                 </div>
                 <div className="text-xs text-muted-foreground font-bold">
                   HACKCAST LIVE

@@ -68,6 +68,22 @@ export function EnhancedBroadcastVideoPlayer({ hackathonId }: EnhancedBroadcastV
   const [showChyron, setShowChyron] = useState(false);
   const [controlsVisible, setControlsVisible] = useState(false);
   const [controlsTimeout, setControlsTimeout] = useState<NodeJS.Timeout | null>(null);
+  
+  // TTS mute state - default to muted to save credits until user explicitly unmutes
+  const [isMuted, setIsMuted] = useState(true);
+  
+  const toggleMute = () => {
+    const newMutedState = !isMuted;
+    console.log('Toggling mute. Old:', isMuted, 'New:', newMutedState);
+    setIsMuted(newMutedState);
+    toast({
+      title: newMutedState ? "Commentary Muted" : "Commentary Unmuted",
+      description: newMutedState 
+        ? "AI voice commentary is now muted to save ElevenLabs credits" 
+        : "AI voice commentary is now active",
+      duration: 3000,
+    });
+  };
 
   // Real-time event integration
   useRealtimeBroadcastEvents((event) => {
@@ -217,6 +233,7 @@ export function EnhancedBroadcastVideoPlayer({ hackathonId }: EnhancedBroadcastV
                   isLive={isLive}
                   isSpeaking={phase === 'CONTENT_DELIVERY'}
                   activeAnchor={activePersonality}
+                  isMuted={isMuted}
                 />
               )}
             </div>
@@ -323,27 +340,36 @@ export function EnhancedBroadcastVideoPlayer({ hackathonId }: EnhancedBroadcastV
         </ProductionEffects>
         )}
 
-        {/* Click overlay for play/pause */}
+        {/* Click overlay for play/pause - but don't block controls */}
         <div 
           className="absolute inset-0 z-[105]"
           onClick={handleClick}
+          style={{ pointerEvents: 'auto' }}
         />
 
         {/* Bottom gradient for controls */}
-        <div className={`absolute bottom-0 left-0 right-0 h-32 bg-gradient-to-t from-black/80 to-transparent z-[100] transition-opacity duration-300 ${
-          controlsVisible || !isLive ? 'opacity-100' : 'opacity-0'
-        }`} />
+        <div 
+          className={`absolute bottom-0 left-0 right-0 h-32 bg-gradient-to-t from-black/80 to-transparent z-[100] transition-opacity duration-300 ${
+            controlsVisible || !isLive ? 'opacity-100' : 'opacity-0'
+          }`} 
+          style={{ pointerEvents: 'none' }}
+        />
 
-        {/* Video player controls */}
-        <div className={`absolute bottom-0 left-0 right-0 z-[110] transition-opacity duration-300 ${
-          controlsVisible || !isLive ? 'opacity-100' : 'opacity-0'
-        }`}>
+        {/* Video player controls - Always clickable, z-index above overlay */}
+        <div 
+          className={`absolute bottom-0 left-0 right-0 z-[110] transition-opacity duration-300 ${
+            controlsVisible || !isLive ? 'opacity-100' : 'opacity-0'
+          }`}
+          style={{ pointerEvents: 'auto' }}
+        >
           <VideoPlayerControls
             isPlaying={isLive}
             isLive={isLive}
             progress={progressPercent}
+            isMuted={isMuted}
             onPlayPause={togglePlayPause}
             onFullscreen={handleFullscreen}
+            onToggleMute={toggleMute}
           />
         </div>
 

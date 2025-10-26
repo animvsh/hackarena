@@ -1,20 +1,24 @@
-import { Play, Pause, Maximize, Volume2 } from 'lucide-react';
+import { Play, Pause, Maximize, Volume2, VolumeX } from 'lucide-react';
 import { Slider } from '@/components/ui/slider';
 
 interface VideoPlayerControlsProps {
   isPlaying: boolean;
   isLive: boolean;
   progress: number;
+  isMuted: boolean;
   onPlayPause: () => void;
   onFullscreen: () => void;
+  onToggleMute: () => void;
 }
 
 export function VideoPlayerControls({
   isPlaying,
   isLive,
   progress,
+  isMuted,
   onPlayPause,
   onFullscreen,
+  onToggleMute,
 }: VideoPlayerControlsProps) {
   return (
     <div className="relative px-4 pb-4 pt-2">
@@ -60,17 +64,27 @@ export function VideoPlayerControls({
 
         {/* Right side - Volume & Fullscreen */}
         <div className="flex items-center gap-3">
-          {/* Volume control (placeholder for future voice) */}
-          <div className="hidden md:flex items-center gap-2 px-3 py-2 bg-white/10 rounded-lg backdrop-blur-sm">
-            <Volume2 className="w-4 h-4 text-white" />
-            <Slider
-              value={[80]}
-              max={100}
-              step={1}
-              className="w-20"
-              disabled
-            />
-          </div>
+          {/* Mute/Unmute TTS control */}
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              console.log('Mute button clicked!');
+              onToggleMute();
+            }}
+            className={`w-10 h-10 flex items-center justify-center rounded-full backdrop-blur-sm transition-all duration-200 ${
+              isMuted 
+                ? 'bg-red-500/80 hover:bg-red-500 hover:scale-110' 
+                : 'bg-primary/80 hover:bg-primary hover:scale-110'
+            }`}
+            aria-label={isMuted ? 'Unmute commentary' : 'Mute commentary'}
+            title={isMuted ? 'Click to Unmute AI Commentary' : 'Click to Mute AI Commentary'}
+          >
+            {isMuted ? (
+              <VolumeX className="w-5 h-5 text-white" />
+            ) : (
+              <Volume2 className="w-5 h-5 text-white" />
+            )}
+          </button>
 
           {/* Fullscreen */}
           <button
