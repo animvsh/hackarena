@@ -56,7 +56,7 @@ async function fetchWithRetry(
 
       return response;
     } catch (error) {
-      if (error.name === 'AbortError') {
+      if (error instanceof Error && error.name === 'AbortError') {
         throw new Error('Request timeout - GitHub API is not responding');
       }
 
