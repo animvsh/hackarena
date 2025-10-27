@@ -460,9 +460,9 @@ export function UnifiedBroadcastPlayer() {
           />
         </div>
 
-        {/* Master User Controls (hidden from non-master users) */}
+        {/* Master User Controls - Always visible pause/resume button */}
         {isMasterUser && (
-          <div className="absolute top-20 left-4 z-[250] space-y-2">
+          <div className="absolute top-4 right-4 z-[250] space-y-2">
             <button
               onClick={(e) => {
                 e.stopPropagation();
@@ -473,13 +473,25 @@ export function UnifiedBroadcastPlayer() {
                   duration: 3000,
                 });
               }}
-              className="flex items-center gap-2 bg-primary/90 hover:bg-primary text-primary-foreground px-4 py-2 rounded-lg shadow-lg transition-all"
+              className={`flex items-center gap-2 px-5 py-3 rounded-lg shadow-2xl transition-all font-bold text-sm border-2 ${
+                isPaused 
+                  ? 'bg-green-500 hover:bg-green-600 text-white border-green-400 hover:scale-105' 
+                  : 'bg-red-500 hover:bg-red-600 text-white border-red-400 hover:scale-105'
+              }`}
             >
-              {isPaused ? <Play className="w-4 h-4" /> : <Pause className="w-4 h-4" />}
-              <span className="text-sm font-medium">
-                {isPaused ? 'Resume' : 'Pause'} Broadcast
+              {isPaused ? <Play className="w-5 h-5 fill-current" /> : <Pause className="w-5 h-5" />}
+              <span>
+                {isPaused ? 'RESUME BROADCAST' : 'PAUSE BROADCAST'}
               </span>
             </button>
+            
+            <div className="bg-black/60 backdrop-blur-md border border-white/20 px-3 py-2 rounded-lg shadow-lg text-xs space-y-1">
+              <div className="text-white/70">👥 Viewers</div>
+              <div className="font-bold text-lg text-white">{viewerCount}</div>
+              {isPausedBySystem && (
+                <div className="text-yellow-400 text-xs">Auto-Paused</div>
+              )}
+            </div>
             
             <button
               onClick={(e) => {
@@ -493,24 +505,16 @@ export function UnifiedBroadcastPlayer() {
                   duration: 3000,
                 });
               }}
-              className="flex items-center gap-2 bg-card/90 hover:bg-card border border-border text-foreground px-4 py-2 rounded-lg shadow-lg transition-all"
+              className="flex items-center gap-2 bg-black/60 hover:bg-black/80 border border-white/20 text-white px-3 py-2 rounded-lg shadow-lg transition-all text-xs"
             >
-              <Users className="w-4 h-4" />
-              <span className="text-sm">
+              <Users className="w-3 h-3" />
+              <span>
                 Auto-Pause: {autoPauseEnabled ? 'ON' : 'OFF'}
               </span>
             </button>
             
-            <div className="bg-card/90 border border-border px-4 py-2 rounded-lg shadow-lg text-xs space-y-1">
-              <div className="text-muted-foreground">Viewer Count</div>
-              <div className="font-bold text-lg">{viewerCount}</div>
-              {isPausedBySystem && (
-                <div className="text-yellow-500 text-xs">System Paused</div>
-              )}
-            </div>
-            
-            <p className="text-xs text-white/60 ml-1">
-              Master Control • Press 'P' to toggle
+            <p className="text-xs text-white/50 ml-1">
+              Press 'P' to toggle
             </p>
           </div>
         )}
