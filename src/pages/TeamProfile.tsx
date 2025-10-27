@@ -97,7 +97,7 @@ export default function TeamProfile() {
           github_repo: teamData.github_url || '',
           devpost_url: teamData.devpost_url || '',
           current_progress: teamData.current_progress || 0,
-          momentum_score: parseFloat(teamData.momentum_score || '0'),
+          momentum_score: parseFloat(String(teamData.momentum_score || '0')),
           team_size: teamData.team_size || 0,
           status: 'active',
           invite_code: teamData.invite_code || '',
@@ -544,18 +544,7 @@ export default function TeamProfile() {
                                 )}
                               </div>
                             </div>
-                            {member.stats && (
-                              <div className="mt-3 pt-3 border-t grid grid-cols-2 gap-2 text-xs">
-                                <div>
-                                  <div className="text-muted-foreground">Rating</div>
-                                  <div className="font-semibold">{member.stats.overall_rating?.toFixed(1) || 'N/A'}</div>
-                                </div>
-                                <div>
-                                  <div className="text-muted-foreground">Technical</div>
-                                  <div className="font-semibold">{member.stats.technical_skill || 'N/A'}</div>
-                                </div>
-                              </div>
-                            )}
+                            {/* Stats removed - not available in team_members table */}
                           </Card>
                         </UserHoverCard>
                       ))}

@@ -22,7 +22,7 @@ interface Team {
   status: string;
   team_size: number;
   current_progress: number;
-  momentum_score: number;
+  momentum_score: string; // Changed to string to match database
 }
 
 const HackathonTeams = () => {
@@ -77,7 +77,7 @@ const HackathonTeams = () => {
         status: 'active',
         team_size: team.team_size || 0,
         current_progress: team.current_progress || 0,
-        momentum_score: parseFloat(team.momentum_score || '0'),
+        momentum_score: String(team.momentum_score || '0'),
       }));
       setTeams(formattedTeams);
     }
@@ -101,7 +101,7 @@ const HackathonTeams = () => {
     filtered = [...filtered].sort((a, b) => {
       switch (sortBy) {
         case 'momentum':
-          return b.momentum_score - a.momentum_score;
+          return parseFloat(b.momentum_score) - parseFloat(a.momentum_score);
         case 'progress':
           return b.current_progress - a.current_progress;
         case 'name':
@@ -195,7 +195,7 @@ const HackathonTeams = () => {
             {filteredTeams.map((team) => (
               <TeamCard
                 key={team.id}
-                team={team}
+                team={{ ...team, momentum_score: parseFloat(team.momentum_score) }}
                 onClick={() => navigate(`/hackathons/${hackathonId}/teams/${team.id}`)}
               />
             ))}

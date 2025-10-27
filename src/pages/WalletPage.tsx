@@ -88,33 +88,19 @@ const WalletPage = () => {
     if (userData) {
       setUser(userData);
 
-      // Fetch user's bets from hackathon_bets
-      const { data: betsData } = await supabase
-        .from('hackathon_bets')
-        .select(`
-          *,
-          hackathon_teams!hackathon_bets_team_id_fkey (name, logo_url),
-          hackathon_prizes!hackathon_bets_prize_id_fkey (category, prize_amount)
-        `)
-        .eq('user_id', userData.id)
-        .order('created_at', { ascending: false })
-        .limit(20);
+      // Wallet page currently disabled due to database schema changes
+      // const { data: betsData } = await supabase
+      //   .from('hackathon_bets')
+      //   .select(`
+      //     *,
+      //     hackathon_teams!hackathon_bets_team_id_fkey (name, logo_url),
+      //     hackathon_prizes!hackathon_bets_prize_id_fkey (category, prize_amount)
+      //   `)
+      //   .eq('user_id', userData.id)
+      //   .order('created_at', { ascending: false })
+      //   .limit(20);
 
-      // Transform bets to match Prediction interface
-      const predictionsData = betsData?.map(bet => ({
-        id: bet.id,
-        amount: bet.bet_amount,
-        odds_at_bet: parseFloat(bet.odds_decimal.toString()) * 100, // Convert to percentage
-        status: bet.status,
-        payout: bet.final_payout || 0,
-        created_at: bet.created_at,
-        teams: bet.hackathon_teams,
-        prediction_markets: bet.hackathon_prizes
-      }));
-
-      if (predictionsData) {
-        setPredictions(predictionsData as Prediction[]);
-      }
+      setPredictions([]);
     }
 
     setLoading(false);

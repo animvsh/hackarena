@@ -84,10 +84,10 @@ const Leaderboard = () => {
                 category: team.category || '',
                 hackathon_name: team.hackathons?.name || hackathon.name,
                 hackathon_id: team.hackathon_id,
-                overall_rating: parseFloat(stats?.avg_overall_rating || '0'),
-                technical_skill: parseFloat(stats?.avg_technical_skill || '0'),
-                hackathon_experience: parseFloat(stats?.avg_hackathon_experience || '0'),
-                innovation: parseFloat(stats?.avg_innovation || '0')
+                overall_rating: parseFloat(String(stats?.avg_overall_rating || '0')),
+                technical_skill: parseFloat(String(stats?.avg_technical_skill || '0')),
+                hackathon_experience: parseFloat(String(stats?.avg_hackathon_experience || '0')),
+                innovation: parseFloat(String(stats?.avg_innovation || '0'))
               };
             })
             .filter(team => team.overall_rating > 0) // Only include teams with stats

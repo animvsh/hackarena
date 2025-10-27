@@ -123,13 +123,14 @@ const Markets = () => {
 
       console.log('Prizes:', prizes);
 
-      // Store prizes
-      if (prizes && prizes.length > 0) {
-        setPrizes(prizes);
-        // Only set initial prize if none is selected yet
-        if (!selectedPrize) {
-          setSelectedPrize(prizes[0]);
-        }
+      // Convert prize_amount to string to match interface
+      const formattedPrizes = prizes.map(p => ({
+        ...p,
+        prize_amount: String(p.prize_amount)
+      }));
+      setPrizes(formattedPrizes);
+      if (!selectedPrize && formattedPrizes.length > 0) {
+        setSelectedPrize(formattedPrizes[0]);
       }
 
       // If no prizes exist, just fetch teams for display and return early
@@ -153,13 +154,13 @@ const Markets = () => {
           const teamsWithStats = hackathonTeams.map(team => {
             const stats = team.team_stats?.[0];
             if (stats) {
-              const overallRating = parseFloat(stats.avg_overall_rating) || 70;
+              const overallRating = String(stats.avg_overall_rating || '70');
               return {
                 ...team,
-                overall_rating: overallRating,
-                technical_skill: parseFloat(stats.avg_technical_skill) || 70,
-                hackathon_experience: parseFloat(stats.avg_hackathon_experience) || 60,
-                innovation_score: parseFloat(stats.avg_innovation) || 70,
+                overall_rating: parseFloat(overallRating),
+                technical_skill: parseFloat(String(stats.avg_technical_skill || '70')),
+                hackathon_experience: parseFloat(String(stats.avg_hackathon_experience || '60')),
+                innovation_score: parseFloat(String(stats.avg_innovation || '70')),
                 betting_odds: {
                   american_odds: 0,
                   decimal_odds: 1.0,
@@ -219,25 +220,25 @@ const Markets = () => {
           const teamOdds = oddsData?.find(odds => odds.team_id === team.id);
 
           if (stats) {
-            const overallRating = parseFloat(stats.avg_overall_rating) || 70;
-            const technical_skill = parseFloat(stats.avg_technical_skill) || 70;
-            const hackathon_experience = parseFloat(stats.avg_hackathon_experience) || 60;
-            const innovation_score = parseFloat(stats.avg_innovation) || 70;
+            const overallRating = parseFloat(String(stats.avg_overall_rating || '70'));
+            const technical_skill = parseFloat(String(stats.avg_technical_skill || '70'));
+            const hackathon_experience = parseFloat(String(stats.avg_hackathon_experience || '60'));
+            const innovation_score = parseFloat(String(stats.avg_innovation || '70'));
 
             // Use stored odds if available, otherwise calculate
             let bettingOdds;
             if (teamOdds) {
               bettingOdds = {
                 american_odds: teamOdds.odds_american,
-                decimal_odds: parseFloat(teamOdds.odds_decimal),
-                win_probability: Math.round(parseFloat(teamOdds.implied_probability) * 10000) / 100
+                decimal_odds: parseFloat(String(teamOdds.odds_decimal)),
+                win_probability: Math.round(parseFloat(String(teamOdds.implied_probability)) * 10000) / 100
               };
             } else {
               // Calculate odds based on rating vs competitors
               // Get average rating of all teams
               const avgRating = hackathonTeams.reduce((sum, t) => {
                 const tStats = t.team_stats?.[0];
-                return sum + parseFloat(tStats?.avg_overall_rating || '70');
+                return sum + parseFloat(String(tStats?.avg_overall_rating || '70'));
               }, 0) / hackathonTeams.length;
 
               // Calculate relative strength
