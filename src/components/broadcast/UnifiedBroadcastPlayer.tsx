@@ -34,6 +34,7 @@ export function UnifiedBroadcastPlayer() {
   const { toast } = useToast();
 
   // Global broadcast state (synchronized across all users)
+  const broadcastStateData = useGlobalBroadcastState();
   const {
     state: broadcastState,
     currentScene: globalScene,
@@ -42,7 +43,7 @@ export function UnifiedBroadcastPlayer() {
     pausedAt,
     isMasterUser,
     togglePause,
-  } = useGlobalBroadcastState();
+  } = broadcastStateData;
 
   // Unified segment manager for multi-hackathon broadcasts
   const {
@@ -64,7 +65,7 @@ export function UnifiedBroadcastPlayer() {
     allHackathons,
     hackathonScores,
     injectBreakingNews
-  } = useUnifiedSegmentManager(isPaused);
+  } = useUnifiedSegmentManager(isPaused, stateLoading);
 
   // Track viewer presence
   useViewerPresence();

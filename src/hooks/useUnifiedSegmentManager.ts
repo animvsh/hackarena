@@ -29,7 +29,7 @@ const HACKATHON_SWITCH_DURATION = 3000; // 3s for hackathon transitions
 // How often to check for hackathon switches (between segments)
 const HACKATHON_CHECK_INTERVAL_SCENES = 2; // Check every 2 scenes
 
-export function useUnifiedSegmentManager(isPaused?: boolean) {
+export function useUnifiedSegmentManager(isPaused?: boolean, isStateLoading?: boolean) {
   const { generateSegment, injectBreakingNews } = useSegmentContent();
   const { hackathons, currentHackathon, latestEvent, getHackathonScores } = useMultiHackathonEvents();
 
@@ -46,8 +46,18 @@ export function useUnifiedSegmentManager(isPaused?: boolean) {
 
   const scenesSinceCheckRef = useRef(0);
   const lastHackathonIdRef = useRef<string | null>(null);
+  const activeTimerRef = useRef<NodeJS.Timeout | null>(null);
 
   const currentScene = SCENE_SEQUENCE[currentSceneIndex];
+
+  // Clear all timers when paused
+  useEffect(() => {
+    if (isPaused && activeTimerRef.current) {
+      console.log('[useUnifiedSegmentManager] Clearing timer due to pause');
+      clearTimeout(activeTimerRef.current);
+      activeTimerRef.current = null;
+    }
+  }, [isPaused]);
 
   // Handle breaking news events from any hackathon
   useEffect(() => {
@@ -110,8 +120,8 @@ export function useUnifiedSegmentManager(isPaused?: boolean) {
 
   // Initialize segment content when scene changes or hackathon changes
   useEffect(() => {
-    if (!activeHackathonId || isPaused) {
-      console.log('[useUnifiedSegmentManager] Skipping segment init - paused or no hackathon');
+    if (!activeHackathonId || isPaused || isStateLoading) {
+      console.log('[useUnifiedSegmentManager] Skipping segment init - paused, loading, or no hackathon', { isPaused, isStateLoading });
       return;
     }
 
@@ -136,12 +146,15 @@ export function useUnifiedSegmentManager(isPaused?: boolean) {
     };
 
     loadSegment();
-  }, [currentScene, activeHackathonId, generateSegment, hackathons, isPaused]);
+  }, [currentScene, activeHackathonId, generateSegment, hackathons, isPaused, isStateLoading]);
 
   // Segment flow state machine
   useEffect(() => {
-    // Don't run while initializing new scene or when broadcast is paused
-    if (isInitializing || isPaused) return;
+    // Don't run while initializing new scene, loading state, or when broadcast is paused
+    if (isInitializing || isPaused || isStateLoading) {
+      console.log('[useUnifiedSegmentManager] State machine paused', { isInitializing, isPaused, isStateLoading });
+      return;
+    }
     let timer: NodeJS.Timeout;
 
     switch (phase) {
@@ -151,6 +164,7 @@ export function useUnifiedSegmentManager(isPaused?: boolean) {
           setShowBumper(false);
           setPhase('CONTENT_DELIVERY');
         }, BUMPER_IN_DURATION);
+        activeTimerRef.current = timer;
         break;
 
       case 'CONTENT_DELIVERY':
@@ -177,6 +191,7 @@ export function useUnifiedSegmentManager(isPaused?: boolean) {
             setPhase('BUMPER_OUT');
           }
         }, currentPiece.duration * 1000);
+        activeTimerRef.current = timer;
         break;
 
       case 'BUMPER_OUT':
@@ -191,6 +206,7 @@ export function useUnifiedSegmentManager(isPaused?: boolean) {
             setPhase('TRANSITION');
           }
         }, BUMPER_OUT_DURATION);
+        activeTimerRef.current = timer;
         break;
 
       case 'HACKATHON_SWITCH':
@@ -206,6 +222,7 @@ export function useUnifiedSegmentManager(isPaused?: boolean) {
           scenesSinceCheckRef.current = 0;
           setPhase('BUMPER_IN');
         }, HACKATHON_SWITCH_DURATION);
+        activeTimerRef.current = timer;
         break;
 
       case 'TRANSITION':
@@ -220,11 +237,17 @@ export function useUnifiedSegmentManager(isPaused?: boolean) {
           scenesSinceCheckRef.current += 1;
           setPhase('BUMPER_IN');
         }, TRANSITION_DURATION);
+        activeTimerRef.current = timer;
         break;
     }
 
-    return () => clearTimeout(timer);
-  }, [phase, currentCommentaryIndex, isInitializing, segmentContent, isHackathonSwitching, activeHackathonId, isPaused]);
+    return () => {
+      if (timer) {
+        clearTimeout(timer);
+        activeTimerRef.current = null;
+      }
+    };
+  }, [phase, currentCommentaryIndex, isInitializing, segmentContent, isHackathonSwitching, activeHackathonId, isPaused, isStateLoading]);
 
   const getCurrentCommentary = useCallback(() => {
     if (!segmentContent || phase !== 'CONTENT_DELIVERY') return '';
