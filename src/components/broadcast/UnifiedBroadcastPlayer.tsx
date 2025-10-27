@@ -28,7 +28,8 @@ import { useViewerPresence } from '@/hooks/useViewerPresence';
 import { selectPersonalityForScene } from '@/types/broadcastPersonality';
 import type { BroadcastScene } from '@/types/broadcast';
 import { useToast } from '@/hooks/use-toast';
-import { Radio, Play, Pause } from 'lucide-react';
+import { Radio, Play, Pause, Users } from 'lucide-react';
+import { useAutoPauseOnNoViewers } from '@/hooks/useAutoPauseOnNoViewers';
 
 export function UnifiedBroadcastPlayer() {
   const { toast } = useToast();
@@ -41,8 +42,14 @@ export function UnifiedBroadcastPlayer() {
     isLoading: stateLoading,
     isPaused,
     pausedAt,
+    isPausedBySystem,
+    autoPauseEnabled,
+    liveViewerCount,
     isMasterUser,
     togglePause,
+    systemPause,
+    systemResume,
+    toggleAutoPause,
   } = broadcastStateData;
 
   // Unified segment manager for multi-hackathon broadcasts
@@ -68,7 +75,7 @@ export function UnifiedBroadcastPlayer() {
   } = useUnifiedSegmentManager(isPaused, stateLoading);
 
   // Track viewer presence
-  useViewerPresence();
+  const { viewerCount } = useViewerPresence();
 
   // Event animation states
   const [showEventAnimation, setShowEventAnimation] = useState(false);
@@ -78,6 +85,17 @@ export function UnifiedBroadcastPlayer() {
   const [controlsTimeout, setControlsTimeout] = useState<NodeJS.Timeout | null>(null);
   const [previousHackathonName, setPreviousHackathonName] = useState<string | null>(null);
   const [isMuted, setIsMuted] = useState(false);
+
+  // Auto-pause when no viewers
+  useAutoPauseOnNoViewers({
+    viewerCount: viewerCount,
+    isPaused,
+    isPausedBySystem,
+    autoPauseEnabled,
+    isMasterUser,
+    onSystemPause: systemPause,
+    onSystemResume: systemResume,
+  });
 
   // Track hackathon changes for smooth transitions
   useEffect(() => {
@@ -219,7 +237,7 @@ export function UnifiedBroadcastPlayer() {
         {/* Broadcast Paused Overlay (highest priority - shows above everything) */}
         <AnimatePresence>
           {isPaused && (
-            <BroadcastPausedOverlay pausedAt={pausedAt} />
+            <BroadcastPausedOverlay pausedAt={pausedAt} isPausedBySystem={isPausedBySystem} />
           )}
         </AnimatePresence>
 
@@ -444,7 +462,7 @@ export function UnifiedBroadcastPlayer() {
 
         {/* Master User Controls (hidden from non-master users) */}
         {isMasterUser && (
-          <div className="absolute top-20 left-4 z-[250] opacity-70 hover:opacity-100 transition-opacity">
+          <div className="absolute top-20 left-4 z-[250] space-y-2">
             <button
               onClick={(e) => {
                 e.stopPropagation();
@@ -455,25 +473,43 @@ export function UnifiedBroadcastPlayer() {
                   duration: 3000,
                 });
               }}
-              className={`px-4 py-2 rounded-lg text-sm font-bold backdrop-blur-sm flex items-center gap-2 ${
-                isPaused
-                  ? 'bg-green-600/90 hover:bg-green-700 text-white'
-                  : 'bg-red-600/90 hover:bg-red-700 text-white'
-              }`}
+              className="flex items-center gap-2 bg-primary/90 hover:bg-primary text-primary-foreground px-4 py-2 rounded-lg shadow-lg transition-all"
             >
-              {isPaused ? (
-                <>
-                  <Play className="w-4 h-4" fill="currentColor" />
-                  Resume Broadcast
-                </>
-              ) : (
-                <>
-                  <Pause className="w-4 h-4" />
-                  Pause Broadcast
-                </>
-              )}
+              {isPaused ? <Play className="w-4 h-4" /> : <Pause className="w-4 h-4" />}
+              <span className="text-sm font-medium">
+                {isPaused ? 'Resume' : 'Pause'} Broadcast
+              </span>
             </button>
-            <p className="text-xs text-white/60 mt-1 ml-1">
+            
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                toggleAutoPause();
+                toast({
+                  title: autoPauseEnabled ? "⏸️ Auto-Pause Disabled" : "▶️ Auto-Pause Enabled",
+                  description: autoPauseEnabled 
+                    ? "Broadcast will NOT pause when no viewers" 
+                    : "Broadcast will auto-pause after 30s with no viewers",
+                  duration: 3000,
+                });
+              }}
+              className="flex items-center gap-2 bg-card/90 hover:bg-card border border-border text-foreground px-4 py-2 rounded-lg shadow-lg transition-all"
+            >
+              <Users className="w-4 h-4" />
+              <span className="text-sm">
+                Auto-Pause: {autoPauseEnabled ? 'ON' : 'OFF'}
+              </span>
+            </button>
+            
+            <div className="bg-card/90 border border-border px-4 py-2 rounded-lg shadow-lg text-xs space-y-1">
+              <div className="text-muted-foreground">Viewer Count</div>
+              <div className="font-bold text-lg">{viewerCount}</div>
+              {isPausedBySystem && (
+                <div className="text-yellow-500 text-xs">System Paused</div>
+              )}
+            </div>
+            
+            <p className="text-xs text-white/60 ml-1">
               Master Control • Press 'P' to toggle
             </p>
           </div>

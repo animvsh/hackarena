@@ -14,6 +14,9 @@ interface GlobalBroadcastState {
   isPaused: boolean;
   pausedByUserId: string | null;
   pausedAt: string | null;
+  isPausedBySystem: boolean;
+  autoPauseEnabled: boolean;
+  lastViewerLeftAt: string | null;
 }
 
 const MASTER_USER_EMAIL = 'aalang@ucsc.edu';
@@ -26,9 +29,12 @@ export function useGlobalBroadcastState(hackathonId?: string) {
     commentaryIndex: 0,
     phase: 'CONTENT_DELIVERY',
     liveViewerCount: 0,
-    isPaused: false,
+    isPaused: true, // Start paused until we confirm state from database
     pausedByUserId: null,
     pausedAt: null,
+    isPausedBySystem: false,
+    autoPauseEnabled: true,
+    lastViewerLeftAt: null,
   });
   const [isLoading, setIsLoading] = useState(true);
   const [isMasterUser, setIsMasterUser] = useState(false);
@@ -55,6 +61,11 @@ export function useGlobalBroadcastState(hackathonId?: string) {
       const { data, error } = await query.maybeSingle();
 
       if (data && !error) {
+        console.log('[useGlobalBroadcastState] Loaded initial state:', {
+          isPaused: data.is_paused,
+          isPausedBySystem: data.is_paused_by_system,
+          autoPauseEnabled: data.auto_pause_enabled,
+        });
         setBroadcastState({
           state: data.state as BroadcastState,
           currentScene: data.current_scene as BroadcastScene,
@@ -65,7 +76,12 @@ export function useGlobalBroadcastState(hackathonId?: string) {
           isPaused: data.is_paused || false,
           pausedByUserId: data.paused_by_user_id || null,
           pausedAt: data.paused_at || null,
+          isPausedBySystem: data.is_paused_by_system || false,
+          autoPauseEnabled: data.auto_pause_enabled !== false, // Default true if not set
+          lastViewerLeftAt: data.last_viewer_left_at || null,
         });
+      } else {
+        console.log('[useGlobalBroadcastState] No initial state found or error:', error);
       }
       setIsLoading(false);
     };
@@ -86,6 +102,10 @@ export function useGlobalBroadcastState(hackathonId?: string) {
         (payload) => {
           const newData = payload.new as any;
           if (newData && (!hackathonId || newData.hackathon_id === hackathonId)) {
+            console.log('[useGlobalBroadcastState] Received real-time update:', {
+              isPaused: newData.is_paused,
+              isPausedBySystem: newData.is_paused_by_system,
+            });
             setBroadcastState({
               state: newData.state as BroadcastState,
               currentScene: newData.current_scene as BroadcastScene,
@@ -96,6 +116,9 @@ export function useGlobalBroadcastState(hackathonId?: string) {
               isPaused: newData.is_paused || false,
               pausedByUserId: newData.paused_by_user_id || null,
               pausedAt: newData.paused_at || null,
+              isPausedBySystem: newData.is_paused_by_system || false,
+              autoPauseEnabled: newData.auto_pause_enabled !== false,
+              lastViewerLeftAt: newData.last_viewer_left_at || null,
             });
           }
         }
@@ -162,6 +185,70 @@ export function useGlobalBroadcastState(hackathonId?: string) {
     }
   }, [isMasterUser, hackathonId]);
 
+  const systemPause = useCallback(async () => {
+    console.log('[systemPause] Auto-pausing broadcast (no viewers)');
+    
+    let query = supabase.from('broadcast_state').update({
+      is_paused: true,
+      is_paused_by_system: true,
+      paused_at: new Date().toISOString(),
+      last_viewer_left_at: new Date().toISOString(),
+    });
+
+    if (hackathonId) {
+      query = query.eq('hackathon_id', hackathonId);
+    } else {
+      query = query.neq('id', '00000000-0000-0000-0000-000000000000');
+    }
+
+    const { error } = await query;
+    if (error) {
+      console.error('Failed to system pause broadcast:', error);
+    }
+  }, [hackathonId]);
+
+  const systemResume = useCallback(async () => {
+    console.log('[systemResume] Auto-resuming broadcast (viewer joined)');
+    
+    let query = supabase.from('broadcast_state').update({
+      is_paused: false,
+      is_paused_by_system: false,
+      paused_at: null,
+      last_viewer_left_at: null,
+    });
+
+    if (hackathonId) {
+      query = query.eq('hackathon_id', hackathonId);
+    } else {
+      query = query.neq('id', '00000000-0000-0000-0000-000000000000');
+    }
+
+    const { error } = await query;
+    if (error) {
+      console.error('Failed to system resume broadcast:', error);
+    }
+  }, [hackathonId]);
+
+  const toggleAutoPause = useCallback(async () => {
+    const newValue = !broadcastState.autoPauseEnabled;
+    console.log('[toggleAutoPause] Setting to:', newValue);
+    
+    let query = supabase.from('broadcast_state').update({
+      auto_pause_enabled: newValue,
+    });
+
+    if (hackathonId) {
+      query = query.eq('hackathon_id', hackathonId);
+    } else {
+      query = query.neq('id', '00000000-0000-0000-0000-000000000000');
+    }
+
+    const { error } = await query;
+    if (error) {
+      console.error('Failed to toggle auto-pause:', error);
+    }
+  }, [broadcastState.autoPauseEnabled, hackathonId]);
+
   const togglePause = useCallback(async () => {
     console.log('[togglePause] Current isPaused:', broadcastState.isPaused);
     
@@ -169,6 +256,7 @@ export function useGlobalBroadcastState(hackathonId?: string) {
     setBroadcastState(prev => ({
       ...prev,
       isPaused: !prev.isPaused,
+      isPausedBySystem: false, // Manual pause/resume clears system pause
       pausedAt: !prev.isPaused ? new Date().toISOString() : null,
     }));
     
@@ -188,5 +276,8 @@ export function useGlobalBroadcastState(hackathonId?: string) {
     pauseBroadcast,
     resumeBroadcast,
     togglePause,
+    systemPause,
+    systemResume,
+    toggleAutoPause,
   };
 }

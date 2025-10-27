@@ -4,9 +4,10 @@ import { useState, useEffect } from 'react';
 
 interface BroadcastPausedOverlayProps {
   pausedAt?: string | null;
+  isPausedBySystem?: boolean;
 }
 
-export function BroadcastPausedOverlay({ pausedAt }: BroadcastPausedOverlayProps) {
+export function BroadcastPausedOverlay({ pausedAt, isPausedBySystem }: BroadcastPausedOverlayProps) {
   const [pauseDuration, setPauseDuration] = useState(0);
 
   useEffect(() => {
@@ -54,10 +55,12 @@ export function BroadcastPausedOverlay({ pausedAt }: BroadcastPausedOverlayProps
           className="space-y-3"
         >
           <h1 className="text-5xl font-bold bg-gradient-to-r from-red-400 via-orange-400 to-yellow-400 bg-clip-text text-transparent">
-            BROADCAST PAUSED
+            {isPausedBySystem ? 'BROADCAST PAUSED' : 'BROADCAST PAUSED'}
           </h1>
           <p className="text-xl text-white/70">
-            Waiting for master user to resume...
+            {isPausedBySystem 
+              ? 'No active viewers • Broadcast will resume when someone joins'
+              : 'Waiting for master user to resume...'}
           </p>
         </motion.div>
 

@@ -182,12 +182,15 @@ export type Database = {
       }
       broadcast_state: {
         Row: {
+          auto_pause_enabled: boolean | null
           commentary_index: number | null
           current_scene: string
           current_segment_id: string | null
           hackathon_id: string | null
           id: string
           is_paused: boolean | null
+          is_paused_by_system: boolean | null
+          last_viewer_left_at: string | null
           live_viewer_count: number | null
           paused_at: string | null
           paused_by_user_id: string | null
@@ -197,12 +200,15 @@ export type Database = {
           updated_at: string | null
         }
         Insert: {
+          auto_pause_enabled?: boolean | null
           commentary_index?: number | null
           current_scene: string
           current_segment_id?: string | null
           hackathon_id?: string | null
           id?: string
           is_paused?: boolean | null
+          is_paused_by_system?: boolean | null
+          last_viewer_left_at?: string | null
           live_viewer_count?: number | null
           paused_at?: string | null
           paused_by_user_id?: string | null
@@ -212,12 +218,15 @@ export type Database = {
           updated_at?: string | null
         }
         Update: {
+          auto_pause_enabled?: boolean | null
           commentary_index?: number | null
           current_scene?: string
           current_segment_id?: string | null
           hackathon_id?: string | null
           id?: string
           is_paused?: boolean | null
+          is_paused_by_system?: boolean | null
+          last_viewer_left_at?: string | null
           live_viewer_count?: number | null
           paused_at?: string | null
           paused_by_user_id?: string | null
@@ -395,6 +404,89 @@ export type Database = {
             columns: ["related_team_id"]
             isOneToOne: false
             referencedRelation: "teams"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      hackathon_bets: {
+        Row: {
+          bet_amount: number
+          created_at: string
+          final_payout: number | null
+          hackathon_id: string
+          id: string
+          odds_american: number
+          odds_decimal: number
+          payout_multiplier: number | null
+          prize_id: string
+          resolved_at: string | null
+          status: string
+          team_final_position: number | null
+          team_id: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          bet_amount: number
+          created_at?: string
+          final_payout?: number | null
+          hackathon_id: string
+          id?: string
+          odds_american: number
+          odds_decimal: number
+          payout_multiplier?: number | null
+          prize_id: string
+          resolved_at?: string | null
+          status?: string
+          team_final_position?: number | null
+          team_id: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          bet_amount?: number
+          created_at?: string
+          final_payout?: number | null
+          hackathon_id?: string
+          id?: string
+          odds_american?: number
+          odds_decimal?: number
+          payout_multiplier?: number | null
+          prize_id?: string
+          resolved_at?: string | null
+          status?: string
+          team_final_position?: number | null
+          team_id?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "hackathon_bets_hackathon_id_fkey"
+            columns: ["hackathon_id"]
+            isOneToOne: false
+            referencedRelation: "dashboard_stats"
+            referencedColumns: ["hackathon_id"]
+          },
+          {
+            foreignKeyName: "hackathon_bets_hackathon_id_fkey"
+            columns: ["hackathon_id"]
+            isOneToOne: false
+            referencedRelation: "hackathons"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "hackathon_bets_prize_id_fkey"
+            columns: ["prize_id"]
+            isOneToOne: false
+            referencedRelation: "hackathon_prizes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "hackathon_bets_team_id_fkey"
+            columns: ["team_id"]
+            isOneToOne: false
+            referencedRelation: "hackathon_teams"
             referencedColumns: ["id"]
           },
         ]
@@ -1105,7 +1197,7 @@ export type Database = {
             foreignKeyName: "progress_updates_team_id_fkey"
             columns: ["team_id"]
             isOneToOne: false
-            referencedRelation: "teams"
+            referencedRelation: "hackathon_teams"
             referencedColumns: ["id"]
           },
         ]
@@ -1761,6 +1853,7 @@ export type Database = {
       }
       users: {
         Row: {
+          accuracy_rate: number | null
           avatar_url: string | null
           bio: string | null
           certifications: Json | null
@@ -1792,15 +1885,18 @@ export type Database = {
           resume_url: string | null
           skills: Json | null
           social_links: Json | null
+          total_bets: number | null
           total_predictions: number | null
           updated_at: string | null
           username: string
           wallet_balance: number | null
+          won_bets: number | null
           xp: number | null
           xrp_destination_tag: string | null
           years_of_experience: number | null
         }
         Insert: {
+          accuracy_rate?: number | null
           avatar_url?: string | null
           bio?: string | null
           certifications?: Json | null
@@ -1832,15 +1928,18 @@ export type Database = {
           resume_url?: string | null
           skills?: Json | null
           social_links?: Json | null
+          total_bets?: number | null
           total_predictions?: number | null
           updated_at?: string | null
           username: string
           wallet_balance?: number | null
+          won_bets?: number | null
           xp?: number | null
           xrp_destination_tag?: string | null
           years_of_experience?: number | null
         }
         Update: {
+          accuracy_rate?: number | null
           avatar_url?: string | null
           bio?: string | null
           certifications?: Json | null
@@ -1872,10 +1971,12 @@ export type Database = {
           resume_url?: string | null
           skills?: Json | null
           social_links?: Json | null
+          total_bets?: number | null
           total_predictions?: number | null
           updated_at?: string | null
           username?: string
           wallet_balance?: number | null
+          won_bets?: number | null
           xp?: number | null
           xrp_destination_tag?: string | null
           years_of_experience?: number | null
