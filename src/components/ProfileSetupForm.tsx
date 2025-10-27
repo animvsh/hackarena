@@ -131,18 +131,6 @@ export const ProfileSetupForm = ({ onProfileCreated, onCancel }: ProfileSetupFor
         hackerrank_username: profileData.hackerrank_username || undefined,
         stackoverflow_user_id: profileData.stackoverflow_user_id || undefined,
         portfolio_url: profileData.portfolio_url || undefined,
-        manual_data: {
-          email: profileData.email,
-          location: profileData.location,
-          current_company: profileData.current_company,
-          current_title: profileData.current_title,
-          years_experience: profileData.years_experience,
-          seniority_level: profileData.seniority_level,
-          skills: profileData.skills,
-          hackathon_history: profileData.hackathon_history,
-          bio: profileData.bio,
-          interests: profileData.interests
-        }
       });
 
       toast.success("Profile created successfully!");
