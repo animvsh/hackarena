@@ -62,6 +62,7 @@ export default function TeamProfile() {
   const [isTeamCreator, setIsTeamCreator] = useState(false);
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [commitData, setCommitData] = useState<any[]>([]);
 
   const { odds } = useMarketOdds(marketId);
   const teamOdds = odds.find(o => o.team_id === teamId);
@@ -210,6 +211,36 @@ export default function TeamProfile() {
     return () => {
       supabase.removeChannel(statsChannel);
     };
+  }, [teamId]);
+
+  // Fetch commit data for performance chart
+  useEffect(() => {
+    const fetchCommitData = async () => {
+      if (!teamId) return;
+
+      const { data: commits } = await supabase
+        .from('progress_updates')
+        .select('*')
+        .eq('team_id', teamId)
+        .eq('type', 'commit')
+        .order('created_at', { ascending: true });
+
+      if (commits) {
+        // Group commits and create chart data
+        const chartData = commits.map((commit, index) => ({
+          commit: `Commit ${index + 1}`,
+          timestamp: new Date(commit.created_at).toLocaleDateString(),
+          date: new Date(commit.created_at).toLocaleString(),
+          files: (commit.metadata as any)?.files || 0,
+          additions: (commit.metadata as any)?.additions || 0,
+          deletions: (commit.metadata as any)?.deletions || 0,
+        }));
+        
+        setCommitData(chartData);
+      }
+    };
+
+    fetchCommitData();
   }, [teamId]);
 
   const handleBet = (amount: number) => {
@@ -423,36 +454,56 @@ export default function TeamProfile() {
                   <Card className="p-6">
                     <h3 className="font-semibold mb-4">Performance Metrics</h3>
                     <p className="text-muted-foreground text-sm mb-4">
-                      Based on commits from the last 24 hours
+                      Commit activity over time
                     </p>
-                    <ResponsiveContainer width="100%" height={300}>
-                      <LineChart data={oddsHistory}>
-                        <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-                        <XAxis 
-                          dataKey="timestamp" 
-                          stroke="hsl(var(--muted-foreground))"
-                          fontSize={12}
-                        />
-                        <YAxis 
-                          stroke="hsl(var(--muted-foreground))"
-                          fontSize={12}
-                        />
-                        <Tooltip 
-                          contentStyle={{ 
-                            backgroundColor: 'hsl(var(--card))', 
-                            border: '1px solid hsl(var(--border))',
-                            borderRadius: '0.5rem'
-                          }}
-                        />
-                        <Line 
-                          type="monotone" 
-                          dataKey="odds" 
-                          stroke="hsl(var(--primary))" 
-                          strokeWidth={2}
-                          name="Odds %"
-                        />
-                      </LineChart>
-                    </ResponsiveContainer>
+                    {commitData.length > 0 ? (
+                      <ResponsiveContainer width="100%" height={300}>
+                        <LineChart data={commitData}>
+                          <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+                          <XAxis 
+                            dataKey="commit" 
+                            stroke="hsl(var(--muted-foreground))"
+                            fontSize={12}
+                          />
+                          <YAxis 
+                            stroke="hsl(var(--muted-foreground))"
+                            fontSize={12}
+                          />
+                          <Tooltip 
+                            contentStyle={{ 
+                              backgroundColor: 'hsl(var(--card))', 
+                              border: '1px solid hsl(var(--border))',
+                              borderRadius: '0.5rem'
+                            }}
+                            formatter={(value, name) => {
+                              if (name === 'Additions') return [`+${value}`, 'Additions'];
+                              if (name === 'Deletions') return [`-${value}`, 'Deletions'];
+                              return [value, name];
+                            }}
+                          />
+                          <Line 
+                            type="monotone" 
+                            dataKey="additions" 
+                            stroke="#22c55e" 
+                            strokeWidth={2}
+                            name="Additions"
+                            dot={{ r: 4 }}
+                          />
+                          <Line 
+                            type="monotone" 
+                            dataKey="deletions" 
+                            stroke="hsl(var(--destructive))" 
+                            strokeWidth={2}
+                            name="Deletions"
+                            dot={{ r: 4 }}
+                          />
+                        </LineChart>
+                      </ResponsiveContainer>
+                    ) : (
+                      <div className="h-[300px] flex items-center justify-center text-muted-foreground">
+                        <p>No commit data available</p>
+                      </div>
+                    )}
                   </Card>
                 </TabsContent>
 
